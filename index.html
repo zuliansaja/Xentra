@@ -149,6 +149,13 @@ body {
 .spin { animation:spin 1s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg);} }
 
+/* PTR (Pull to refresh) */
+#ptr-indicator {
+  text-align:center; padding:12px; font-size:13px; color:var(--text2);
+  display:none; flex-shrink:0;
+}
+#ptr-indicator i { margin-right:6px; }
+
 /* LOGIN WALL */
 .login-wall { padding:80px 24px; text-align:center; }
 .login-wall i { font-size:54px; color:var(--accent); margin-bottom:16px; display:block; }
@@ -292,6 +299,9 @@ body {
     <div class="ftab" onclick="switchTab('viral',this)">Viral</div>
   </div>
 
+  <!-- PTR INDICATOR -->
+  <div id="ptr-indicator"><i class="fa fa-sync-alt spin"></i> Memuat ulang...</div>
+
   <!-- CONTENT AREA -->
   <div id="content">
 
@@ -309,8 +319,8 @@ body {
         </div>
       </div>
       <div style="display:flex;border-bottom:1px solid var(--border);padding:0 16px">
-        <div style="padding:10px 16px 10px 0;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)" id="tabTopik">Topik</div>
-        <div style="padding:10px 16px;font-size:14px;font-weight:600;color:var(--text2)" id="tabSudahGabung">Sudah Gabung</div>
+        <div style="padding:10px 16px 10px 0;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent);cursor:pointer" id="tabTopik" onclick="switchTopikTab('all')">Topik</div>
+        <div style="padding:10px 16px;font-size:14px;font-weight:600;color:var(--text2);border-bottom:2px solid transparent;cursor:pointer" id="tabSudahGabung" onclick="switchTopikTab('joined')">Sudah Gabung</div>
       </div>
       <div id="topikList"></div>
     </div>
@@ -473,8 +483,10 @@ const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi
 
 let user = null, token = null, currentPost = null, selFiles = [];
 let feedType = 'fresh';
+let joinedTopics = JSON.parse(localStorage.getItem('xn_joined')||'[]');
+let topikTab = 'all';
 
-// Restore session dari localStorage
+// SESSION
 function saveSession() {
   if(user && token) {
     localStorage.setItem('xn_token', token);
@@ -505,9 +517,9 @@ const h = () => ({
 
 async function sb(path, opts={}) {
   const r = await fetch(SB + path, { headers: h(), ...opts });
-  const t = await r.text();
-  if (!r.ok) { const e = JSON.parse(t||'{}'); throw new Error(e.message || e.error_description || 'Error'); }
-  return t ? JSON.parse(t) : {};
+  const txt = await r.text();
+  if (!r.ok) { const e = JSON.parse(txt||'{}'); throw new Error(e.message || e.error_description || 'Error'); }
+  return txt ? JSON.parse(txt) : {};
 }
 
 async function sbAuth(path, body) {
@@ -526,9 +538,9 @@ function closeSheet(id) { document.getElementById(id).classList.remove('open'); 
 
 // TOAST
 function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2500);
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2500);
 }
 
 // TIME AGO
@@ -542,7 +554,7 @@ function ago(d) {
 
 // AUTH
 function switchAuth(tab) {
-  document.querySelectorAll('.atab').forEach((t,i)=>t.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.querySelectorAll('.atab').forEach((el,i)=>el.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));
   document.getElementById('authLogin').style.display = tab==='login'?'block':'none';
   document.getElementById('authReg').style.display = tab==='register'?'block':'none';
 }
@@ -637,7 +649,7 @@ function loginWall() {
 // FEED
 function switchTab(type, el) {
   feedType = type;
-  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.ftab').forEach(tab=>tab.classList.remove('on'));
   el.classList.add('on');
   loadFeed();
 }
@@ -651,7 +663,6 @@ async function loadFeed() {
       feed.innerHTML = `<div class="center-msg"><i class="fa fa-wind"></i><h3>${t('nopost')}</h3><p>${t('nopostsub')}</p></div>`;
       return;
     }
-    // ambil profiles terpisah
     const userIds = [...new Set(posts.map(p=>p.user_id).filter(Boolean))];
     let profileMap = {};
     if(userIds.length) {
@@ -687,14 +698,14 @@ function renderPost(p) {
       <i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px"></i>
     </div>
     ${cap?`<div class="ptitle">${cap}</div>`:''}
-    ${tags.length?`<div class="ptags">${tags.map(t=>`<span class="ptag">${t}</span>`).join('')}</div>`:''}
+    ${tags.length?`<div class="ptags">${tags.map(tg=>`<span class="ptag">${tg}</span>`).join('')}</div>`:''}
     ${imgHtml}
     <div class="pactions">
       <div class="pact ${myVote?'upvoted':''}" id="vb-${p.id}" onclick="vote('${p.id}',this)">
         <i class="fa fa-arrow-up"></i><span id="vc-${p.id}">${upvotes}</span>
       </div>
       <div class="pact" onclick="openKomentar('${p.id}')">
-        <i class="fa fa-comment"></i><span>0</span>
+        <i class="fa fa-comment"></i><span id="cc-${p.id}">0</span>
       </div>
       <div class="pact" onclick="toast('Download segera hadir')">
         <i class="fa fa-download"></i>
@@ -731,6 +742,9 @@ async function openKomentar(pid) {
   list.innerHTML = '<div class="center-msg" style="padding:20px"><i class="fa fa-spinner spin"></i></div>';
   try {
     const cs = await sb(`/rest/v1/comments?post_id=eq.${pid}&select=*,profiles(username)&order=created_at.asc`);
+    // update comment count on card
+    const ccEl = document.getElementById('cc-'+pid);
+    if(ccEl) ccEl.textContent = cs.length;
     list.innerHTML = cs.length
       ? cs.map(c=>`<div class="kitem"><div class="kavatar"><i class="fa fa-user"></i></div><div><div class="kuname">${c.profiles?.username||'user'}</div><div class="ktext">${c.content}</div></div></div>`).join('')
       : `<div style="text-align:center;padding:20px;color:var(--text2)">${t('nocomment')}</div>`;
@@ -770,7 +784,7 @@ async function uploadImg(file) {
   const r = await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{
     method:'POST', headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type}, body:file
   });
-  if(!r.ok) throw new Error('Gagal upload');
+  if(!r.ok) { const err = await r.text(); throw new Error('Gagal upload: '+err); }
   return `${SB}/storage/v1/object/public/meme-images/${path}`;
 }
 async function submitPost() {
@@ -798,17 +812,72 @@ async function submitPost() {
 
 function openUploadPost() { closeSheet('uploadOptSheet'); if(!user){openSheet('authSheet');return;} openSheet('uploadPostSheet'); }
 function openBuatTopik() { closeSheet('uploadOptSheet'); if(!user){openSheet('authSheet');return;} openSheet('buatTopikSheet'); }
-async function submitTopik() {
-  const name = document.getElementById('topikName').value.trim();
-  if(!name) return toast(t('topicname'));
-  toast(t('topicsuccess')); closeSheet('buatTopikSheet');
-}
 
 // TOPIK
-function renderTopik() {
-  document.getElementById('topikList').innerHTML = `<div class="center-msg"><i class="fa fa-users"></i><h3>${t('notopic')}</h3><p>${t('notopicsub')}</p></div>`;
+function switchTopikTab(tab) {
+  topikTab = tab;
+  const tabAll = document.getElementById('tabTopik');
+  const tabJoined = document.getElementById('tabSudahGabung');
+  tabAll.style.color = tab==='all' ? 'var(--accent)' : 'var(--text2)';
+  tabAll.style.borderBottom = tab==='all' ? '2px solid var(--accent)' : '2px solid transparent';
+  tabJoined.style.color = tab==='joined' ? 'var(--accent)' : 'var(--text2)';
+  tabJoined.style.borderBottom = tab==='joined' ? '2px solid var(--accent)' : '2px solid transparent';
+  renderTopik();
 }
-function toggleJoin(btn) { btn.classList.toggle('joined'); btn.textContent=btn.classList.contains('joined')?'Gabung ✓':'Gabung'; }
+
+async function renderTopik() {
+  const list = document.getElementById('topikList');
+  list.innerHTML = '<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  try {
+    let topics = await sb(`/rest/v1/topics?select=*&order=created_at.desc`);
+    if(topikTab==='joined') topics = topics.filter(tp=>joinedTopics.includes(tp.id));
+    if(!topics.length) {
+      list.innerHTML = `<div class="center-msg"><i class="fa fa-users"></i><h3>${topikTab==='joined'?'Belum ada topik diikuti':t('notopic')}</h3><p>${topikTab==='joined'?'Ikuti topik dulu':t('notopicsub')}</p></div>`;
+      return;
+    }
+    list.innerHTML = topics.map(tp=>{
+      const isJoined = joinedTopics.includes(tp.id);
+      return `<div class="titem">
+        <div class="tavatar">${tp.emoji||'👥'}</div>
+        <div class="tinfo">
+          <div class="tname">${tp.name}</div>
+          <div class="tmember">${tp.member_count||0} ${t('member')}</div>
+        </div>
+        <button class="tjoin ${isJoined?'joined':''}" onclick="toggleJoin(this,'${tp.id}')">${isJoined?'Gabung ✓':'Gabung'}</button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = `<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;
+  }
+}
+
+function toggleJoin(btn, id) {
+  const isJoined = joinedTopics.includes(id);
+  if(isJoined) {
+    joinedTopics = joinedTopics.filter(x=>x!==id);
+    btn.classList.remove('joined');
+    btn.textContent = 'Gabung';
+  } else {
+    joinedTopics.push(id);
+    btn.classList.add('joined');
+    btn.textContent = 'Gabung ✓';
+  }
+  localStorage.setItem('xn_joined', JSON.stringify(joinedTopics));
+}
+
+async function submitTopik() {
+  const name = document.getElementById('topikName').value.trim();
+  const desc = document.getElementById('topikDesc').value.trim();
+  if(!name) return toast(t('topicname'));
+  try {
+    await sb('/rest/v1/topics',{method:'POST',body:JSON.stringify({name,description:desc,member_count:0,emoji:'👥'})});
+    toast(t('topicsuccess'));
+    closeSheet('buatTopikSheet');
+    document.getElementById('topikName').value='';
+    document.getElementById('topikDesc').value='';
+    renderTopik();
+  } catch(e) { toast(e.message); }
+}
 
 // PROFIL
 function renderProfil() {
@@ -830,10 +899,13 @@ function renderProfil() {
     <div class="profil-grid" id="profilGrid"></div>`;
   loadProfilPosts();
 }
+
 async function loadProfilPosts() {
   try {
-    const posts = await sb(`/rest/v1/posts?user_id=eq.${user.id}&select=*,post_images(image_url,order_index)&order=created_at.desc`);
+    const posts = await sb(`/rest/v1/posts?user_id=eq.${user.id}&select=*,post_images(image_url,order_index),votes(type)&order=created_at.desc`);
     document.getElementById('statPost').textContent = posts.length;
+    const totalVotes = posts.reduce((sum,p)=>(p.votes||[]).filter(v=>v.type==='up').length+sum, 0);
+    document.getElementById('statVote').textContent = totalVotes;
     document.getElementById('profilGrid').innerHTML = posts.map(p=>{
       const img = (p.post_images||[])[0]?.image_url;
       return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;
@@ -869,10 +941,11 @@ async function doSearch(q) {
 
 // SETTINGS
 function toggleDark() {
-  const t = document.getElementById('darkToggle');
-  t.classList.toggle('on');
-  document.documentElement.setAttribute('data-theme', t.classList.contains('on')?'dark':'light');
+  const el = document.getElementById('darkToggle');
+  el.classList.toggle('on');
+  document.documentElement.setAttribute('data-theme', el.classList.contains('on')?'dark':'light');
 }
+
 const T = {
   id: {
     foryou:'For You', fresh:'Fresh', viral:'Viral',
@@ -898,7 +971,7 @@ const T = {
     topicdeschere:'Deskripsi topik...', email:'Email', password:'Password',
     username:'Username', minpasshint:'Password (min 6 karakter)',
     searchhint:'Ketik untuk mencari', searchresult:'Tidak ditemukan',
-    failsend:'Gagal kirim', failvote:'Gagal vote',
+    failsend:'Gagal kirim', failvote:'Gagal vote', noimage:'Pilih foto dulu',
   },
   en: {
     foryou:'For You', fresh:'Fresh', viral:'Viral',
@@ -924,7 +997,7 @@ const T = {
     topicdeschere:'Topic description...', email:'Email', password:'Password',
     username:'Username', minpasshint:'Password (min 6 characters)',
     searchhint:'Type to search', searchresult:'Not found',
-    failsend:'Failed to send', failvote:'Failed to vote',
+    failsend:'Failed to send', failvote:'Failed to vote', noimage:'Pick a photo first',
   }
 };
 let lang = 'id';
@@ -938,23 +1011,18 @@ function setLang(l) {
 }
 
 function applyLang() {
-  // feed tabs
   document.querySelectorAll('.ftab').forEach((tab,i)=>{
     const keys = ['foryou','fresh','viral'];
     tab.textContent = t(keys[i]);
   });
-  // search input
   const si = document.getElementById('searchInput');
   if(si) si.placeholder = t('search');
-  // settings sheet
   document.querySelectorAll('.slabel').forEach(el=>{
     if(el.textContent==='Mode Gelap'||el.textContent==='Dark Mode') el.textContent=t('darkmode');
-    if(el.textContent==='Indonesia'||el.textContent==='Indonesia') el.textContent='Indonesia';
   });
   document.querySelectorAll('.ssub').forEach(el=>{
     if(el.textContent==='Default aktif'||el.textContent==='Active by default') el.textContent=t('darkmodesub');
   });
-  // auth sheet
   document.querySelectorAll('.atab').forEach((tab,i)=>{
     tab.textContent = i===0 ? t('login') : t('register');
   });
@@ -974,21 +1042,47 @@ function applyLang() {
     if(btn.onclick?.toString().includes('submitPost')) btn.textContent=t('postnow');
     if(btn.onclick?.toString().includes('submitTopik')) btn.textContent=t('createtopic');
   });
-  // topik tabs
   const tabTopik = document.getElementById('tabTopik');
   const tabSudah = document.getElementById('tabSudahGabung');
   const topikSrch = document.getElementById('topikSearchInput');
   if(tabTopik) tabTopik.textContent = lang==='en' ? 'Topics' : 'Topik';
   if(tabSudah) tabSudah.textContent = lang==='en' ? 'Joined' : 'Sudah Gabung';
   if(topikSrch) topikSrch.placeholder = t('searchtopik');
-
-  // reload current page content
   const activePage = document.querySelector('.page.on');
   if(activePage?.id==='pg-home') loadFeed();
   if(activePage?.id==='pg-topik') renderTopik();
   if(activePage?.id==='pg-notif' && user) renderNotif();
 }
+
 function sharePost() { if(navigator.share) navigator.share({title:'Xentra',url:location.href}); else toast('Link disalin!'); }
+
+// PULL TO REFRESH
+let ptrStart = 0, ptrActive = false;
+const contentEl = document.getElementById('content');
+const ptrEl = document.getElementById('ptr-indicator');
+
+contentEl.addEventListener('touchstart', e=>{
+  if(contentEl.scrollTop === 0) { ptrStart = e.touches[0].clientY; ptrActive = true; }
+}, {passive:true});
+
+contentEl.addEventListener('touchmove', e=>{
+  if(!ptrActive) return;
+  const diff = e.touches[0].clientY - ptrStart;
+  if(diff > 50) ptrEl.style.display = 'block';
+}, {passive:true});
+
+contentEl.addEventListener('touchend', e=>{
+  if(!ptrActive) return;
+  ptrActive = false;
+  const diff = e.changedTouches[0].clientY - ptrStart;
+  if(diff > 70) {
+    const activePage = document.querySelector('.page.on');
+    if(activePage?.id==='pg-home') loadFeed();
+    else if(activePage?.id==='pg-topik') renderTopik();
+    else if(activePage?.id==='pg-profil' && user) renderProfil();
+  }
+  ptrEl.style.display = 'none';
+}, {passive:true});
 
 // INIT
 (async () => {
