@@ -40,8 +40,6 @@ body {
   max-width:480px;
   margin:0 auto;
 }
-
-/* APP SHELL */
 #app {
   display:flex;
   flex-direction:column;
@@ -103,12 +101,8 @@ body {
   font-size:22px; cursor:pointer; flex-shrink:0;
   box-shadow:0 4px 14px rgba(74,158,255,0.4);
 }
-
-/* PAGES */
 .page { display:none; }
 .page.on { display:block; }
-
-/* POST CARD */
 .pcard { border-bottom:1px solid var(--border); padding:14px 16px; }
 .phead { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .puser { display:flex; align-items:center; gap:10px; }
@@ -140,23 +134,16 @@ body {
 .pact i { font-size:17px; }
 .pact span { font-size:13px; font-weight:600; }
 .pact.upvoted { color:var(--accent); }
-
-/* EMPTY / LOADING */
 .center-msg { text-align:center; padding:60px 20px; color:var(--text2); }
 .center-msg i { font-size:40px; margin-bottom:12px; display:block; color:var(--border); }
 .center-msg h3 { color:var(--text); font-size:17px; margin-bottom:6px; }
 .center-msg p { font-size:13px; line-height:1.6; }
 .spin { animation:spin 1s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg);} }
-
-/* PTR (Pull to refresh) */
 #ptr-indicator {
   text-align:center; padding:12px; font-size:13px; color:var(--text2);
   display:none; flex-shrink:0;
 }
-#ptr-indicator i { margin-right:6px; }
-
-/* LOGIN WALL */
 .login-wall { padding:80px 24px; text-align:center; }
 .login-wall i { font-size:54px; color:var(--accent); margin-bottom:16px; display:block; }
 .login-wall h3 { font-size:17px; font-weight:700; margin-bottom:20px; }
@@ -165,8 +152,6 @@ body {
   background:var(--accent); color:#fff; font-size:15px;
   font-weight:700; cursor:pointer; border:none; font-family:inherit;
 }
-
-/* TOPIK */
 .titem { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); }
 .tavatar { width:48px; height:48px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
 .tinfo { flex:1; }
@@ -178,8 +163,6 @@ body {
   font-weight:600; cursor:pointer; font-family:inherit;
 }
 .tjoin.joined { background:var(--accent); color:#fff; }
-
-/* PROFIL */
 .profil-top { text-align:center; padding:24px 16px 16px; }
 .pavatar-lg { width:80px; height:80px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:32px; color:var(--text2); margin:0 auto 12px; overflow:hidden; }
 .pavatar-lg img { width:100%; height:100%; object-fit:cover; }
@@ -193,21 +176,15 @@ body {
 .profil-thumb img { width:100%; height:100%; object-fit:cover; }
 .profil-btns { display:flex; gap:8px; justify-content:center; margin-bottom:16px; }
 .btn-outline { padding:9px 22px; border-radius:20px; border:1px solid var(--border); color:var(--text); background:transparent; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
-
-/* SEARCH */
 .search-bar { padding:12px 16px; background:var(--bg2); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; }
 .sinput-wrap { position:relative; }
 .sinput-wrap i { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--text2); font-size:15px; }
 .sinput { width:100%; padding:11px 14px 11px 38px; border-radius:12px; border:1px solid var(--border); background:var(--input); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
 .sinput:focus { border-color:var(--accent); }
-
-/* NOTIF FILTERS */
 .nfilters { display:flex; gap:8px; padding:12px 16px; overflow-x:auto; scrollbar-width:none; flex-shrink:0; }
 .nfilters::-webkit-scrollbar { display:none; }
 .nfbtn { padding:6px 14px; border-radius:20px; border:1px solid var(--border); color:var(--text2); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; background:transparent; font-family:inherit; }
 .nfbtn.on { background:var(--accent); color:#fff; border-color:var(--accent); }
-
-/* MODAL / SHEET */
 .overlay {
   position:fixed; inset:0; background:rgba(0,0,0,0.75);
   z-index:300; display:none; align-items:flex-end;
@@ -225,13 +202,9 @@ body {
 .finput:focus { border-color:var(--accent); }
 .flabel { font-size:13px; font-weight:600; color:var(--text2); margin-bottom:6px; display:block; }
 .fbtn { width:100%; padding:14px; border-radius:12px; background:var(--accent); color:#fff; border:none; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:4px; }
-
-/* AUTH TABS */
 .atabs { display:flex; background:var(--bg3); border-radius:12px; padding:4px; margin-bottom:20px; }
 .atab { flex:1; text-align:center; padding:10px; border-radius:9px; cursor:pointer; font-weight:600; font-size:14px; color:var(--text2); }
 .atab.on { background:var(--accent); color:#fff; }
-
-/* UPLOAD */
 .uparea { border:2px dashed var(--border); border-radius:12px; padding:28px; text-align:center; cursor:pointer; margin-bottom:14px; }
 .uparea i { font-size:30px; color:var(--text2); margin-bottom:8px; display:block; }
 .uparea p { font-size:13px; color:var(--text2); }
@@ -239,15 +212,11 @@ body {
 .upthumb { position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; }
 .upthumb img { width:100%; height:100%; object-fit:cover; }
 .upthumb-del { position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,0.7); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; }
-
-/* UPLOAD OPTIONS */
 .uopt { display:flex; align-items:center; gap:14px; padding:15px; border-radius:12px; cursor:pointer; }
 .uopt:hover { background:var(--bg3); }
 .uopt i { font-size:20px; color:var(--accent); width:24px; text-align:center; }
 .uopt-title { font-weight:600; font-size:15px; }
 .uopt-sub { font-size:13px; color:var(--text2); }
-
-/* KOMENTAR */
 .klist { max-height:45vh; overflow-y:auto; }
 .kitem { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); }
 .kavatar { width:32px; height:32px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--text2); flex-shrink:0; }
@@ -256,8 +225,6 @@ body {
 .kinput-row { display:flex; gap:10px; align-items:center; padding:12px 16px; border-top:1px solid var(--border); }
 .kinput { flex:1; padding:10px 14px; border-radius:20px; border:1px solid var(--border); background:var(--input); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
 .ksend { width:36px; height:36px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-
-/* SETTINGS */
 .sitem { display:flex; align-items:center; justify-content:space-between; padding:15px 16px; border-bottom:1px solid var(--border); }
 .sitem-l { display:flex; align-items:center; gap:12px; }
 .sitem-l i { font-size:17px; color:var(--accent); width:22px; }
@@ -267,8 +234,6 @@ body {
 .toggle.on { background:var(--accent); }
 .tdot { position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; }
 .toggle.on .tdot { transform:translateX(20px); }
-
-/* TOAST */
 .toast {
   position:fixed; bottom:72px; left:50%; transform:translateX(-50%) translateY(10px);
   background:var(--bg3); color:var(--text); padding:10px 20px;
@@ -280,10 +245,7 @@ body {
 </style>
 </head>
 <body>
-
 <div id="app">
-
-  <!-- TOPBAR -->
   <div id="topbar">
     <div class="logo">Xentra</div>
     <div class="topbar-right">
@@ -291,26 +253,14 @@ body {
       <button class="icon-btn" onclick="openSheet('settingsSheet')"><i class="fa fa-sliders-h"></i></button>
     </div>
   </div>
-
-  <!-- FEED TABS -->
   <div id="feedtabs">
     <div class="ftab on" onclick="switchTab('foryou',this)">For You</div>
     <div class="ftab" onclick="switchTab('fresh',this)">Fresh</div>
     <div class="ftab" onclick="switchTab('viral',this)">Viral</div>
   </div>
-
-  <!-- PTR INDICATOR -->
   <div id="ptr-indicator"><i class="fa fa-sync-alt spin"></i> Memuat ulang...</div>
-
-  <!-- CONTENT AREA -->
   <div id="content">
-
-    <!-- HOME -->
-    <div class="page on" id="pg-home">
-      <div id="feed"></div>
-    </div>
-
-    <!-- TOPIK -->
+    <div class="page on" id="pg-home"><div id="feed"></div></div>
     <div class="page" id="pg-topik">
       <div style="padding:12px 16px">
         <div class="sinput-wrap">
@@ -324,8 +274,6 @@ body {
       </div>
       <div id="topikList"></div>
     </div>
-
-    <!-- SEARCH -->
     <div class="page" id="pg-search">
       <div class="search-bar">
         <div class="sinput-wrap">
@@ -337,20 +285,9 @@ body {
         <div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div>
       </div>
     </div>
-
-    <!-- NOTIF -->
-    <div class="page" id="pg-notif">
-      <div id="notifWall"></div>
-    </div>
-
-    <!-- PROFIL -->
-    <div class="page" id="pg-profil">
-      <div id="profilWall"></div>
-    </div>
-
+    <div class="page" id="pg-notif"><div id="notifWall"></div></div>
+    <div class="page" id="pg-profil"><div id="profilWall"></div></div>
   </div>
-
-  <!-- NAVBAR -->
   <div id="navbar">
     <div class="nitem on" id="nb-home" onclick="goPage('home')"><i class="fa fa-home"></i></div>
     <div class="nitem" id="nb-topik" onclick="goPage('topik')"><i class="fa fa-users"></i></div>
@@ -358,10 +295,7 @@ body {
     <div class="nitem" id="nb-notif" onclick="goPage('notif')"><i class="fa fa-bell"></i></div>
     <div class="nitem" id="nb-profil" onclick="goPage('profil')"><i class="fa fa-user"></i></div>
   </div>
-
 </div>
-
-<!-- SHEETS / MODALS -->
 
 <!-- AUTH SHEET -->
 <div class="overlay" id="authSheet" onclick="closeSheet('authSheet')">
@@ -389,7 +323,7 @@ body {
   </div>
 </div>
 
-<!-- UPLOAD OPTIONS SHEET -->
+<!-- UPLOAD OPTIONS -->
 <div class="overlay" id="uploadOptSheet" onclick="closeSheet('uploadOptSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
@@ -405,7 +339,7 @@ body {
   </div>
 </div>
 
-<!-- UPLOAD POST SHEET -->
+<!-- UPLOAD POST -->
 <div class="overlay" id="uploadPostSheet" onclick="closeSheet('uploadPostSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
@@ -424,7 +358,7 @@ body {
   </div>
 </div>
 
-<!-- BUAT TOPIK SHEET -->
+<!-- BUAT TOPIK -->
 <div class="overlay" id="buatTopikSheet" onclick="closeSheet('buatTopikSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
@@ -437,7 +371,7 @@ body {
   </div>
 </div>
 
-<!-- KOMENTAR SHEET -->
+<!-- KOMENTAR -->
 <div class="overlay" id="komentarSheet" onclick="closeSheet('komentarSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
@@ -450,7 +384,7 @@ body {
   </div>
 </div>
 
-<!-- SETTINGS SHEET -->
+<!-- SETTINGS -->
 <div class="overlay" id="settingsSheet" onclick="closeSheet('settingsSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
@@ -474,39 +408,51 @@ body {
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
 const SB = 'https://qlyybibfopmlqgoznuqp.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFseXliaWJmb3BtbHFnb3pudXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTAwMTcsImV4cCI6MjA5NjMyNjAxN30.AWB9IXOBgqnh5UiBmfGj6kvmTpv9G3eVzSHmLPrbNS4';
 
-let user = null, token = null, currentPost = null, selFiles = [];
+let user = null, token = null, currentPost = null;
 let feedType = 'fresh';
 let joinedTopics = JSON.parse(localStorage.getItem('xn_joined')||'[]');
 let topikTab = 'all';
 
 // SESSION
-function saveSession() {
+function saveSession(refreshToken) {
   if(user && token) {
     localStorage.setItem('xn_token', token);
     localStorage.setItem('xn_user', JSON.stringify(user));
+    if(refreshToken) localStorage.setItem('xn_refresh', refreshToken);
   }
 }
 function clearSession() {
   localStorage.removeItem('xn_token');
   localStorage.removeItem('xn_user');
+  localStorage.removeItem('xn_refresh');
 }
+
 async function restoreSession() {
-  const savedToken = localStorage.getItem('xn_token');
+  const savedRefresh = localStorage.getItem('xn_refresh');
   const savedUser = localStorage.getItem('xn_user');
-  if(savedToken && savedUser) {
-    try {
-      token = savedToken;
-      user = JSON.parse(savedUser);
+  if(!savedRefresh || !savedUser) return;
+  try {
+    const r = await fetch(`${SB}/auth/v1/token?grant_type=refresh_token`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':KEY},
+      body: JSON.stringify({refresh_token: savedRefresh})
+    });
+    if(r.ok) {
+      const d = await r.json();
+      token = d.access_token;
+      user = d.user;
+      saveSession(d.refresh_token);
       await loadProfile();
-    } catch(e) { clearSession(); token=null; user=null; }
-  }
+    } else {
+      clearSession();
+    }
+  } catch(e) { clearSession(); }
 }
 
 const h = () => ({
@@ -532,18 +478,15 @@ async function sbAuth(path, body) {
   return d;
 }
 
-// SHEET
 function openSheet(id) { document.getElementById(id).classList.add('open'); }
 function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
 
-// TOAST
 function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'), 2500);
 }
 
-// TIME AGO
 function ago(d) {
   const s = (Date.now() - new Date(d))/1000;
   if(s<60) return 'Baru saja';
@@ -567,7 +510,7 @@ async function doLogin() {
     const d = await sbAuth('token?grant_type=password',{email,password:pass});
     token = d.access_token; user = d.user;
     await loadProfile();
-    saveSession();
+    saveSession(d.refresh_token);
     closeSheet('authSheet');
     toast(t('welcome'));
     goPage('home'); loadFeed();
@@ -585,7 +528,7 @@ async function doRegister() {
     token = d.access_token; user = d.user;
     await sb('/rest/v1/profiles',{method:'POST',body:JSON.stringify({id:user.id,username})});
     await loadProfile();
-    saveSession();
+    saveSession(d.refresh_token);
     closeSheet('authSheet');
     toast(t('welcomenew'));
     goPage('home'); loadFeed();
@@ -607,7 +550,6 @@ function goPage(page) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
   const tabs = document.getElementById('feedtabs');
-
   if(needLogin.includes(page) && !user) {
     tabs.style.display = 'none';
     if(page==='notif') {
@@ -620,11 +562,9 @@ function goPage(page) {
     document.getElementById('nb-'+page).classList.add('on');
     return;
   }
-
   tabs.style.display = page==='home' ? 'flex' : 'none';
   document.getElementById('pg-'+page).classList.add('on');
   document.getElementById('nb-'+page) && document.getElementById('nb-'+page).classList.add('on');
-
   if(page==='topik') renderTopik();
   if(page==='profil' && user) renderProfil();
   if(page==='notif' && user) renderNotif();
@@ -639,11 +579,7 @@ function goSearch() {
 }
 
 function loginWall() {
-  return `<div class="login-wall">
-    <i class="fa fa-lock"></i>
-    <h3>${t('loginwall')}</h3>
-    <button class="btn-primary" onclick="openSheet('authSheet')">${t('loginnow')}</button>
-  </div>`;
+  return `<div class="login-wall"><i class="fa fa-lock"></i><h3>${t('loginwall')}</h3><button class="btn-primary" onclick="openSheet('authSheet')">${t('loginnow')}</button></div>`;
 }
 
 // FEED
@@ -683,12 +619,10 @@ function renderPost(p) {
   const tags = (p.caption||'').match(/#\w+/g)||[];
   const cap = (p.caption||'').replace(/#\w+/g,'').trim();
   const uname = p.profiles?.username || 'user';
-
   let imgHtml = '';
   if(imgs.length===1) imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy"></div>`;
   else if(imgs.length===2) imgHtml=`<div class="pimgs s2">${imgs.map(i=>`<img src="${i.image_url}" loading="lazy">`).join('')}</div>`;
   else if(imgs.length>=3) imgHtml=`<div class="pimgs s3"><img class="pm" src="${imgs[0].image_url}" loading="lazy"><img src="${imgs[1].image_url}" loading="lazy"><img src="${imgs[2].image_url}" loading="lazy"></div>`;
-
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
       <div class="puser">
@@ -742,13 +676,12 @@ async function openKomentar(pid) {
   list.innerHTML = '<div class="center-msg" style="padding:20px"><i class="fa fa-spinner spin"></i></div>';
   try {
     const cs = await sb(`/rest/v1/comments?post_id=eq.${pid}&select=*,profiles(username)&order=created_at.asc`);
-    // update comment count on card
     const ccEl = document.getElementById('cc-'+pid);
     if(ccEl) ccEl.textContent = cs.length;
     list.innerHTML = cs.length
       ? cs.map(c=>`<div class="kitem"><div class="kavatar"><i class="fa fa-user"></i></div><div><div class="kuname">${c.profiles?.username||'user'}</div><div class="ktext">${c.content}</div></div></div>`).join('')
       : `<div style="text-align:center;padding:20px;color:var(--text2)">${t('nocomment')}</div>`;
-  } catch(e) { list.innerHTML = '<div style="padding:20px;color:var(--text2)">Gagal memuat</div>'; }
+  } catch(e) { list.innerHTML = `<div style="padding:20px;color:var(--text2)">Gagal memuat: ${e.message}</div>`; }
 }
 
 async function submitKomentar() {
@@ -760,7 +693,7 @@ async function submitKomentar() {
     await sb('/rest/v1/comments',{method:'POST',body:JSON.stringify({post_id:currentPost,user_id:user.id,content:txt})});
     inp.value = '';
     openKomentar(currentPost);
-  } catch(e) { toast('Gagal kirim'); }
+  } catch(e) { toast('Gagal kirim: '+e.message); }
 }
 
 // UPLOAD
@@ -789,7 +722,7 @@ async function uploadImg(file) {
 }
 async function submitPost() {
   if(!user) return openSheet('authSheet');
-  if(!selFiles2.length) return toast(t('nopost'));
+  if(!selFiles2.length) return toast('Pilih foto dulu');
   const cap = document.getElementById('postCaption').value.trim();
   const tags = document.getElementById('postTags').value.trim();
   const full = cap + (tags?' '+tags:'');
@@ -839,10 +772,7 @@ async function renderTopik() {
       const isJoined = joinedTopics.includes(tp.id);
       return `<div class="titem">
         <div class="tavatar">${tp.emoji||'👥'}</div>
-        <div class="tinfo">
-          <div class="tname">${tp.name}</div>
-          <div class="tmember">${tp.member_count||0} ${t('member')}</div>
-        </div>
+        <div class="tinfo"><div class="tname">${tp.name}</div><div class="tmember">${tp.member_count||0} ${t('member')}</div></div>
         <button class="tjoin ${isJoined?'joined':''}" onclick="toggleJoin(this,'${tp.id}')">${isJoined?'Gabung ✓':'Gabung'}</button>
       </div>`;
     }).join('');
@@ -853,15 +783,8 @@ async function renderTopik() {
 
 function toggleJoin(btn, id) {
   const isJoined = joinedTopics.includes(id);
-  if(isJoined) {
-    joinedTopics = joinedTopics.filter(x=>x!==id);
-    btn.classList.remove('joined');
-    btn.textContent = 'Gabung';
-  } else {
-    joinedTopics.push(id);
-    btn.classList.add('joined');
-    btn.textContent = 'Gabung ✓';
-  }
+  if(isJoined) { joinedTopics = joinedTopics.filter(x=>x!==id); btn.classList.remove('joined'); btn.textContent='Gabung'; }
+  else { joinedTopics.push(id); btn.classList.add('joined'); btn.textContent='Gabung ✓'; }
   localStorage.setItem('xn_joined', JSON.stringify(joinedTopics));
 }
 
@@ -892,7 +815,7 @@ function renderProfil() {
         <div><div class="pstat-num" id="statVote">0</div><div class="pstat-label">Upvote</div></div>
       </div>
       <div class="profil-btns">
-        <button class="btn-primary" onclick="toast(t('postsuccess'))">${t('editprofil')}</button>
+        <button class="btn-primary" onclick="toast('Segera hadir')">${t('editprofil')}</button>
         <button class="btn-outline" onclick="doLogout()">${t('logout')}</button>
       </div>
     </div>
@@ -966,12 +889,9 @@ const T = {
     uploading:'Mengupload...', postsuccess:'Post berhasil!', topicsuccess:'Topik dibuat!',
     logoutsuccess:'Berhasil keluar', welcome:'Selamat datang!', welcomenew:'Selamat datang di Xentra!',
     fillemail:'Isi email dan password', fillall:'Isi semua field', minpass:'Password min 6 karakter',
-    member:'member', ago_now:'Baru saja', ago_min:'menit', ago_hour:'jam', ago_day:'hari',
-    typehere:'Tulis caption...', taghere:'#gaming #meme', topicnamehere:'Nama topik...',
-    topicdeschere:'Deskripsi topik...', email:'Email', password:'Password',
-    username:'Username', minpasshint:'Password (min 6 karakter)',
-    searchhint:'Ketik untuk mencari', searchresult:'Tidak ditemukan',
-    failsend:'Gagal kirim', failvote:'Gagal vote', noimage:'Pilih foto dulu',
+    member:'member', typehere:'Tulis caption...', taghere:'#gaming #meme',
+    topicnamehere:'Nama topik...', topicdeschere:'Deskripsi topik...',
+    email:'Email', password:'Password', username:'Username', minpasshint:'Password (min 6 karakter)',
   },
   en: {
     foryou:'For You', fresh:'Fresh', viral:'Viral',
@@ -992,12 +912,9 @@ const T = {
     uploading:'Uploading...', postsuccess:'Post successful!', topicsuccess:'Topic created!',
     logoutsuccess:'Logged out', welcome:'Welcome back!', welcomenew:'Welcome to Xentra!',
     fillemail:'Fill in email and password', fillall:'Fill in all fields', minpass:'Password min 6 characters',
-    member:'members', ago_now:'Just now', ago_min:'min', ago_hour:'hr', ago_day:'d',
-    typehere:'Write a caption...', taghere:'#gaming #meme', topicnamehere:'Topic name...',
-    topicdeschere:'Topic description...', email:'Email', password:'Password',
-    username:'Username', minpasshint:'Password (min 6 characters)',
-    searchhint:'Type to search', searchresult:'Not found',
-    failsend:'Failed to send', failvote:'Failed to vote', noimage:'Pick a photo first',
+    member:'members', typehere:'Write a caption...', taghere:'#gaming #meme',
+    topicnamehere:'Topic name...', topicdeschere:'Topic description...',
+    email:'Email', password:'Password', username:'Username', minpasshint:'Password (min 6 characters)',
   }
 };
 let lang = 'id';
@@ -1011,42 +928,14 @@ function setLang(l) {
 }
 
 function applyLang() {
-  document.querySelectorAll('.ftab').forEach((tab,i)=>{
-    const keys = ['foryou','fresh','viral'];
-    tab.textContent = t(keys[i]);
-  });
+  document.querySelectorAll('.ftab').forEach((tab,i)=>{ const keys=['foryou','fresh','viral']; tab.textContent=t(keys[i]); });
   const si = document.getElementById('searchInput');
   if(si) si.placeholder = t('search');
-  document.querySelectorAll('.slabel').forEach(el=>{
-    if(el.textContent==='Mode Gelap'||el.textContent==='Dark Mode') el.textContent=t('darkmode');
-  });
-  document.querySelectorAll('.ssub').forEach(el=>{
-    if(el.textContent==='Default aktif'||el.textContent==='Active by default') el.textContent=t('darkmodesub');
-  });
-  document.querySelectorAll('.atab').forEach((tab,i)=>{
-    tab.textContent = i===0 ? t('login') : t('register');
-  });
-  document.querySelectorAll('.finput').forEach(inp=>{
-    if(inp.id==='lEmail'||inp.id==='rEmail') inp.placeholder=t('email');
-    if(inp.id==='lPass') inp.placeholder=t('password');
-    if(inp.id==='rUser') inp.placeholder=t('username');
-    if(inp.id==='rPass') inp.placeholder=t('minpasshint');
-    if(inp.id==='postCaption') inp.placeholder=t('typehere');
-    if(inp.id==='postTags') inp.placeholder=t('taghere');
-    if(inp.id==='topikName') inp.placeholder=t('topicnamehere');
-    if(inp.id==='topikDesc') inp.placeholder=t('topicdeschere');
-  });
-  document.querySelectorAll('.fbtn').forEach(btn=>{
-    if(btn.onclick?.toString().includes('doLogin')) btn.textContent=t('login');
-    if(btn.onclick?.toString().includes('doRegister')) btn.textContent=t('register');
-    if(btn.onclick?.toString().includes('submitPost')) btn.textContent=t('postnow');
-    if(btn.onclick?.toString().includes('submitTopik')) btn.textContent=t('createtopic');
-  });
   const tabTopik = document.getElementById('tabTopik');
   const tabSudah = document.getElementById('tabSudahGabung');
   const topikSrch = document.getElementById('topikSearchInput');
-  if(tabTopik) tabTopik.textContent = lang==='en' ? 'Topics' : 'Topik';
-  if(tabSudah) tabSudah.textContent = lang==='en' ? 'Joined' : 'Sudah Gabung';
+  if(tabTopik) tabTopik.textContent = lang==='en'?'Topics':'Topik';
+  if(tabSudah) tabSudah.textContent = lang==='en'?'Joined':'Sudah Gabung';
   if(topikSrch) topikSrch.placeholder = t('searchtopik');
   const activePage = document.querySelector('.page.on');
   if(activePage?.id==='pg-home') loadFeed();
@@ -1060,29 +949,20 @@ function sharePost() { if(navigator.share) navigator.share({title:'Xentra',url:l
 let ptrStart = 0, ptrActive = false;
 const contentEl = document.getElementById('content');
 const ptrEl = document.getElementById('ptr-indicator');
-
-contentEl.addEventListener('touchstart', e=>{
-  if(contentEl.scrollTop === 0) { ptrStart = e.touches[0].clientY; ptrActive = true; }
-}, {passive:true});
-
-contentEl.addEventListener('touchmove', e=>{
-  if(!ptrActive) return;
-  const diff = e.touches[0].clientY - ptrStart;
-  if(diff > 50) ptrEl.style.display = 'block';
-}, {passive:true});
-
+contentEl.addEventListener('touchstart', e=>{ if(contentEl.scrollTop===0){ptrStart=e.touches[0].clientY; ptrActive=true;} },{passive:true});
+contentEl.addEventListener('touchmove', e=>{ if(ptrActive && e.touches[0].clientY-ptrStart>50) ptrEl.style.display='block'; },{passive:true});
 contentEl.addEventListener('touchend', e=>{
   if(!ptrActive) return;
-  ptrActive = false;
+  ptrActive=false;
   const diff = e.changedTouches[0].clientY - ptrStart;
-  if(diff > 70) {
+  if(diff>70) {
     const activePage = document.querySelector('.page.on');
     if(activePage?.id==='pg-home') loadFeed();
     else if(activePage?.id==='pg-topik') renderTopik();
-    else if(activePage?.id==='pg-profil' && user) renderProfil();
+    else if(activePage?.id==='pg-profil'&&user) renderProfil();
   }
-  ptrEl.style.display = 'none';
-}, {passive:true});
+  ptrEl.style.display='none';
+},{passive:true});
 
 // INIT
 (async () => {
