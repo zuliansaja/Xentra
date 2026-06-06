@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Xentra</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --bg2: #141414;
+  --bg3: #1e1e1e;
+  --border: #2a2a2a;
+  --text: #ffffff;
+  --text2: #888888;
+  --accent: #4a9eff;
+  --accent2: #2d7dd2;
+  --card: #141414;
+  --input: #1e1e1e;
+}
+[data-theme="light"] {
+  --bg: #f0f2f5;
+  --bg2: #ffffff;
+  --bg3: #e4e6ea;
+  --border: #dddddd;
+  --text: #0a0a0a;
+  --text2: #666666;
+  --card: #ffffff;
+  --input: #f0f2f5;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { height:100%; }
+body {
+  font-family:'Plus Jakarta Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  height:100%;
+  overflow:hidden;
+  max-width:480px;
+  margin:0 auto;
+}
+
+/* APP SHELL */
+#app {
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  height:100dvh;
+}
+#topbar {
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-shrink:0;
+}
+.logo { font-size:22px; font-weight:800; color:var(--accent); }
+.topbar-right { display:flex; gap:8px; }
+.icon-btn {
+  width:36px; height:36px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--text2); font-size:18px; cursor:pointer;
+  background:transparent; border:none;
+}
+#feedtabs {
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  flex-shrink:0;
+}
+.ftab {
+  flex:1; text-align:center; padding:11px 0;
+  font-size:14px; font-weight:600; color:var(--text2);
+  cursor:pointer; border-bottom:2px solid transparent;
+}
+.ftab.on { color:var(--accent); border-bottom-color:var(--accent); }
+#content {
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+#navbar {
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  height:58px;
+  flex-shrink:0;
+}
+.nitem {
+  flex:1; display:flex; align-items:center; justify-content:center;
+  height:100%; color:var(--text2); font-size:22px; cursor:pointer;
+}
+.nitem.on { color:var(--accent); }
+.nplus {
+  width:46px; height:46px; border-radius:14px;
+  background:var(--accent); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; cursor:pointer; flex-shrink:0;
+  box-shadow:0 4px 14px rgba(74,158,255,0.4);
+}
+
+/* PAGES */
+.page { display:none; }
+.page.on { display:block; }
+
+/* POST CARD */
+.pcard { border-bottom:1px solid var(--border); padding:14px 16px; }
+.phead { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.puser { display:flex; align-items:center; gap:10px; }
+.pavatar {
+  width:38px; height:38px; border-radius:50%;
+  background:var(--bg3); display:flex; align-items:center;
+  justify-content:center; color:var(--text2); font-size:15px; overflow:hidden; flex-shrink:0;
+}
+.pavatar img { width:100%; height:100%; object-fit:cover; }
+.puname { font-weight:700; font-size:14px; }
+.ptime { font-size:12px; color:var(--text2); }
+.ptitle { font-size:15px; font-weight:600; margin-bottom:6px; }
+.ptags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.ptag { font-size:12px; color:var(--accent); }
+.pimgs { border-radius:10px; overflow:hidden; margin-bottom:10px; }
+.pimgs.s1 img { width:100%; max-height:380px; object-fit:cover; display:block; }
+.pimgs.s2 { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
+.pimgs.s2 img { width:100%; height:190px; object-fit:cover; }
+.pimgs.s3 { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
+.pimgs.s3 .pm { grid-row:span 2; height:244px; }
+.pimgs.s3 img { width:100%; height:120px; object-fit:cover; }
+.pimgs.s3 .pm { height:244px; }
+.pactions { display:flex; }
+.pact {
+  display:flex; align-items:center; gap:5px;
+  padding:6px 0; color:var(--text2); font-size:14px;
+  cursor:pointer; flex:1;
+}
+.pact i { font-size:17px; }
+.pact span { font-size:13px; font-weight:600; }
+.pact.upvoted { color:var(--accent); }
+
+/* EMPTY / LOADING */
+.center-msg { text-align:center; padding:60px 20px; color:var(--text2); }
+.center-msg i { font-size:40px; margin-bottom:12px; display:block; color:var(--border); }
+.center-msg h3 { color:var(--text); font-size:17px; margin-bottom:6px; }
+.center-msg p { font-size:13px; line-height:1.6; }
+.spin { animation:spin 1s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg);} }
+
+/* LOGIN WALL */
+.login-wall { padding:80px 24px; text-align:center; }
+.login-wall i { font-size:54px; color:var(--accent); margin-bottom:16px; display:block; }
+.login-wall h3 { font-size:17px; font-weight:700; margin-bottom:20px; }
+.btn-primary {
+  display:inline-block; padding:12px 28px; border-radius:24px;
+  background:var(--accent); color:#fff; font-size:15px;
+  font-weight:700; cursor:pointer; border:none; font-family:inherit;
+}
+
+/* TOPIK */
+.titem { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); }
+.tavatar { width:48px; height:48px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.tinfo { flex:1; }
+.tname { font-weight:700; font-size:15px; }
+.tmember { font-size:12px; color:var(--text2); margin-top:2px; }
+.tjoin {
+  padding:7px 16px; border-radius:20px; border:1px solid var(--accent);
+  color:var(--accent); background:transparent; font-size:13px;
+  font-weight:600; cursor:pointer; font-family:inherit;
+}
+.tjoin.joined { background:var(--accent); color:#fff; }
+
+/* PROFIL */
+.profil-top { text-align:center; padding:24px 16px 16px; }
+.pavatar-lg { width:80px; height:80px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:32px; color:var(--text2); margin:0 auto 12px; overflow:hidden; }
+.pavatar-lg img { width:100%; height:100%; object-fit:cover; }
+.pname { font-size:20px; font-weight:800; }
+.pusername { font-size:14px; color:var(--text2); margin-top:2px; }
+.pstats { display:flex; justify-content:center; gap:36px; margin:16px 0; }
+.pstat-num { font-size:20px; font-weight:800; }
+.pstat-label { font-size:12px; color:var(--text2); }
+.profil-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
+.profil-thumb { aspect-ratio:1; overflow:hidden; background:var(--bg3); }
+.profil-thumb img { width:100%; height:100%; object-fit:cover; }
+.profil-btns { display:flex; gap:8px; justify-content:center; margin-bottom:16px; }
+.btn-outline { padding:9px 22px; border-radius:20px; border:1px solid var(--border); color:var(--text); background:transparent; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
+
+/* SEARCH */
+.search-bar { padding:12px 16px; background:var(--bg2); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; }
+.sinput-wrap { position:relative; }
+.sinput-wrap i { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--text2); font-size:15px; }
+.sinput { width:100%; padding:11px 14px 11px 38px; border-radius:12px; border:1px solid var(--border); background:var(--input); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
+.sinput:focus { border-color:var(--accent); }
+
+/* NOTIF FILTERS */
+.nfilters { display:flex; gap:8px; padding:12px 16px; overflow-x:auto; scrollbar-width:none; flex-shrink:0; }
+.nfilters::-webkit-scrollbar { display:none; }
+.nfbtn { padding:6px 14px; border-radius:20px; border:1px solid var(--border); color:var(--text2); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; background:transparent; font-family:inherit; }
+.nfbtn.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+/* MODAL / SHEET */
+.overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.75);
+  z-index:300; display:none; align-items:flex-end;
+  justify-content:center;
+}
+.overlay.open { display:flex; }
+.sheet {
+  background:var(--bg2); width:100%; max-width:480px;
+  border-radius:20px 20px 0 0; padding:20px 16px 36px;
+  max-height:92vh; overflow-y:auto;
+}
+.handle { width:38px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 18px; }
+.sheet-title { font-size:18px; font-weight:700; margin-bottom:18px; }
+.finput { width:100%; padding:13px 14px; border-radius:11px; border:1px solid var(--border); background:var(--input); color:var(--text); font-size:14px; margin-bottom:12px; font-family:inherit; outline:none; resize:none; }
+.finput:focus { border-color:var(--accent); }
+.flabel { font-size:13px; font-weight:600; color:var(--text2); margin-bottom:6px; display:block; }
+.fbtn { width:100%; padding:14px; border-radius:12px; background:var(--accent); color:#fff; border:none; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:4px; }
+
+/* AUTH TABS */
+.atabs { display:flex; background:var(--bg3); border-radius:12px; padding:4px; margin-bottom:20px; }
+.atab { flex:1; text-align:center; padding:10px; border-radius:9px; cursor:pointer; font-weight:600; font-size:14px; color:var(--text2); }
+.atab.on { background:var(--accent); color:#fff; }
+
+/* UPLOAD */
+.uparea { border:2px dashed var(--border); border-radius:12px; padding:28px; text-align:center; cursor:pointer; margin-bottom:14px; }
+.uparea i { font-size:30px; color:var(--text2); margin-bottom:8px; display:block; }
+.uparea p { font-size:13px; color:var(--text2); }
+.uppreviews { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+.upthumb { position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; }
+.upthumb img { width:100%; height:100%; object-fit:cover; }
+.upthumb-del { position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,0.7); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; }
+
+/* UPLOAD OPTIONS */
+.uopt { display:flex; align-items:center; gap:14px; padding:15px; border-radius:12px; cursor:pointer; }
+.uopt:hover { background:var(--bg3); }
+.uopt i { font-size:20px; color:var(--accent); width:24px; text-align:center; }
+.uopt-title { font-weight:600; font-size:15px; }
+.uopt-sub { font-size:13px; color:var(--text2); }
+
+/* KOMENTAR */
+.klist { max-height:45vh; overflow-y:auto; }
+.kitem { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); }
+.kavatar { width:32px; height:32px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--text2); flex-shrink:0; }
+.kuname { font-weight:700; font-size:13px; }
+.ktext { font-size:13px; color:var(--text2); margin-top:2px; }
+.kinput-row { display:flex; gap:10px; align-items:center; padding:12px 16px; border-top:1px solid var(--border); }
+.kinput { flex:1; padding:10px 14px; border-radius:20px; border:1px solid var(--border); background:var(--input); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
+.ksend { width:36px; height:36px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+/* SETTINGS */
+.sitem { display:flex; align-items:center; justify-content:space-between; padding:15px 16px; border-bottom:1px solid var(--border); }
+.sitem-l { display:flex; align-items:center; gap:12px; }
+.sitem-l i { font-size:17px; color:var(--accent); width:22px; }
+.slabel { font-size:15px; font-weight:500; }
+.ssub { font-size:12px; color:var(--text2); }
+.toggle { width:44px; height:24px; background:var(--border); border-radius:12px; cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; }
+.toggle.on { background:var(--accent); }
+.tdot { position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; }
+.toggle.on .tdot { transform:translateX(20px); }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:72px; left:50%; transform:translateX(-50%) translateY(10px);
+  background:var(--bg3); color:var(--text); padding:10px 20px;
+  border-radius:20px; font-size:14px; font-weight:600;
+  z-index:400; opacity:0; transition:all .25s; pointer-events:none;
+  white-space:nowrap; box-shadow:0 4px 16px rgba(0,0,0,0.4);
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="logo">Xentra</div>
+    <div class="topbar-right">
+      <button class="icon-btn" onclick="goSearch()"><i class="fa fa-search"></i></button>
+      <button class="icon-btn" onclick="openSheet('settingsSheet')"><i class="fa fa-sliders-h"></i></button>
+    </div>
+  </div>
+
+  <!-- FEED TABS -->
+  <div id="feedtabs">
+    <div class="ftab on" onclick="switchTab('foryou',this)">For You</div>
+    <div class="ftab" onclick="switchTab('fresh',this)">Fresh</div>
+    <div class="ftab" onclick="switchTab('viral',this)">Viral</div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div id="content">
+
+    <!-- HOME -->
+    <div class="page on" id="pg-home">
+      <div id="feed"></div>
+    </div>
+
+    <!-- TOPIK -->
+    <div class="page" id="pg-topik">
+      <div style="padding:12px 16px">
+        <div class="sinput-wrap">
+          <i class="fa fa-search"></i>
+          <input type="text" class="sinput" id="topikSearchInput" placeholder="Cari topik...">
+        </div>
+      </div>
+      <div style="display:flex;border-bottom:1px solid var(--border);padding:0 16px">
+        <div style="padding:10px 16px 10px 0;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)" id="tabTopik">Topik</div>
+        <div style="padding:10px 16px;font-size:14px;font-weight:600;color:var(--text2)" id="tabSudahGabung">Sudah Gabung</div>
+      </div>
+      <div id="topikList"></div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="page" id="pg-search">
+      <div class="search-bar">
+        <div class="sinput-wrap">
+          <i class="fa fa-search"></i>
+          <input type="text" class="sinput" id="searchInput" placeholder="Cari post, user, topik..." oninput="doSearch(this.value)">
+        </div>
+      </div>
+      <div id="searchResults">
+        <div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div>
+      </div>
+    </div>
+
+    <!-- NOTIF -->
+    <div class="page" id="pg-notif">
+      <div id="notifWall"></div>
+    </div>
+
+    <!-- PROFIL -->
+    <div class="page" id="pg-profil">
+      <div id="profilWall"></div>
+    </div>
+
+  </div>
+
+  <!-- NAVBAR -->
+  <div id="navbar">
+    <div class="nitem on" id="nb-home" onclick="goPage('home')"><i class="fa fa-home"></i></div>
+    <div class="nitem" id="nb-topik" onclick="goPage('topik')"><i class="fa fa-users"></i></div>
+    <div class="nplus" onclick="openSheet('uploadOptSheet')"><i class="fa fa-plus"></i></div>
+    <div class="nitem" id="nb-notif" onclick="goPage('notif')"><i class="fa fa-bell"></i></div>
+    <div class="nitem" id="nb-profil" onclick="goPage('profil')"><i class="fa fa-user"></i></div>
+  </div>
+
+</div>
+
+<!-- SHEETS / MODALS -->
+
+<!-- AUTH SHEET -->
+<div class="overlay" id="authSheet" onclick="closeSheet('authSheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:26px;font-weight:800;color:var(--accent)">Xentra</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px">Platform meme & gaming Indonesia</div>
+    </div>
+    <div class="atabs">
+      <div class="atab on" onclick="switchAuth('login')">Masuk</div>
+      <div class="atab" onclick="switchAuth('register')">Daftar</div>
+    </div>
+    <div id="authLogin">
+      <input type="email" class="finput" id="lEmail" placeholder="Email">
+      <input type="password" class="finput" id="lPass" placeholder="Password">
+      <button class="fbtn" onclick="doLogin()">Masuk</button>
+    </div>
+    <div id="authReg" style="display:none">
+      <input type="text" class="finput" id="rUser" placeholder="Username">
+      <input type="email" class="finput" id="rEmail" placeholder="Email">
+      <input type="password" class="finput" id="rPass" placeholder="Password (min 6 karakter)">
+      <button class="fbtn" onclick="doRegister()">Daftar</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD OPTIONS SHEET -->
+<div class="overlay" id="uploadOptSheet" onclick="closeSheet('uploadOptSheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+    <div class="sheet-title">Buat</div>
+    <div class="uopt" onclick="openUploadPost()">
+      <i class="fa fa-image"></i>
+      <div><div class="uopt-title">Buat Post</div><div class="uopt-sub">Bagikan meme atau konten gaming</div></div>
+    </div>
+    <div class="uopt" onclick="openBuatTopik()">
+      <i class="fa fa-users"></i>
+      <div><div class="uopt-title">Buat Topik</div><div class="uopt-sub">Buat komunitas baru</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD POST SHEET -->
+<div class="overlay" id="uploadPostSheet" onclick="closeSheet('uploadPostSheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+    <div class="sheet-title">Buat Post</div>
+    <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this)">
+    <div class="uparea" onclick="document.getElementById('fileInput').click()">
+      <i class="fa fa-image"></i>
+      <p>Tap untuk pilih foto (max 3)</p>
+    </div>
+    <div class="uppreviews" id="uppreviews" style="display:none"></div>
+    <label class="flabel">Caption</label>
+    <textarea class="finput" id="postCaption" rows="3" placeholder="Tulis caption..."></textarea>
+    <label class="flabel">Hashtag</label>
+    <input type="text" class="finput" id="postTags" placeholder="#gaming #meme">
+    <button class="fbtn" onclick="submitPost()">Post Sekarang</button>
+  </div>
+</div>
+
+<!-- BUAT TOPIK SHEET -->
+<div class="overlay" id="buatTopikSheet" onclick="closeSheet('buatTopikSheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+    <div class="sheet-title">Buat Topik</div>
+    <label class="flabel">Nama Topik</label>
+    <input type="text" class="finput" id="topikName" placeholder="Nama topik...">
+    <label class="flabel">Deskripsi</label>
+    <textarea class="finput" id="topikDesc" rows="3" placeholder="Deskripsi topik..."></textarea>
+    <button class="fbtn" onclick="submitTopik()">Buat Topik</button>
+  </div>
+</div>
+
+<!-- KOMENTAR SHEET -->
+<div class="overlay" id="komentarSheet" onclick="closeSheet('komentarSheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+    <div class="sheet-title">Komentar</div>
+    <div class="klist" id="komentarList"></div>
+    <div class="kinput-row">
+      <input type="text" class="kinput" id="kinput" placeholder="Tulis komentar...">
+      <button class="ksend" onclick="submitKomentar()"><i class="fa fa-paper-plane"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS SHEET -->
+<div class="overlay" id="settingsSheet" onclick="closeSheet('settingsSheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+    <div class="sheet-title">Preferensi</div>
+    <div class="sitem">
+      <div class="sitem-l">
+        <i class="fa fa-moon"></i>
+        <div><div class="slabel">Mode Gelap</div><div class="ssub">Default aktif</div></div>
+      </div>
+      <div class="toggle on" id="darkToggle" onclick="toggleDark()"><div class="tdot"></div></div>
+    </div>
+    <div style="padding:10px 16px;font-size:12px;font-weight:700;color:var(--text2)">BAHASA</div>
+    <div class="sitem" onclick="setLang('id')" style="cursor:pointer">
+      <div class="sitem-l"><i class="fa fa-globe"></i><div class="slabel">Indonesia</div></div>
+      <i class="fa fa-check" id="langId" style="color:var(--accent)"></i>
+    </div>
+    <div class="sitem" onclick="setLang('en')" style="cursor:pointer">
+      <div class="sitem-l"><i class="fa fa-globe"></i><div class="slabel">English</div></div>
+      <i class="fa fa-check" id="langEn" style="display:none;color:var(--accent)"></i>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SB = 'https://qlyybibfopmlqgoznuqp.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFseXliaWJmb3BtbHFnb3pudXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTAwMTcsImV4cCI6MjA5NjMyNjAxN30.AWB9IXOBgqnh5UiBmfGj6kvmTpv9G3eVzSHmLPrbNS4';
+
+let user = null, token = null, currentPost = null, selFiles = [];
+let feedType = 'fresh';
+
+// Restore session dari localStorage
+function saveSession() {
+  if(user && token) {
+    localStorage.setItem('xn_token', token);
+    localStorage.setItem('xn_user', JSON.stringify(user));
+  }
+}
+function clearSession() {
+  localStorage.removeItem('xn_token');
+  localStorage.removeItem('xn_user');
+}
+async function restoreSession() {
+  const savedToken = localStorage.getItem('xn_token');
+  const savedUser = localStorage.getItem('xn_user');
+  if(savedToken && savedUser) {
+    try {
+      token = savedToken;
+      user = JSON.parse(savedUser);
+      await loadProfile();
+    } catch(e) { clearSession(); token=null; user=null; }
+  }
+}
+
+const h = () => ({
+  'Content-Type':'application/json',
+  'apikey': KEY,
+  'Authorization': `Bearer ${token || KEY}`
+});
+
+async function sb(path, opts={}) {
+  const r = await fetch(SB + path, { headers: h(), ...opts });
+  const t = await r.text();
+  if (!r.ok) { const e = JSON.parse(t||'{}'); throw new Error(e.message || e.error_description || 'Error'); }
+  return t ? JSON.parse(t) : {};
+}
+
+async function sbAuth(path, body) {
+  const r = await fetch(`${SB}/auth/v1/${path}`, {
+    method:'POST', headers:{'Content-Type':'application/json','apikey':KEY},
+    body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error_description || d.message || 'Error');
+  return d;
+}
+
+// SHEET
+function openSheet(id) { document.getElementById(id).classList.add('open'); }
+function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
+
+// TOAST
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// TIME AGO
+function ago(d) {
+  const s = (Date.now() - new Date(d))/1000;
+  if(s<60) return 'Baru saja';
+  if(s<3600) return Math.floor(s/60)+' menit';
+  if(s<86400) return Math.floor(s/3600)+' jam';
+  return Math.floor(s/86400)+' hari';
+}
+
+// AUTH
+function switchAuth(tab) {
+  document.querySelectorAll('.atab').forEach((t,i)=>t.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('authLogin').style.display = tab==='login'?'block':'none';
+  document.getElementById('authReg').style.display = tab==='register'?'block':'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('lEmail').value.trim();
+  const pass = document.getElementById('lPass').value;
+  if(!email||!pass) return toast(t('fillemail'));
+  try {
+    const d = await sbAuth('token?grant_type=password',{email,password:pass});
+    token = d.access_token; user = d.user;
+    await loadProfile();
+    saveSession();
+    closeSheet('authSheet');
+    toast(t('welcome'));
+    goPage('home'); loadFeed();
+  } catch(e) { toast(e.message); }
+}
+
+async function doRegister() {
+  const username = document.getElementById('rUser').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const pass = document.getElementById('rPass').value;
+  if(!username||!email||!pass) return toast(t('fillall'));
+  if(pass.length<6) return toast(t('minpass'));
+  try {
+    const d = await sbAuth('signup',{email,password:pass});
+    token = d.access_token; user = d.user;
+    await sb('/rest/v1/profiles',{method:'POST',body:JSON.stringify({id:user.id,username})});
+    await loadProfile();
+    saveSession();
+    closeSheet('authSheet');
+    toast(t('welcomenew'));
+    goPage('home'); loadFeed();
+  } catch(e) { toast(e.message); }
+}
+
+async function loadProfile() {
+  try {
+    const d = await sb(`/rest/v1/profiles?id=eq.${user.id}&select=*`);
+    if(d[0]) user.profile = d[0];
+  } catch(e) {}
+}
+
+function doLogout() { user=null; token=null; clearSession(); goPage('home'); loadFeed(); toast(t('logoutsuccess')); }
+
+// PAGES
+const needLogin = ['notif','profil'];
+function goPage(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
+  const tabs = document.getElementById('feedtabs');
+
+  if(needLogin.includes(page) && !user) {
+    tabs.style.display = 'none';
+    if(page==='notif') {
+      document.getElementById('pg-notif').classList.add('on');
+      document.getElementById('pg-notif').innerHTML = loginWall();
+    } else {
+      document.getElementById('pg-profil').classList.add('on');
+      document.getElementById('pg-profil').innerHTML = loginWall();
+    }
+    document.getElementById('nb-'+page).classList.add('on');
+    return;
+  }
+
+  tabs.style.display = page==='home' ? 'flex' : 'none';
+  document.getElementById('pg-'+page).classList.add('on');
+  document.getElementById('nb-'+page) && document.getElementById('nb-'+page).classList.add('on');
+
+  if(page==='topik') renderTopik();
+  if(page==='profil' && user) renderProfil();
+  if(page==='notif' && user) renderNotif();
+}
+
+function goSearch() {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
+  document.getElementById('feedtabs').style.display = 'none';
+  document.getElementById('pg-search').classList.add('on');
+  setTimeout(()=>document.getElementById('searchInput').focus(),100);
+}
+
+function loginWall() {
+  return `<div class="login-wall">
+    <i class="fa fa-lock"></i>
+    <h3>${t('loginwall')}</h3>
+    <button class="btn-primary" onclick="openSheet('authSheet')">${t('loginnow')}</button>
+  </div>`;
+}
+
+// FEED
+function switchTab(type, el) {
+  feedType = type;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  loadFeed();
+}
+
+async function loadFeed() {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  try {
+    const posts = await sb(`/rest/v1/posts?select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=30`);
+    if(!posts.length) {
+      feed.innerHTML = `<div class="center-msg"><i class="fa fa-wind"></i><h3>${t('nopost')}</h3><p>${t('nopostsub')}</p></div>`;
+      return;
+    }
+    // ambil profiles terpisah
+    const userIds = [...new Set(posts.map(p=>p.user_id).filter(Boolean))];
+    let profileMap = {};
+    if(userIds.length) {
+      const profiles = await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url`);
+      profiles.forEach(p=>profileMap[p.id]=p);
+    }
+    posts.forEach(p=>p.profiles = profileMap[p.user_id]||null);
+    feed.innerHTML = posts.map(p=>renderPost(p)).join('');
+  } catch(e) {
+    feed.innerHTML = `<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>${t('failload')}</h3><p>${e.message}</p></div>`;
+  }
+}
+
+function renderPost(p) {
+  const imgs = (p.post_images||[]).sort((a,b)=>a.order_index-b.order_index);
+  const upvotes = (p.votes||[]).filter(v=>v.type==='up').length;
+  const myVote = user && (p.votes||[]).find(v=>v.user_id===user.id&&v.type==='up');
+  const tags = (p.caption||'').match(/#\w+/g)||[];
+  const cap = (p.caption||'').replace(/#\w+/g,'').trim();
+  const uname = p.profiles?.username || 'user';
+
+  let imgHtml = '';
+  if(imgs.length===1) imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy"></div>`;
+  else if(imgs.length===2) imgHtml=`<div class="pimgs s2">${imgs.map(i=>`<img src="${i.image_url}" loading="lazy">`).join('')}</div>`;
+  else if(imgs.length>=3) imgHtml=`<div class="pimgs s3"><img class="pm" src="${imgs[0].image_url}" loading="lazy"><img src="${imgs[1].image_url}" loading="lazy"><img src="${imgs[2].image_url}" loading="lazy"></div>`;
+
+  return `<div class="pcard" id="pc-${p.id}">
+    <div class="phead">
+      <div class="puser">
+        <div class="pavatar"><i class="fa fa-user"></i></div>
+        <div><div class="puname">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div>
+      </div>
+      <i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px"></i>
+    </div>
+    ${cap?`<div class="ptitle">${cap}</div>`:''}
+    ${tags.length?`<div class="ptags">${tags.map(t=>`<span class="ptag">${t}</span>`).join('')}</div>`:''}
+    ${imgHtml}
+    <div class="pactions">
+      <div class="pact ${myVote?'upvoted':''}" id="vb-${p.id}" onclick="vote('${p.id}',this)">
+        <i class="fa fa-arrow-up"></i><span id="vc-${p.id}">${upvotes}</span>
+      </div>
+      <div class="pact" onclick="openKomentar('${p.id}')">
+        <i class="fa fa-comment"></i><span>0</span>
+      </div>
+      <div class="pact" onclick="toast('Download segera hadir')">
+        <i class="fa fa-download"></i>
+      </div>
+      <div class="pact" onclick="sharePost()">
+        <i class="fa fa-share-alt"></i><span>Kirim</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function vote(pid, el) {
+  if(!user) return openSheet('authSheet');
+  const isOn = el.classList.contains('upvoted');
+  const cnt = document.getElementById('vc-'+pid);
+  try {
+    if(isOn) {
+      await sb(`/rest/v1/votes?post_id=eq.${pid}&user_id=eq.${user.id}`,{method:'DELETE'});
+      el.classList.remove('upvoted');
+      cnt.textContent = parseInt(cnt.textContent)-1;
+    } else {
+      await sb('/rest/v1/votes',{method:'POST',body:JSON.stringify({post_id:pid,user_id:user.id,type:'up'})});
+      el.classList.add('upvoted');
+      cnt.textContent = parseInt(cnt.textContent)+1;
+    }
+  } catch(e) { toast('Gagal vote'); }
+}
+
+// KOMENTAR
+async function openKomentar(pid) {
+  currentPost = pid;
+  openSheet('komentarSheet');
+  const list = document.getElementById('komentarList');
+  list.innerHTML = '<div class="center-msg" style="padding:20px"><i class="fa fa-spinner spin"></i></div>';
+  try {
+    const cs = await sb(`/rest/v1/comments?post_id=eq.${pid}&select=*,profiles(username)&order=created_at.asc`);
+    list.innerHTML = cs.length
+      ? cs.map(c=>`<div class="kitem"><div class="kavatar"><i class="fa fa-user"></i></div><div><div class="kuname">${c.profiles?.username||'user'}</div><div class="ktext">${c.content}</div></div></div>`).join('')
+      : `<div style="text-align:center;padding:20px;color:var(--text2)">${t('nocomment')}</div>`;
+  } catch(e) { list.innerHTML = '<div style="padding:20px;color:var(--text2)">Gagal memuat</div>'; }
+}
+
+async function submitKomentar() {
+  const inp = document.getElementById('kinput');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  if(!user) return openSheet('authSheet');
+  try {
+    await sb('/rest/v1/comments',{method:'POST',body:JSON.stringify({post_id:currentPost,user_id:user.id,content:txt})});
+    inp.value = '';
+    openKomentar(currentPost);
+  } catch(e) { toast('Gagal kirim'); }
+}
+
+// UPLOAD
+let selFiles2 = [];
+function handleFiles(inp) {
+  selFiles2 = Array.from(inp.files).slice(0,3);
+  const prev = document.getElementById('uppreviews');
+  prev.style.display = selFiles2.length ? 'grid' : 'none';
+  prev.innerHTML = selFiles2.map((f,i)=>`<div class="upthumb"><img src="${URL.createObjectURL(f)}"><div class="upthumb-del" onclick="removeFile(${i})"><i class="fa fa-times"></i></div></div>`).join('');
+}
+function removeFile(i) {
+  selFiles2.splice(i,1);
+  const dt = new DataTransfer();
+  selFiles2.forEach(f=>dt.items.add(f));
+  document.getElementById('fileInput').files = dt.files;
+  handleFiles(document.getElementById('fileInput'));
+}
+async function uploadImg(file) {
+  const ext = file.name.split('.').pop();
+  const path = `posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const r = await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{
+    method:'POST', headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type}, body:file
+  });
+  if(!r.ok) throw new Error('Gagal upload');
+  return `${SB}/storage/v1/object/public/meme-images/${path}`;
+}
+async function submitPost() {
+  if(!user) return openSheet('authSheet');
+  if(!selFiles2.length) return toast(t('nopost'));
+  const cap = document.getElementById('postCaption').value.trim();
+  const tags = document.getElementById('postTags').value.trim();
+  const full = cap + (tags?' '+tags:'');
+  try {
+    toast(t('uploading'));
+    const urls = await Promise.all(selFiles2.map(f=>uploadImg(f)));
+    const post = await sb('/rest/v1/posts',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({user_id:user.id,caption:full})});
+    const pid = Array.isArray(post)?post[0].id:post.id;
+    await Promise.all(urls.map((url,i)=>sb('/rest/v1/post_images',{method:'POST',body:JSON.stringify({post_id:pid,image_url:url,order_index:i})})));
+    closeSheet('uploadPostSheet');
+    selFiles2=[];
+    document.getElementById('uppreviews').innerHTML='';
+    document.getElementById('uppreviews').style.display='none';
+    document.getElementById('postCaption').value='';
+    document.getElementById('postTags').value='';
+    toast(t('postsuccess'));
+    loadFeed();
+  } catch(e) { toast(e.message); }
+}
+
+function openUploadPost() { closeSheet('uploadOptSheet'); if(!user){openSheet('authSheet');return;} openSheet('uploadPostSheet'); }
+function openBuatTopik() { closeSheet('uploadOptSheet'); if(!user){openSheet('authSheet');return;} openSheet('buatTopikSheet'); }
+async function submitTopik() {
+  const name = document.getElementById('topikName').value.trim();
+  if(!name) return toast(t('topicname'));
+  toast(t('topicsuccess')); closeSheet('buatTopikSheet');
+}
+
+// TOPIK
+function renderTopik() {
+  document.getElementById('topikList').innerHTML = `<div class="center-msg"><i class="fa fa-users"></i><h3>${t('notopic')}</h3><p>${t('notopicsub')}</p></div>`;
+}
+function toggleJoin(btn) { btn.classList.toggle('joined'); btn.textContent=btn.classList.contains('joined')?'Gabung ✓':'Gabung'; }
+
+// PROFIL
+function renderProfil() {
+  const p = user?.profile || {};
+  document.getElementById('pg-profil').innerHTML = `
+    <div class="profil-top">
+      <div class="pavatar-lg"><i class="fa fa-user"></i></div>
+      <div class="pname">${p.username||'User'}</div>
+      <div class="pusername">@${p.username||'user'}</div>
+      <div class="pstats">
+        <div><div class="pstat-num" id="statPost">0</div><div class="pstat-label">Post</div></div>
+        <div><div class="pstat-num" id="statVote">0</div><div class="pstat-label">Upvote</div></div>
+      </div>
+      <div class="profil-btns">
+        <button class="btn-primary" onclick="toast(t('postsuccess'))">${t('editprofil')}</button>
+        <button class="btn-outline" onclick="doLogout()">${t('logout')}</button>
+      </div>
+    </div>
+    <div class="profil-grid" id="profilGrid"></div>`;
+  loadProfilPosts();
+}
+async function loadProfilPosts() {
+  try {
+    const posts = await sb(`/rest/v1/posts?user_id=eq.${user.id}&select=*,post_images(image_url,order_index)&order=created_at.desc`);
+    document.getElementById('statPost').textContent = posts.length;
+    document.getElementById('profilGrid').innerHTML = posts.map(p=>{
+      const img = (p.post_images||[])[0]?.image_url;
+      return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+// NOTIF
+function renderNotif() {
+  document.getElementById('pg-notif').innerHTML = `
+    <div class="nfilters">
+      <button class="nfbtn on" onclick="filterNotif(this)">${t('all')}</button>
+      <button class="nfbtn" onclick="filterNotif(this)">${t('post')}</button>
+      <button class="nfbtn" onclick="filterNotif(this)">${t('comment')}</button>
+      <button class="nfbtn" onclick="filterNotif(this)">${t('topic')}</button>
+    </div>
+    <div class="center-msg"><i class="fa fa-bell"></i><h3>${t('notif')}</h3><p>${t('notifsub')}</p></div>`;
+}
+function filterNotif(el) {
+  document.querySelectorAll('.nfbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+
+// SEARCH
+async function doSearch(q) {
+  const res = document.getElementById('searchResults');
+  if(!q.trim()) { res.innerHTML='<div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div>'; return; }
+  try {
+    const posts = await sb(`/rest/v1/posts?caption=ilike.*${encodeURIComponent(q)}*&select=id,caption,created_at,user_id,post_images(image_url,order_index)&limit=10`);
+    res.innerHTML = posts.length ? posts.map(p=>renderPost({...p,profiles:{username:'user'},votes:[]})).join('') : '<div class="center-msg"><i class="fa fa-search"></i><h3>Tidak ditemukan</h3></div>';
+  } catch(e) {}
+}
+
+// SETTINGS
+function toggleDark() {
+  const t = document.getElementById('darkToggle');
+  t.classList.toggle('on');
+  document.documentElement.setAttribute('data-theme', t.classList.contains('on')?'dark':'light');
+}
+const T = {
+  id: {
+    foryou:'For You', fresh:'Fresh', viral:'Viral',
+    search:'Cari post, user, topik...', searchtopik:'Cari topik...',
+    notopic:'Belum ada topik', notopicsub:'Jadilah yang pertama membuat topik!',
+    nopost:'Belum ada post', nopostsub:'Jadilah yang pertama posting!',
+    failload:'Gagal memuat', join:'Gabung', joined:'Gabung ✓',
+    login:'Masuk', register:'Daftar', loginwall:'Kamu harus login untuk mengakses halaman ini',
+    loginnow:'Login sekarang', caption:'Caption', hashtag:'Hashtag',
+    postnow:'Post Sekarang', creating:'Buat', createpost:'Buat Post',
+    createpostsub:'Bagikan meme atau konten gaming', createtopic:'Buat Topik',
+    createtopicsub:'Buat komunitas baru', topicname:'Nama Topik',
+    topicdesc:'Deskripsi', comment:'Komentar', nocomment:'Belum ada komentar',
+    writecomment:'Tulis komentar...', send:'Kirim',
+    pref:'Preferensi', darkmode:'Mode Gelap', darkmodesub:'Default aktif',
+    lang:'BAHASA', notif:'Belum ada notifikasi', notifsub:'Notifikasi akan muncul di sini',
+    all:'Semua', post:'Post', topic:'Topik', editprofil:'Edit Profil', logout:'Keluar',
+    uploading:'Mengupload...', postsuccess:'Post berhasil!', topicsuccess:'Topik dibuat!',
+    logoutsuccess:'Berhasil keluar', welcome:'Selamat datang!', welcomenew:'Selamat datang di Xentra!',
+    fillemail:'Isi email dan password', fillall:'Isi semua field', minpass:'Password min 6 karakter',
+    member:'member', ago_now:'Baru saja', ago_min:'menit', ago_hour:'jam', ago_day:'hari',
+    typehere:'Tulis caption...', taghere:'#gaming #meme', topicnamehere:'Nama topik...',
+    topicdeschere:'Deskripsi topik...', email:'Email', password:'Password',
+    username:'Username', minpasshint:'Password (min 6 karakter)',
+    searchhint:'Ketik untuk mencari', searchresult:'Tidak ditemukan',
+    failsend:'Gagal kirim', failvote:'Gagal vote',
+  },
+  en: {
+    foryou:'For You', fresh:'Fresh', viral:'Viral',
+    search:'Search posts, users, topics...', searchtopik:'Search topics...',
+    notopic:'No topics yet', notopicsub:'Be the first to create a topic!',
+    nopost:'No posts yet', nopostsub:'Be the first to post!',
+    failload:'Failed to load', join:'Join', joined:'Joined ✓',
+    login:'Login', register:'Register', loginwall:'You must login to access this page',
+    loginnow:'Login now', caption:'Caption', hashtag:'Hashtag',
+    postnow:'Post Now', creating:'Create', createpost:'Create Post',
+    createpostsub:'Share your meme or gaming content', createtopic:'Create Topic',
+    createtopicsub:'Create a new community', topicname:'Topic Name',
+    topicdesc:'Description', comment:'Comments', nocomment:'No comments yet',
+    writecomment:'Write a comment...', send:'Send',
+    pref:'Preferences', darkmode:'Dark Mode', darkmodesub:'Active by default',
+    lang:'LANGUAGE', notif:'No notifications yet', notifsub:'Notifications will appear here',
+    all:'All', post:'Post', topic:'Topic', editprofil:'Edit Profile', logout:'Logout',
+    uploading:'Uploading...', postsuccess:'Post successful!', topicsuccess:'Topic created!',
+    logoutsuccess:'Logged out', welcome:'Welcome back!', welcomenew:'Welcome to Xentra!',
+    fillemail:'Fill in email and password', fillall:'Fill in all fields', minpass:'Password min 6 characters',
+    member:'members', ago_now:'Just now', ago_min:'min', ago_hour:'hr', ago_day:'d',
+    typehere:'Write a caption...', taghere:'#gaming #meme', topicnamehere:'Topic name...',
+    topicdeschere:'Topic description...', email:'Email', password:'Password',
+    username:'Username', minpasshint:'Password (min 6 characters)',
+    searchhint:'Type to search', searchresult:'Not found',
+    failsend:'Failed to send', failvote:'Failed to vote',
+  }
+};
+let lang = 'id';
+function t(key) { return T[lang][key] || T['id'][key] || key; }
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('langId').style.display = l==='id'?'block':'none';
+  document.getElementById('langEn').style.display = l==='en'?'block':'none';
+  applyLang();
+}
+
+function applyLang() {
+  // feed tabs
+  document.querySelectorAll('.ftab').forEach((tab,i)=>{
+    const keys = ['foryou','fresh','viral'];
+    tab.textContent = t(keys[i]);
+  });
+  // search input
+  const si = document.getElementById('searchInput');
+  if(si) si.placeholder = t('search');
+  // settings sheet
+  document.querySelectorAll('.slabel').forEach(el=>{
+    if(el.textContent==='Mode Gelap'||el.textContent==='Dark Mode') el.textContent=t('darkmode');
+    if(el.textContent==='Indonesia'||el.textContent==='Indonesia') el.textContent='Indonesia';
+  });
+  document.querySelectorAll('.ssub').forEach(el=>{
+    if(el.textContent==='Default aktif'||el.textContent==='Active by default') el.textContent=t('darkmodesub');
+  });
+  // auth sheet
+  document.querySelectorAll('.atab').forEach((tab,i)=>{
+    tab.textContent = i===0 ? t('login') : t('register');
+  });
+  document.querySelectorAll('.finput').forEach(inp=>{
+    if(inp.id==='lEmail'||inp.id==='rEmail') inp.placeholder=t('email');
+    if(inp.id==='lPass') inp.placeholder=t('password');
+    if(inp.id==='rUser') inp.placeholder=t('username');
+    if(inp.id==='rPass') inp.placeholder=t('minpasshint');
+    if(inp.id==='postCaption') inp.placeholder=t('typehere');
+    if(inp.id==='postTags') inp.placeholder=t('taghere');
+    if(inp.id==='topikName') inp.placeholder=t('topicnamehere');
+    if(inp.id==='topikDesc') inp.placeholder=t('topicdeschere');
+  });
+  document.querySelectorAll('.fbtn').forEach(btn=>{
+    if(btn.onclick?.toString().includes('doLogin')) btn.textContent=t('login');
+    if(btn.onclick?.toString().includes('doRegister')) btn.textContent=t('register');
+    if(btn.onclick?.toString().includes('submitPost')) btn.textContent=t('postnow');
+    if(btn.onclick?.toString().includes('submitTopik')) btn.textContent=t('createtopic');
+  });
+  // topik tabs
+  const tabTopik = document.getElementById('tabTopik');
+  const tabSudah = document.getElementById('tabSudahGabung');
+  const topikSrch = document.getElementById('topikSearchInput');
+  if(tabTopik) tabTopik.textContent = lang==='en' ? 'Topics' : 'Topik';
+  if(tabSudah) tabSudah.textContent = lang==='en' ? 'Joined' : 'Sudah Gabung';
+  if(topikSrch) topikSrch.placeholder = t('searchtopik');
+
+  // reload current page content
+  const activePage = document.querySelector('.page.on');
+  if(activePage?.id==='pg-home') loadFeed();
+  if(activePage?.id==='pg-topik') renderTopik();
+  if(activePage?.id==='pg-notif' && user) renderNotif();
+}
+function sharePost() { if(navigator.share) navigator.share({title:'Xentra',url:location.href}); else toast('Link disalin!'); }
+
+// INIT
+(async () => {
+  await restoreSession();
+  loadFeed();
+  renderTopik();
+})();
+</script>
+</body>
+</html>
