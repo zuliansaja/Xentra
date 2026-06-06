@@ -675,12 +675,17 @@ async function openKomentar(pid) {
   const list = document.getElementById('komentarList');
   list.innerHTML = '<div class="center-msg" style="padding:20px"><i class="fa fa-spinner spin"></i></div>';
   try {
-    const cs = await sb(`/rest/v1/comments?post_id=eq.${pid}&select=*,profiles(username)&order=created_at.asc`);
+    const cs = await sb(`/rest/v1/comments?post_id=eq.${pid}&select=*&order=created_at.asc`);
     const ccEl = document.getElementById('cc-'+pid);
     if(ccEl) ccEl.textContent = cs.length;
-    list.innerHTML = cs.length
-      ? cs.map(c=>`<div class="kitem"><div class="kavatar"><i class="fa fa-user"></i></div><div><div class="kuname">${c.profiles?.username||'user'}</div><div class="ktext">${c.content}</div></div></div>`).join('')
-      : `<div style="text-align:center;padding:20px;color:var(--text2)">${t('nocomment')}</div>`;
+    if(!cs.length) { list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text2)">${t('nocomment')}</div>`; return; }
+    const uids = [...new Set(cs.map(c=>c.user_id).filter(Boolean))];
+    let pmap = {};
+    if(uids.length) {
+      const profiles = await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username`);
+      profiles.forEach(p=>pmap[p.id]=p);
+    }
+    list.innerHTML = cs.map(c=>`<div class="kitem"><div class="kavatar"><i class="fa fa-user"></i></div><div><div class="kuname">${pmap[c.user_id]?.username||'user'}</div><div class="ktext">${c.content}</div></div></div>`).join('');
   } catch(e) { list.innerHTML = `<div style="padding:20px;color:var(--text2)">Gagal memuat: ${e.message}</div>`; }
 }
 
