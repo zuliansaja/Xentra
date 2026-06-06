@@ -8,109 +8,35 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 :root {
-  --bg: #0a0a0a;
-  --bg2: #141414;
-  --bg3: #1e1e1e;
-  --border: #2a2a2a;
-  --text: #ffffff;
-  --text2: #888888;
-  --accent: #4a9eff;
-  --accent2: #2d7dd2;
-  --card: #141414;
-  --input: #1e1e1e;
+  --bg: #0a0a0a; --bg2: #141414; --bg3: #1e1e1e; --border: #2a2a2a;
+  --text: #ffffff; --text2: #888888; --accent: #4a9eff; --accent2: #2d7dd2;
+  --card: #141414; --input: #1e1e1e;
 }
 [data-theme="light"] {
-  --bg: #f0f2f5;
-  --bg2: #ffffff;
-  --bg3: #e4e6ea;
-  --border: #dddddd;
-  --text: #0a0a0a;
-  --text2: #666666;
-  --card: #ffffff;
-  --input: #f0f2f5;
+  --bg: #f0f2f5; --bg2: #ffffff; --bg3: #e4e6ea; --border: #dddddd;
+  --text: #0a0a0a; --text2: #666666; --card: #ffffff; --input: #f0f2f5;
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html { height:100%; }
-body {
-  font-family:'Plus Jakarta Sans',sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  height:100%;
-  overflow:hidden;
-  max-width:480px;
-  margin:0 auto;
-}
-#app {
-  display:flex;
-  flex-direction:column;
-  height:100vh;
-  height:100dvh;
-}
-#topbar {
-  background:var(--bg2);
-  border-bottom:1px solid var(--border);
-  padding:12px 16px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  flex-shrink:0;
-}
+body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); height:100%; overflow:hidden; max-width:480px; margin:0 auto; }
+#app { display:flex; flex-direction:column; height:100vh; height:100dvh; }
+#topbar { background:var(--bg2); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
 .logo { font-size:22px; font-weight:800; color:var(--accent); }
 .topbar-right { display:flex; gap:8px; }
-.icon-btn {
-  width:36px; height:36px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  color:var(--text2); font-size:18px; cursor:pointer;
-  background:transparent; border:none;
-}
-#feedtabs {
-  background:var(--bg2);
-  border-bottom:1px solid var(--border);
-  display:flex;
-  flex-shrink:0;
-}
-.ftab {
-  flex:1; text-align:center; padding:11px 0;
-  font-size:14px; font-weight:600; color:var(--text2);
-  cursor:pointer; border-bottom:2px solid transparent;
-}
+.icon-btn { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--text2); font-size:18px; cursor:pointer; background:transparent; border:none; }
+#feedtabs { background:var(--bg2); border-bottom:1px solid var(--border); display:flex; flex-shrink:0; }
+.ftab { flex:1; text-align:center; padding:11px 0; font-size:14px; font-weight:600; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; }
 .ftab.on { color:var(--accent); border-bottom-color:var(--accent); }
-#content {
-  flex:1;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
-}
-#navbar {
-  background:var(--bg2);
-  border-top:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  height:58px;
-  flex-shrink:0;
-}
-.nitem {
-  flex:1; display:flex; align-items:center; justify-content:center;
-  height:100%; color:var(--text2); font-size:22px; cursor:pointer;
-}
+#content { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+#navbar { background:var(--bg2); border-top:1px solid var(--border); display:flex; align-items:center; height:58px; flex-shrink:0; }
+.nitem { flex:1; display:flex; align-items:center; justify-content:center; height:100%; color:var(--text2); font-size:22px; cursor:pointer; }
 .nitem.on { color:var(--accent); }
-.nplus {
-  width:46px; height:46px; border-radius:14px;
-  background:var(--accent); color:#fff;
-  display:flex; align-items:center; justify-content:center;
-  font-size:22px; cursor:pointer; flex-shrink:0;
-  box-shadow:0 4px 14px rgba(74,158,255,0.4);
-}
-.page { display:none; }
-.page.on { display:block; }
+.nplus { width:46px; height:46px; border-radius:14px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; cursor:pointer; flex-shrink:0; box-shadow:0 4px 14px rgba(74,158,255,0.4); }
+.page { display:none; } .page.on { display:block; }
 .pcard { border-bottom:1px solid var(--border); padding:14px 16px; }
 .phead { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .puser { display:flex; align-items:center; gap:10px; }
-.pavatar {
-  width:38px; height:38px; border-radius:50%;
-  background:var(--bg3); display:flex; align-items:center;
-  justify-content:center; color:var(--text2); font-size:15px; overflow:hidden; flex-shrink:0;
-}
+.pavatar { width:38px; height:38px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; color:var(--text2); font-size:15px; overflow:hidden; flex-shrink:0; }
 .pavatar img { width:100%; height:100%; object-fit:cover; }
 .puname { font-weight:700; font-size:14px; }
 .ptime { font-size:12px; color:var(--text2); }
@@ -126,13 +52,8 @@ body {
 .pimgs.s3 img { width:100%; height:120px; object-fit:cover; }
 .pimgs.s3 .pm { height:244px; }
 .pactions { display:flex; }
-.pact {
-  display:flex; align-items:center; gap:5px;
-  padding:6px 0; color:var(--text2); font-size:14px;
-  cursor:pointer; flex:1;
-}
-.pact i { font-size:17px; }
-.pact span { font-size:13px; font-weight:600; }
+.pact { display:flex; align-items:center; gap:5px; padding:6px 0; color:var(--text2); font-size:14px; cursor:pointer; flex:1; }
+.pact i { font-size:17px; } .pact span { font-size:13px; font-weight:600; }
 .pact.upvoted { color:var(--accent); }
 .center-msg { text-align:center; padding:60px 20px; color:var(--text2); }
 .center-msg i { font-size:40px; margin-bottom:12px; display:block; color:var(--border); }
@@ -140,37 +61,23 @@ body {
 .center-msg p { font-size:13px; line-height:1.6; }
 .spin { animation:spin 1s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg);} }
-#ptr-indicator {
-  text-align:center; padding:12px; font-size:13px; color:var(--text2);
-  display:none; flex-shrink:0;
-}
+#ptr-indicator { text-align:center; padding:12px; font-size:13px; color:var(--text2); display:none; flex-shrink:0; }
 .login-wall { padding:80px 24px; text-align:center; }
 .login-wall i { font-size:54px; color:var(--accent); margin-bottom:16px; display:block; }
 .login-wall h3 { font-size:17px; font-weight:700; margin-bottom:20px; }
-.btn-primary {
-  display:inline-block; padding:12px 28px; border-radius:24px;
-  background:var(--accent); color:#fff; font-size:15px;
-  font-weight:700; cursor:pointer; border:none; font-family:inherit;
-}
-.titem { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); }
+.btn-primary { display:inline-block; padding:12px 28px; border-radius:24px; background:var(--accent); color:#fff; font-size:15px; font-weight:700; cursor:pointer; border:none; font-family:inherit; }
+.titem { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
+.titem:hover { background:var(--bg3); }
 .tavatar { width:48px; height:48px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
-.tinfo { flex:1; }
-.tname { font-weight:700; font-size:15px; }
-.tmember { font-size:12px; color:var(--text2); margin-top:2px; }
-.tjoin {
-  padding:7px 16px; border-radius:20px; border:1px solid var(--accent);
-  color:var(--accent); background:transparent; font-size:13px;
-  font-weight:600; cursor:pointer; font-family:inherit;
-}
+.tinfo { flex:1; } .tname { font-weight:700; font-size:15px; } .tmember { font-size:12px; color:var(--text2); margin-top:2px; }
+.tjoin { padding:7px 16px; border-radius:20px; border:1px solid var(--accent); color:var(--accent); background:transparent; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; flex-shrink:0; }
 .tjoin.joined { background:var(--accent); color:#fff; }
 .profil-top { text-align:center; padding:24px 16px 16px; }
 .pavatar-lg { width:80px; height:80px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:32px; color:var(--text2); margin:0 auto 12px; overflow:hidden; }
 .pavatar-lg img { width:100%; height:100%; object-fit:cover; }
-.pname { font-size:20px; font-weight:800; }
-.pusername { font-size:14px; color:var(--text2); margin-top:2px; }
+.pname { font-size:20px; font-weight:800; } .pusername { font-size:14px; color:var(--text2); margin-top:2px; }
 .pstats { display:flex; justify-content:center; gap:36px; margin:16px 0; }
-.pstat-num { font-size:20px; font-weight:800; }
-.pstat-label { font-size:12px; color:var(--text2); }
+.pstat-num { font-size:20px; font-weight:800; } .pstat-label { font-size:12px; color:var(--text2); }
 .profil-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
 .profil-thumb { aspect-ratio:1; overflow:hidden; background:var(--bg3); }
 .profil-thumb img { width:100%; height:100%; object-fit:cover; }
@@ -185,17 +92,9 @@ body {
 .nfilters::-webkit-scrollbar { display:none; }
 .nfbtn { padding:6px 14px; border-radius:20px; border:1px solid var(--border); color:var(--text2); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; background:transparent; font-family:inherit; }
 .nfbtn.on { background:var(--accent); color:#fff; border-color:var(--accent); }
-.overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.75);
-  z-index:300; display:none; align-items:flex-end;
-  justify-content:center;
-}
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:300; display:none; align-items:flex-end; justify-content:center; }
 .overlay.open { display:flex; }
-.sheet {
-  background:var(--bg2); width:100%; max-width:480px;
-  border-radius:20px 20px 0 0; padding:20px 16px 36px;
-  max-height:92vh; overflow-y:auto;
-}
+.sheet { background:var(--bg2); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px 16px 36px; max-height:92vh; overflow-y:auto; }
 .handle { width:38px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 18px; }
 .sheet-title { font-size:18px; font-weight:700; margin-bottom:18px; }
 .finput { width:100%; padding:13px 14px; border-radius:11px; border:1px solid var(--border); background:var(--input); color:var(--text); font-size:14px; margin-bottom:12px; font-family:inherit; outline:none; resize:none; }
@@ -215,33 +114,44 @@ body {
 .uopt { display:flex; align-items:center; gap:14px; padding:15px; border-radius:12px; cursor:pointer; }
 .uopt:hover { background:var(--bg3); }
 .uopt i { font-size:20px; color:var(--accent); width:24px; text-align:center; }
-.uopt-title { font-weight:600; font-size:15px; }
-.uopt-sub { font-size:13px; color:var(--text2); }
+.uopt-title { font-weight:600; font-size:15px; } .uopt-sub { font-size:13px; color:var(--text2); }
 .klist { max-height:45vh; overflow-y:auto; }
 .kitem { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); }
 .kavatar { width:32px; height:32px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--text2); flex-shrink:0; }
-.kuname { font-weight:700; font-size:13px; }
-.ktext { font-size:13px; color:var(--text2); margin-top:2px; }
+.kuname { font-weight:700; font-size:13px; } .ktext { font-size:13px; color:var(--text2); margin-top:2px; }
 .kinput-row { display:flex; gap:10px; align-items:center; padding:12px 16px; border-top:1px solid var(--border); }
 .kinput { flex:1; padding:10px 14px; border-radius:20px; border:1px solid var(--border); background:var(--input); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
 .ksend { width:36px; height:36px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .sitem { display:flex; align-items:center; justify-content:space-between; padding:15px 16px; border-bottom:1px solid var(--border); }
 .sitem-l { display:flex; align-items:center; gap:12px; }
 .sitem-l i { font-size:17px; color:var(--accent); width:22px; }
-.slabel { font-size:15px; font-weight:500; }
-.ssub { font-size:12px; color:var(--text2); }
+.slabel { font-size:15px; font-weight:500; } .ssub { font-size:12px; color:var(--text2); }
 .toggle { width:44px; height:24px; background:var(--border); border-radius:12px; cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; }
 .toggle.on { background:var(--accent); }
 .tdot { position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; }
 .toggle.on .tdot { transform:translateX(20px); }
-.toast {
-  position:fixed; bottom:72px; left:50%; transform:translateX(-50%) translateY(10px);
-  background:var(--bg3); color:var(--text); padding:10px 20px;
-  border-radius:20px; font-size:14px; font-weight:600;
-  z-index:400; opacity:0; transition:all .25s; pointer-events:none;
-  white-space:nowrap; box-shadow:0 4px 16px rgba(0,0,0,0.4);
-}
+.toast { position:fixed; bottom:72px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--bg3); color:var(--text); padding:10px 20px; border-radius:20px; font-size:14px; font-weight:600; z-index:400; opacity:0; transition:all .25s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 16px rgba(0,0,0,0.4); }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+/* CHAT PAGE */
+#pg-chat { display:none; flex-direction:column; height:100%; }
+#pg-chat.on { display:flex; }
+.chat-topbar { background:var(--bg2); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.chat-back { font-size:20px; color:var(--text2); cursor:pointer; }
+.chat-info { flex:1; }
+.chat-name { font-weight:700; font-size:16px; }
+.chat-member-count { font-size:12px; color:var(--text2); }
+.chat-msgs { flex:1; overflow-y:auto; padding:12px 16px; display:flex; flex-direction:column; gap:10px; }
+.chat-msg { display:flex; gap:8px; align-items:flex-end; }
+.chat-msg.mine { flex-direction:row-reverse; }
+.chat-bubble { max-width:75%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.5; }
+.chat-msg.mine .chat-bubble { background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+.chat-msg:not(.mine) .chat-bubble { background:var(--bg3); color:var(--text); border-bottom-left-radius:4px; }
+.chat-uname { font-size:11px; color:var(--text2); margin-bottom:3px; }
+.chat-time { font-size:10px; color:var(--text2); flex-shrink:0; }
+.chat-input-row { display:flex; gap:8px; align-items:center; padding:10px 16px; border-top:1px solid var(--border); background:var(--bg2); flex-shrink:0; }
+.chat-input { flex:1; padding:10px 14px; border-radius:22px; border:1px solid var(--border); background:var(--input); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
+.chat-send { width:40px; height:40px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.chat-avatar { width:30px; height:30px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--text2); flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -263,10 +173,7 @@ body {
     <div class="page on" id="pg-home"><div id="feed"></div></div>
     <div class="page" id="pg-topik">
       <div style="padding:12px 16px">
-        <div class="sinput-wrap">
-          <i class="fa fa-search"></i>
-          <input type="text" class="sinput" id="topikSearchInput" placeholder="Cari topik...">
-        </div>
+        <div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="topikSearchInput" placeholder="Cari topik..."></div>
       </div>
       <div style="display:flex;border-bottom:1px solid var(--border);padding:0 16px">
         <div style="padding:10px 16px 10px 0;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent);cursor:pointer" id="tabTopik" onclick="switchTopikTab('all')">Topik</div>
@@ -274,16 +181,25 @@ body {
       </div>
       <div id="topikList"></div>
     </div>
-    <div class="page" id="pg-search">
-      <div class="search-bar">
-        <div class="sinput-wrap">
-          <i class="fa fa-search"></i>
-          <input type="text" class="sinput" id="searchInput" placeholder="Cari post, user, topik..." oninput="doSearch(this.value)">
+    <div class="page" id="pg-chat">
+      <div class="chat-topbar">
+        <div class="chat-back" onclick="goPage('topik')"><i class="fa fa-arrow-left"></i></div>
+        <div class="chat-info">
+          <div class="chat-name" id="chatName">-</div>
+          <div class="chat-member-count" id="chatMemberCount">0 member</div>
         </div>
       </div>
-      <div id="searchResults">
-        <div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div>
+      <div class="chat-msgs" id="chatMsgs"></div>
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Tulis pesan..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()"><i class="fa fa-paper-plane"></i></button>
       </div>
+    </div>
+    <div class="page" id="pg-search">
+      <div class="search-bar">
+        <div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="searchInput" placeholder="Cari post, user, topik..." oninput="doSearch(this.value)"></div>
+      </div>
+      <div id="searchResults"><div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div></div>
     </div>
     <div class="page" id="pg-notif"><div id="notifWall"></div></div>
     <div class="page" id="pg-profil"><div id="profilWall"></div></div>
@@ -297,7 +213,6 @@ body {
   </div>
 </div>
 
-<!-- AUTH SHEET -->
 <div class="overlay" id="authSheet" onclick="closeSheet('authSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
@@ -323,32 +238,21 @@ body {
   </div>
 </div>
 
-<!-- UPLOAD OPTIONS -->
 <div class="overlay" id="uploadOptSheet" onclick="closeSheet('uploadOptSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
     <div class="sheet-title">Buat</div>
-    <div class="uopt" onclick="openUploadPost()">
-      <i class="fa fa-image"></i>
-      <div><div class="uopt-title">Buat Post</div><div class="uopt-sub">Bagikan meme atau konten gaming</div></div>
-    </div>
-    <div class="uopt" onclick="openBuatTopik()">
-      <i class="fa fa-users"></i>
-      <div><div class="uopt-title">Buat Topik</div><div class="uopt-sub">Buat komunitas baru</div></div>
-    </div>
+    <div class="uopt" onclick="openUploadPost()"><i class="fa fa-image"></i><div><div class="uopt-title">Buat Post</div><div class="uopt-sub">Bagikan meme atau konten gaming</div></div></div>
+    <div class="uopt" onclick="openBuatTopik()"><i class="fa fa-users"></i><div><div class="uopt-title">Buat Topik</div><div class="uopt-sub">Buat komunitas baru</div></div></div>
   </div>
 </div>
 
-<!-- UPLOAD POST -->
 <div class="overlay" id="uploadPostSheet" onclick="closeSheet('uploadPostSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
     <div class="sheet-title">Buat Post</div>
     <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this)">
-    <div class="uparea" onclick="document.getElementById('fileInput').click()">
-      <i class="fa fa-image"></i>
-      <p>Tap untuk pilih foto (max 3)</p>
-    </div>
+    <div class="uparea" onclick="document.getElementById('fileInput').click()"><i class="fa fa-image"></i><p>Tap untuk pilih foto (max 3)</p></div>
     <div class="uppreviews" id="uppreviews" style="display:none"></div>
     <label class="flabel">Caption</label>
     <textarea class="finput" id="postCaption" rows="3" placeholder="Tulis caption..."></textarea>
@@ -358,7 +262,6 @@ body {
   </div>
 </div>
 
-<!-- BUAT TOPIK -->
 <div class="overlay" id="buatTopikSheet" onclick="closeSheet('buatTopikSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
@@ -371,7 +274,6 @@ body {
   </div>
 </div>
 
-<!-- KOMENTAR -->
 <div class="overlay" id="komentarSheet" onclick="closeSheet('komentarSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
@@ -384,16 +286,12 @@ body {
   </div>
 </div>
 
-<!-- SETTINGS -->
 <div class="overlay" id="settingsSheet" onclick="closeSheet('settingsSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
     <div class="sheet-title">Preferensi</div>
     <div class="sitem">
-      <div class="sitem-l">
-        <i class="fa fa-moon"></i>
-        <div><div class="slabel">Mode Gelap</div><div class="ssub">Default aktif</div></div>
-      </div>
+      <div class="sitem-l"><i class="fa fa-moon"></i><div><div class="slabel">Mode Gelap</div><div class="ssub">Default aktif</div></div></div>
       <div class="toggle on" id="darkToggle" onclick="toggleDark()"><div class="tdot"></div></div>
     </div>
     <div style="padding:10px 16px;font-size:12px;font-weight:700;color:var(--text2)">BAHASA</div>
@@ -414,403 +312,352 @@ body {
 const SB = 'https://qlyybibfopmlqgoznuqp.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFseXliaWJmb3BtbHFnb3pudXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTAwMTcsImV4cCI6MjA5NjMyNjAxN30.AWB9IXOBgqnh5UiBmfGj6kvmTpv9G3eVzSHmLPrbNS4';
 
-let user = null, token = null, currentPost = null;
-let feedType = 'fresh';
-let joinedTopics = JSON.parse(localStorage.getItem('xn_joined')||'[]');
-let topikTab = 'all';
+let user=null, token=null, currentPost=null, currentTopic=null;
+let feedType='fresh', topikTab='all', chatInterval=null;
 
-// SESSION
-function saveSession(refreshToken) {
-  if(user && token) {
-    localStorage.setItem('xn_token', token);
-    localStorage.setItem('xn_user', JSON.stringify(user));
-    if(refreshToken) localStorage.setItem('xn_refresh', refreshToken);
-  }
-}
-function clearSession() {
-  localStorage.removeItem('xn_token');
-  localStorage.removeItem('xn_user');
-  localStorage.removeItem('xn_refresh');
-}
-
+function saveSession(rt) { if(user&&token){localStorage.setItem('xn_token',token);localStorage.setItem('xn_user',JSON.stringify(user));if(rt)localStorage.setItem('xn_refresh',rt);} }
+function clearSession() { localStorage.removeItem('xn_token');localStorage.removeItem('xn_user');localStorage.removeItem('xn_refresh'); }
 async function restoreSession() {
-  const savedRefresh = localStorage.getItem('xn_refresh');
-  const savedUser = localStorage.getItem('xn_user');
-  if(!savedRefresh || !savedUser) return;
+  const rt=localStorage.getItem('xn_refresh'); if(!rt) return;
   try {
-    const r = await fetch(`${SB}/auth/v1/token?grant_type=refresh_token`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':KEY},
-      body: JSON.stringify({refresh_token: savedRefresh})
-    });
-    if(r.ok) {
-      const d = await r.json();
-      token = d.access_token;
-      user = d.user;
-      saveSession(d.refresh_token);
-      await loadProfile();
-    } else {
-      clearSession();
-    }
-  } catch(e) { clearSession(); }
+    const r=await fetch(`${SB}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'Content-Type':'application/json','apikey':KEY},body:JSON.stringify({refresh_token:rt})});
+    if(r.ok){const d=await r.json();token=d.access_token;user=d.user;saveSession(d.refresh_token);await loadProfile();}else clearSession();
+  } catch(e){clearSession();}
 }
 
-const h = () => ({
-  'Content-Type':'application/json',
-  'apikey': KEY,
-  'Authorization': `Bearer ${token || KEY}`
-});
-
-async function sb(path, opts={}) {
-  const r = await fetch(SB + path, { headers: h(), ...opts });
-  const txt = await r.text();
-  if (!r.ok) { const e = JSON.parse(txt||'{}'); throw new Error(e.message || e.error_description || 'Error'); }
-  return txt ? JSON.parse(txt) : {};
+const h=()=>({'Content-Type':'application/json','apikey':KEY,'Authorization':`Bearer ${token||KEY}`});
+async function sb(path,opts={}) {
+  const r=await fetch(SB+path,{headers:h(),...opts});
+  const txt=await r.text();
+  if(!r.ok){const e=JSON.parse(txt||'{}');throw new Error(e.message||e.error_description||'Error');}
+  return txt?JSON.parse(txt):{};
+}
+async function sbAuth(path,body) {
+  const r=await fetch(`${SB}/auth/v1/${path}`,{method:'POST',headers:{'Content-Type':'application/json','apikey':KEY},body:JSON.stringify(body)});
+  const d=await r.json(); if(!r.ok) throw new Error(d.error_description||d.message||'Error'); return d;
 }
 
-async function sbAuth(path, body) {
-  const r = await fetch(`${SB}/auth/v1/${path}`, {
-    method:'POST', headers:{'Content-Type':'application/json','apikey':KEY},
-    body: JSON.stringify(body)
-  });
-  const d = await r.json();
-  if (!r.ok) throw new Error(d.error_description || d.message || 'Error');
-  return d;
-}
-
-function openSheet(id) { document.getElementById(id).classList.add('open'); }
-function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
-
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), 2500);
-}
+function openSheet(id){document.getElementById(id).classList.add('open');}
+function closeSheet(id){document.getElementById(id).classList.remove('open');}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
 function ago(d) {
-  const s = (Date.now() - new Date(d))/1000;
+  const ds=d.endsWith('Z')||d.includes('+')?d:d+'Z';
+  const s=(Date.now()-new Date(ds))/1000;
   if(s<60) return 'Baru saja';
   if(s<3600) return Math.floor(s/60)+' menit';
   if(s<86400) return Math.floor(s/3600)+' jam';
   return Math.floor(s/86400)+' hari';
 }
 
-// AUTH
 function switchAuth(tab) {
   document.querySelectorAll('.atab').forEach((el,i)=>el.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));
-  document.getElementById('authLogin').style.display = tab==='login'?'block':'none';
-  document.getElementById('authReg').style.display = tab==='register'?'block':'none';
+  document.getElementById('authLogin').style.display=tab==='login'?'block':'none';
+  document.getElementById('authReg').style.display=tab==='register'?'block':'none';
 }
-
 async function doLogin() {
-  const email = document.getElementById('lEmail').value.trim();
-  const pass = document.getElementById('lPass').value;
+  const email=document.getElementById('lEmail').value.trim();
+  const pass=document.getElementById('lPass').value;
   if(!email||!pass) return toast(t('fillemail'));
   try {
-    const d = await sbAuth('token?grant_type=password',{email,password:pass});
-    token = d.access_token; user = d.user;
-    await loadProfile();
-    saveSession(d.refresh_token);
-    closeSheet('authSheet');
-    toast(t('welcome'));
-    goPage('home'); loadFeed();
-  } catch(e) { toast(e.message); }
+    const d=await sbAuth('token?grant_type=password',{email,password:pass});
+    token=d.access_token;user=d.user;await loadProfile();saveSession(d.refresh_token);
+    closeSheet('authSheet');toast(t('welcome'));goPage('home');loadFeed();
+  } catch(e){toast(e.message);}
 }
-
 async function doRegister() {
-  const username = document.getElementById('rUser').value.trim();
-  const email = document.getElementById('rEmail').value.trim();
-  const pass = document.getElementById('rPass').value;
+  const username=document.getElementById('rUser').value.trim();
+  const email=document.getElementById('rEmail').value.trim();
+  const pass=document.getElementById('rPass').value;
   if(!username||!email||!pass) return toast(t('fillall'));
   if(pass.length<6) return toast(t('minpass'));
   try {
-    const d = await sbAuth('signup',{email,password:pass});
-    token = d.access_token; user = d.user;
+    const d=await sbAuth('signup',{email,password:pass});
+    token=d.access_token;user=d.user;
     await sb('/rest/v1/profiles',{method:'POST',body:JSON.stringify({id:user.id,username})});
-    await loadProfile();
-    saveSession(d.refresh_token);
-    closeSheet('authSheet');
-    toast(t('welcomenew'));
-    goPage('home'); loadFeed();
-  } catch(e) { toast(e.message); }
+    await loadProfile();saveSession(d.refresh_token);
+    closeSheet('authSheet');toast(t('welcomenew'));goPage('home');loadFeed();
+  } catch(e){toast(e.message);}
 }
-
 async function loadProfile() {
-  try {
-    const d = await sb(`/rest/v1/profiles?id=eq.${user.id}&select=*`);
-    if(d[0]) user.profile = d[0];
-  } catch(e) {}
+  try{const d=await sb(`/rest/v1/profiles?id=eq.${user.id}&select=*`);if(d[0])user.profile=d[0];}catch(e){}
 }
+function doLogout(){user=null;token=null;clearSession();goPage('home');loadFeed();toast(t('logoutsuccess'));}
 
-function doLogout() { user=null; token=null; clearSession(); goPage('home'); loadFeed(); toast(t('logoutsuccess')); }
-
-// PAGES
-const needLogin = ['notif','profil'];
+const needLogin=['notif','profil'];
 function goPage(page) {
+  if(chatInterval){clearInterval(chatInterval);chatInterval=null;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
-  const tabs = document.getElementById('feedtabs');
-  if(needLogin.includes(page) && !user) {
-    tabs.style.display = 'none';
-    if(page==='notif') {
-      document.getElementById('pg-notif').classList.add('on');
-      document.getElementById('pg-notif').innerHTML = loginWall();
-    } else {
-      document.getElementById('pg-profil').classList.add('on');
-      document.getElementById('pg-profil').innerHTML = loginWall();
-    }
+  const tabs=document.getElementById('feedtabs');
+  if(needLogin.includes(page)&&!user){
+    tabs.style.display='none';
+    const pg=page==='notif'?'pg-notif':'pg-profil';
+    document.getElementById(pg).classList.add('on');
+    document.getElementById(pg).innerHTML=loginWall();
     document.getElementById('nb-'+page).classList.add('on');
     return;
   }
-  tabs.style.display = page==='home' ? 'flex' : 'none';
+  tabs.style.display=page==='home'?'flex':'none';
   document.getElementById('pg-'+page).classList.add('on');
-  document.getElementById('nb-'+page) && document.getElementById('nb-'+page).classList.add('on');
+  document.getElementById('nb-'+page)&&document.getElementById('nb-'+page).classList.add('on');
   if(page==='topik') renderTopik();
-  if(page==='profil' && user) renderProfil();
-  if(page==='notif' && user) renderNotif();
+  if(page==='profil'&&user) renderProfil();
+  if(page==='notif'&&user) renderNotif();
 }
-
 function goSearch() {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
-  document.getElementById('feedtabs').style.display = 'none';
+  document.getElementById('feedtabs').style.display='none';
   document.getElementById('pg-search').classList.add('on');
   setTimeout(()=>document.getElementById('searchInput').focus(),100);
 }
-
 function loginWall() {
   return `<div class="login-wall"><i class="fa fa-lock"></i><h3>${t('loginwall')}</h3><button class="btn-primary" onclick="openSheet('authSheet')">${t('loginnow')}</button></div>`;
 }
 
-// FEED
-function switchTab(type, el) {
-  feedType = type;
-  document.querySelectorAll('.ftab').forEach(tab=>tab.classList.remove('on'));
-  el.classList.add('on');
-  loadFeed();
+function switchTab(type,el) {
+  feedType=type;document.querySelectorAll('.ftab').forEach(tab=>tab.classList.remove('on'));el.classList.add('on');loadFeed();
 }
-
 async function loadFeed() {
-  const feed = document.getElementById('feed');
-  feed.innerHTML = '<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  const feed=document.getElementById('feed');
+  feed.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
   try {
-    const posts = await sb(`/rest/v1/posts?select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=30`);
-    if(!posts.length) {
-      feed.innerHTML = `<div class="center-msg"><i class="fa fa-wind"></i><h3>${t('nopost')}</h3><p>${t('nopostsub')}</p></div>`;
-      return;
-    }
-    const userIds = [...new Set(posts.map(p=>p.user_id).filter(Boolean))];
-    let profileMap = {};
-    if(userIds.length) {
-      const profiles = await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url`);
-      profiles.forEach(p=>profileMap[p.id]=p);
-    }
-    posts.forEach(p=>p.profiles = profileMap[p.user_id]||null);
-    feed.innerHTML = posts.map(p=>renderPost(p)).join('');
-  } catch(e) {
-    feed.innerHTML = `<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>${t('failload')}</h3><p>${e.message}</p></div>`;
-  }
+    const posts=await sb(`/rest/v1/posts?select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=30`);
+    if(!posts.length){feed.innerHTML=`<div class="center-msg"><i class="fa fa-wind"></i><h3>${t('nopost')}</h3><p>${t('nopostsub')}</p></div>`;return;}
+    const userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))];
+    let profileMap={};
+    if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>profileMap[p.id]=p);}
+    posts.forEach(p=>p.profiles=profileMap[p.user_id]||null);
+    feed.innerHTML=posts.map(p=>renderPost(p)).join('');
+  } catch(e){feed.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>${t('failload')}</h3><p>${e.message}</p></div>`;}
 }
-
 function renderPost(p) {
-  const imgs = (p.post_images||[]).sort((a,b)=>a.order_index-b.order_index);
-  const upvotes = (p.votes||[]).filter(v=>v.type==='up').length;
-  const myVote = user && (p.votes||[]).find(v=>v.user_id===user.id&&v.type==='up');
-  const tags = (p.caption||'').match(/#\w+/g)||[];
-  const cap = (p.caption||'').replace(/#\w+/g,'').trim();
-  const uname = p.profiles?.username || 'user';
-  let imgHtml = '';
+  const imgs=(p.post_images||[]).sort((a,b)=>a.order_index-b.order_index);
+  const upvotes=(p.votes||[]).filter(v=>v.type==='up').length;
+  const myVote=user&&(p.votes||[]).find(v=>v.user_id===user.id&&v.type==='up');
+  const tags=(p.caption||'').match(/#\w+/g)||[];
+  const cap=(p.caption||'').replace(/#\w+/g,'').trim();
+  const uname=p.profiles?.username||'user';
+  let imgHtml='';
   if(imgs.length===1) imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy"></div>`;
   else if(imgs.length===2) imgHtml=`<div class="pimgs s2">${imgs.map(i=>`<img src="${i.image_url}" loading="lazy">`).join('')}</div>`;
   else if(imgs.length>=3) imgHtml=`<div class="pimgs s3"><img class="pm" src="${imgs[0].image_url}" loading="lazy"><img src="${imgs[1].image_url}" loading="lazy"><img src="${imgs[2].image_url}" loading="lazy"></div>`;
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
-      <div class="puser">
-        <div class="pavatar"><i class="fa fa-user"></i></div>
-        <div><div class="puname">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div>
-      </div>
-      ${user && (user.id === p.user_id || user.profile?.is_admin) ? `<i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px" onclick="showPostMenu('${p.id}',this)"></i>` : `<i class="fa fa-ellipsis-h" style="color:var(--text2);padding:4px"></i>`}
+      <div class="puser"><div class="pavatar"><i class="fa fa-user"></i></div><div><div class="puname">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
+      ${user&&(user.id===p.user_id||user.profile?.is_admin)?`<i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px" onclick="showPostMenu('${p.id}',this)"></i>`:`<i class="fa fa-ellipsis-h" style="color:var(--text2);padding:4px"></i>`}
     </div>
     ${cap?`<div class="ptitle">${cap}</div>`:''}
     ${tags.length?`<div class="ptags">${tags.map(tg=>`<span class="ptag">${tg}</span>`).join('')}</div>`:''}
     ${imgHtml}
     <div class="pactions">
-      <div class="pact ${myVote?'upvoted':''}" id="vb-${p.id}" onclick="vote('${p.id}',this)">
-        <i class="fa fa-arrow-up"></i><span id="vc-${p.id}">${upvotes}</span>
-      </div>
-      <div class="pact" onclick="openKomentar('${p.id}')">
-        <i class="fa fa-comment"></i><span id="cc-${p.id}">0</span>
-      </div>
-      <div class="pact" onclick="toast('Download segera hadir')">
-        <i class="fa fa-download"></i>
-      </div>
-      <div class="pact" onclick="sharePost()">
-        <i class="fa fa-share-alt"></i><span>Kirim</span>
-      </div>
+      <div class="pact ${myVote?'upvoted':''}" id="vb-${p.id}" onclick="vote('${p.id}',this)"><i class="fa fa-arrow-up"></i><span id="vc-${p.id}">${upvotes}</span></div>
+      <div class="pact" onclick="openKomentar('${p.id}')"><i class="fa fa-comment"></i><span id="cc-${p.id}">0</span></div>
+      <div class="pact" onclick="toast('Download segera hadir')"><i class="fa fa-download"></i></div>
+      <div class="pact" onclick="sharePost()"><i class="fa fa-share-alt"></i><span>Kirim</span></div>
     </div>
   </div>`;
 }
-
-async function vote(pid, el) {
+async function vote(pid,el) {
   if(!user) return openSheet('authSheet');
-  const isOn = el.classList.contains('upvoted');
-  const cnt = document.getElementById('vc-'+pid);
+  const isOn=el.classList.contains('upvoted');
+  const cnt=document.getElementById('vc-'+pid);
   try {
-    if(isOn) {
-      await sb(`/rest/v1/votes?post_id=eq.${pid}&user_id=eq.${user.id}`,{method:'DELETE'});
-      el.classList.remove('upvoted');
-      cnt.textContent = parseInt(cnt.textContent)-1;
-    } else {
-      await sb('/rest/v1/votes',{method:'POST',body:JSON.stringify({post_id:pid,user_id:user.id,type:'up'})});
-      el.classList.add('upvoted');
-      cnt.textContent = parseInt(cnt.textContent)+1;
-    }
-  } catch(e) { toast('Gagal vote'); }
+    if(isOn){await sb(`/rest/v1/votes?post_id=eq.${pid}&user_id=eq.${user.id}`,{method:'DELETE'});el.classList.remove('upvoted');cnt.textContent=parseInt(cnt.textContent)-1;}
+    else{await sb('/rest/v1/votes',{method:'POST',body:JSON.stringify({post_id:pid,user_id:user.id,type:'up'})});el.classList.add('upvoted');cnt.textContent=parseInt(cnt.textContent)+1;}
+  } catch(e){toast('Gagal vote');}
 }
-
-// KOMENTAR
 async function openKomentar(pid) {
-  currentPost = pid;
-  openSheet('komentarSheet');
-  const list = document.getElementById('komentarList');
-  list.innerHTML = '<div class="center-msg" style="padding:20px"><i class="fa fa-spinner spin"></i></div>';
+  currentPost=pid;openSheet('komentarSheet');
+  const list=document.getElementById('komentarList');
+  list.innerHTML='<div class="center-msg" style="padding:20px"><i class="fa fa-spinner spin"></i></div>';
   try {
-    const cs = await sb(`/rest/v1/comments?post_id=eq.${pid}&select=*&order=created_at.asc`);
-    const ccEl = document.getElementById('cc-'+pid);
-    if(ccEl) ccEl.textContent = cs.length;
-    if(!cs.length) { list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text2)">${t('nocomment')}</div>`; return; }
-    const uids = [...new Set(cs.map(c=>c.user_id).filter(Boolean))];
-    let pmap = {};
-    if(uids.length) {
-      const profiles = await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username`);
-      profiles.forEach(p=>pmap[p.id]=p);
-    }
-    list.innerHTML = cs.map(c=>`<div class="kitem"><div class="kavatar"><i class="fa fa-user"></i></div><div><div class="kuname">${pmap[c.user_id]?.username||'user'}</div><div class="ktext">${c.content}</div></div></div>`).join('');
-  } catch(e) { list.innerHTML = `<div style="padding:20px;color:var(--text2)">Gagal memuat: ${e.message}</div>`; }
+    const cs=await sb(`/rest/v1/comments?post_id=eq.${pid}&select=*&order=created_at.asc`);
+    const ccEl=document.getElementById('cc-'+pid);if(ccEl)ccEl.textContent=cs.length;
+    if(!cs.length){list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text2)">${t('nocomment')}</div>`;return;}
+    const uids=[...new Set(cs.map(c=>c.user_id).filter(Boolean))];
+    let pmap={};
+    if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username`);profiles.forEach(p=>pmap[p.id]=p);}
+    list.innerHTML=cs.map(c=>`<div class="kitem"><div class="kavatar"><i class="fa fa-user"></i></div><div><div class="kuname">${pmap[c.user_id]?.username||'user'}</div><div class="ktext">${c.content}</div></div></div>`).join('');
+  } catch(e){list.innerHTML=`<div style="padding:20px;color:var(--text2)">Gagal memuat: ${e.message}</div>`;}
 }
-
 async function submitKomentar() {
-  const inp = document.getElementById('kinput');
-  const txt = inp.value.trim();
-  if(!txt) return;
-  if(!user) return openSheet('authSheet');
-  try {
-    await sb('/rest/v1/comments',{method:'POST',body:JSON.stringify({post_id:currentPost,user_id:user.id,content:txt})});
-    inp.value = '';
-    openKomentar(currentPost);
-  } catch(e) { toast('Gagal kirim: '+e.message); }
+  const inp=document.getElementById('kinput');const txt=inp.value.trim();if(!txt)return;
+  if(!user)return openSheet('authSheet');
+  try{await sb('/rest/v1/comments',{method:'POST',body:JSON.stringify({post_id:currentPost,user_id:user.id,content:txt})});inp.value='';openKomentar(currentPost);}
+  catch(e){toast('Gagal kirim: '+e.message);}
 }
 
-// UPLOAD
-let selFiles2 = [];
+let selFiles2=[];
 function handleFiles(inp) {
-  selFiles2 = Array.from(inp.files).slice(0,3);
-  const prev = document.getElementById('uppreviews');
-  prev.style.display = selFiles2.length ? 'grid' : 'none';
-  prev.innerHTML = selFiles2.map((f,i)=>`<div class="upthumb"><img src="${URL.createObjectURL(f)}"><div class="upthumb-del" onclick="removeFile(${i})"><i class="fa fa-times"></i></div></div>`).join('');
+  selFiles2=Array.from(inp.files).slice(0,3);
+  const prev=document.getElementById('uppreviews');
+  prev.style.display=selFiles2.length?'grid':'none';
+  prev.innerHTML=selFiles2.map((f,i)=>`<div class="upthumb"><img src="${URL.createObjectURL(f)}"><div class="upthumb-del" onclick="removeFile(${i})"><i class="fa fa-times"></i></div></div>`).join('');
 }
 function removeFile(i) {
-  selFiles2.splice(i,1);
-  const dt = new DataTransfer();
-  selFiles2.forEach(f=>dt.items.add(f));
-  document.getElementById('fileInput').files = dt.files;
-  handleFiles(document.getElementById('fileInput'));
+  selFiles2.splice(i,1);const dt=new DataTransfer();selFiles2.forEach(f=>dt.items.add(f));
+  document.getElementById('fileInput').files=dt.files;handleFiles(document.getElementById('fileInput'));
 }
 async function uploadImg(file) {
-  const ext = file.name.split('.').pop();
-  const path = `posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-  const r = await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{
-    method:'POST', headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type}, body:file
-  });
-  if(!r.ok) { const err = await r.text(); throw new Error('Gagal upload: '+err); }
+  const ext=file.name.split('.').pop();
+  const path=`posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
+  if(!r.ok){const err=await r.text();throw new Error('Gagal upload: '+err);}
   return `${SB}/storage/v1/object/public/meme-images/${path}`;
 }
 async function submitPost() {
-  if(!user) return openSheet('authSheet');
-  if(!selFiles2.length) return toast('Pilih foto dulu');
-  const cap = document.getElementById('postCaption').value.trim();
-  const tags = document.getElementById('postTags').value.trim();
-  const full = cap + (tags?' '+tags:'');
+  if(!user)return openSheet('authSheet');
+  if(!selFiles2.length)return toast('Pilih foto dulu');
+  const cap=document.getElementById('postCaption').value.trim();
+  const tags=document.getElementById('postTags').value.trim();
+  const full=cap+(tags?' '+tags:'');
   try {
     toast(t('uploading'));
-    const urls = await Promise.all(selFiles2.map(f=>uploadImg(f)));
-    const post = await sb('/rest/v1/posts',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({user_id:user.id,caption:full})});
-    const pid = Array.isArray(post)?post[0].id:post.id;
+    const urls=await Promise.all(selFiles2.map(f=>uploadImg(f)));
+    const post=await sb('/rest/v1/posts',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({user_id:user.id,caption:full})});
+    const pid=Array.isArray(post)?post[0].id:post.id;
     await Promise.all(urls.map((url,i)=>sb('/rest/v1/post_images',{method:'POST',body:JSON.stringify({post_id:pid,image_url:url,order_index:i})})));
-    closeSheet('uploadPostSheet');
-    selFiles2=[];
-    document.getElementById('uppreviews').innerHTML='';
-    document.getElementById('uppreviews').style.display='none';
-    document.getElementById('postCaption').value='';
-    document.getElementById('postTags').value='';
-    toast(t('postsuccess'));
-    loadFeed();
-  } catch(e) { toast(e.message); }
+    closeSheet('uploadPostSheet');selFiles2=[];
+    document.getElementById('uppreviews').innerHTML='';document.getElementById('uppreviews').style.display='none';
+    document.getElementById('postCaption').value='';document.getElementById('postTags').value='';
+    toast(t('postsuccess'));loadFeed();
+  } catch(e){toast(e.message);}
 }
-
-function openUploadPost() { closeSheet('uploadOptSheet'); if(!user){openSheet('authSheet');return;} openSheet('uploadPostSheet'); }
-function openBuatTopik() { closeSheet('uploadOptSheet'); if(!user){openSheet('authSheet');return;} openSheet('buatTopikSheet'); }
+function openUploadPost(){closeSheet('uploadOptSheet');if(!user){openSheet('authSheet');return;}openSheet('uploadPostSheet');}
+function openBuatTopik(){closeSheet('uploadOptSheet');if(!user){openSheet('authSheet');return;}openSheet('buatTopikSheet');}
 
 // TOPIK
 function switchTopikTab(tab) {
-  topikTab = tab;
-  const tabAll = document.getElementById('tabTopik');
-  const tabJoined = document.getElementById('tabSudahGabung');
-  tabAll.style.color = tab==='all' ? 'var(--accent)' : 'var(--text2)';
-  tabAll.style.borderBottom = tab==='all' ? '2px solid var(--accent)' : '2px solid transparent';
-  tabJoined.style.color = tab==='joined' ? 'var(--accent)' : 'var(--text2)';
-  tabJoined.style.borderBottom = tab==='joined' ? '2px solid var(--accent)' : '2px solid transparent';
+  topikTab=tab;
+  const tabAll=document.getElementById('tabTopik');const tabJoined=document.getElementById('tabSudahGabung');
+  tabAll.style.color=tab==='all'?'var(--accent)':'var(--text2)';tabAll.style.borderBottom=tab==='all'?'2px solid var(--accent)':'2px solid transparent';
+  tabJoined.style.color=tab==='joined'?'var(--accent)':'var(--text2)';tabJoined.style.borderBottom=tab==='joined'?'2px solid var(--accent)':'2px solid transparent';
   renderTopik();
 }
 
 async function renderTopik() {
-  const list = document.getElementById('topikList');
-  list.innerHTML = '<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  const list=document.getElementById('topikList');
+  list.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
   try {
-    let topics = await sb(`/rest/v1/topics?select=*&order=created_at.desc`);
-    if(topikTab==='joined') topics = topics.filter(tp=>joinedTopics.includes(tp.id));
-    if(!topics.length) {
-      list.innerHTML = `<div class="center-msg"><i class="fa fa-users"></i><h3>${topikTab==='joined'?'Belum ada topik diikuti':t('notopic')}</h3><p>${topikTab==='joined'?'Ikuti topik dulu':t('notopicsub')}</p></div>`;
-      return;
+    let topics=await sb(`/rest/v1/topics?select=*&order=created_at.desc`);
+    // Ambil member count dari topic_members
+    const memberCounts={};
+    if(topics.length){
+      const counts=await sb(`/rest/v1/topic_members?select=topic_id&topic_id=in.(${topics.map(t=>t.id).join(',')})`);
+      counts.forEach(c=>{memberCounts[c.topic_id]=(memberCounts[c.topic_id]||0)+1;});
     }
-    list.innerHTML = topics.map(tp=>{
-      const isJoined = joinedTopics.includes(tp.id);
-      return `<div class="titem">
+    // Cek user sudah join topik mana
+    let userJoined=[];
+    if(user&&topics.length){
+      const joined=await sb(`/rest/v1/topic_members?user_id=eq.${user.id}&select=topic_id`);
+      userJoined=joined.map(j=>j.topic_id);
+    }
+    if(topikTab==='joined') topics=topics.filter(tp=>userJoined.includes(tp.id));
+    if(!topics.length){list.innerHTML=`<div class="center-msg"><i class="fa fa-users"></i><h3>${topikTab==='joined'?'Belum ada topik diikuti':t('notopic')}</h3><p>${topikTab==='joined'?'Ikuti topik dulu':t('notopicsub')}</p></div>`;return;}
+    list.innerHTML=topics.map(tp=>{
+      const isJoined=userJoined.includes(tp.id);
+      const count=memberCounts[tp.id]||0;
+      return `<div class="titem" onclick="openChat('${tp.id}','${tp.name.replace(/'/g,"\\'")}',${count})">
         <div class="tavatar">${tp.emoji||'👥'}</div>
-        <div class="tinfo"><div class="tname">${tp.name}</div><div class="tmember">${tp.member_count||0} ${t('member')}</div></div>
-        <button class="tjoin ${isJoined?'joined':''}" onclick="toggleJoin(this,'${tp.id}')">${isJoined?'Gabung ✓':'Gabung'}</button>
+        <div class="tinfo"><div class="tname">${tp.name}</div><div class="tmember">${count} ${t('member')}</div></div>
+        <button class="tjoin ${isJoined?'joined':''}" onclick="event.stopPropagation();toggleJoin(this,'${tp.id}')">${isJoined?'Gabung ✓':'Gabung'}</button>
       </div>`;
     }).join('');
-  } catch(e) {
-    list.innerHTML = `<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;
-  }
+  } catch(e){list.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
 }
 
-function toggleJoin(btn, id) {
-  const isJoined = joinedTopics.includes(id);
-  if(isJoined) { joinedTopics = joinedTopics.filter(x=>x!==id); btn.classList.remove('joined'); btn.textContent='Gabung'; }
-  else { joinedTopics.push(id); btn.classList.add('joined'); btn.textContent='Gabung ✓'; }
-  localStorage.setItem('xn_joined', JSON.stringify(joinedTopics));
+async function toggleJoin(btn,id) {
+  if(!user){openSheet('authSheet');return;}
+  const isJoined=btn.classList.contains('joined');
+  try {
+    if(isJoined){
+      await sb(`/rest/v1/topic_members?topic_id=eq.${id}&user_id=eq.${user.id}`,{method:'DELETE'});
+      btn.classList.remove('joined');btn.textContent='Gabung';
+    } else {
+      await sb('/rest/v1/topic_members',{method:'POST',body:JSON.stringify({topic_id:id,user_id:user.id})});
+      btn.classList.add('joined');btn.textContent='Gabung ✓';
+    }
+    // Update member count di UI
+    const titem=btn.closest('.titem');
+    const memberEl=titem?.querySelector('.tmember');
+    if(memberEl){
+      const cur=parseInt(memberEl.textContent)||0;
+      memberEl.textContent=(isJoined?cur-1:cur+1)+' '+t('member');
+    }
+  } catch(e){toast('Gagal: '+e.message);}
 }
 
 async function submitTopik() {
-  const name = document.getElementById('topikName').value.trim();
-  const desc = document.getElementById('topikDesc').value.trim();
-  if(!name) return toast(t('topicname'));
+  const name=document.getElementById('topikName').value.trim();
+  const desc=document.getElementById('topikDesc').value.trim();
+  if(!name)return toast(t('topicname'));
   try {
     await sb('/rest/v1/topics',{method:'POST',body:JSON.stringify({name,description:desc,member_count:0,emoji:'👥'})});
-    toast(t('topicsuccess'));
-    closeSheet('buatTopikSheet');
-    document.getElementById('topikName').value='';
-    document.getElementById('topikDesc').value='';
+    toast(t('topicsuccess'));closeSheet('buatTopikSheet');
+    document.getElementById('topikName').value='';document.getElementById('topikDesc').value='';
     renderTopik();
-  } catch(e) { toast(e.message); }
+  } catch(e){toast(e.message);}
+}
+
+// CHAT TOPIK
+async function openChat(topicId, topicName, memberCount) {
+  if(!user){openSheet('authSheet');return;}
+  currentTopic={id:topicId,name:topicName};
+  document.getElementById('chatName').textContent=topicName;
+  document.getElementById('chatMemberCount').textContent=memberCount+' member';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
+  document.getElementById('feedtabs').style.display='none';
+  document.getElementById('pg-chat').classList.add('on');
+  document.getElementById('nb-topik').classList.add('on');
+  await loadChatMsgs();
+  // Auto refresh setiap 3 detik
+  chatInterval=setInterval(loadChatMsgs,3000);
+}
+
+async function loadChatMsgs() {
+  if(!currentTopic)return;
+  try {
+    const msgs=await sb(`/rest/v1/topic_chats?topic_id=eq.${currentTopic.id}&select=*&order=created_at.asc&limit=100`);
+    const uids=[...new Set(msgs.map(m=>m.user_id).filter(Boolean))];
+    let pmap={};
+    if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username`);profiles.forEach(p=>pmap[p.id]=p);}
+    const container=document.getElementById('chatMsgs');
+    const isBottom=container.scrollHeight-container.scrollTop-container.clientHeight<60;
+    container.innerHTML=msgs.length
+      ? msgs.map(m=>{
+          const mine=user&&m.user_id===user.id;
+          const uname=pmap[m.user_id]?.username||'user';
+          return `<div class="chat-msg ${mine?'mine':''}">
+            ${!mine?`<div class="chat-avatar"><i class="fa fa-user"></i></div>`:''}
+            <div>
+              ${!mine?`<div class="chat-uname">${uname}</div>`:''}
+              <div class="chat-bubble">${m.content}</div>
+            </div>
+            <div class="chat-time">${ago(m.created_at)}</div>
+          </div>`;
+        }).join('')
+      : '<div style="text-align:center;padding:40px;color:var(--text2)">Belum ada pesan. Mulai chat!</div>';
+    if(isBottom||msgs.length===1) container.scrollTop=container.scrollHeight;
+  } catch(e){}
+}
+
+async function sendChat() {
+  if(!user){openSheet('authSheet');return;}
+  const inp=document.getElementById('chatInput');
+  const txt=inp.value.trim();if(!txt)return;
+  try {
+    await sb('/rest/v1/topic_chats',{method:'POST',body:JSON.stringify({topic_id:currentTopic.id,user_id:user.id,content:txt})});
+    inp.value='';await loadChatMsgs();
+  } catch(e){toast('Gagal kirim: '+e.message);}
 }
 
 // PROFIL
 function renderProfil() {
-  const p = user?.profile || {};
-  document.getElementById('pg-profil').innerHTML = `
+  const p=user?.profile||{};
+  document.getElementById('pg-profil').innerHTML=`
     <div class="profil-top">
       <div class="pavatar-lg"><i class="fa fa-user"></i></div>
       <div class="pname">${p.username||'User'}</div>
@@ -827,23 +674,21 @@ function renderProfil() {
     <div class="profil-grid" id="profilGrid"></div>`;
   loadProfilPosts();
 }
-
 async function loadProfilPosts() {
   try {
-    const posts = await sb(`/rest/v1/posts?user_id=eq.${user.id}&select=*,post_images(image_url,order_index),votes(type)&order=created_at.desc`);
-    document.getElementById('statPost').textContent = posts.length;
-    const totalVotes = posts.reduce((sum,p)=>(p.votes||[]).filter(v=>v.type==='up').length+sum, 0);
-    document.getElementById('statVote').textContent = totalVotes;
-    document.getElementById('profilGrid').innerHTML = posts.map(p=>{
-      const img = (p.post_images||[])[0]?.image_url;
+    const posts=await sb(`/rest/v1/posts?user_id=eq.${user.id}&select=*,post_images(image_url,order_index),votes(type)&order=created_at.desc`);
+    document.getElementById('statPost').textContent=posts.length;
+    const totalVotes=posts.reduce((sum,p)=>(p.votes||[]).filter(v=>v.type==='up').length+sum,0);
+    document.getElementById('statVote').textContent=totalVotes;
+    document.getElementById('profilGrid').innerHTML=posts.map(p=>{
+      const img=(p.post_images||[])[0]?.image_url;
       return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;
     }).join('');
-  } catch(e) {}
+  } catch(e){}
 }
 
-// NOTIF
 function renderNotif() {
-  document.getElementById('pg-notif').innerHTML = `
+  document.getElementById('pg-notif').innerHTML=`
     <div class="nfilters">
       <button class="nfbtn on" onclick="filterNotif(this)">${t('all')}</button>
       <button class="nfbtn" onclick="filterNotif(this)">${t('post')}</button>
@@ -852,153 +697,75 @@ function renderNotif() {
     </div>
     <div class="center-msg"><i class="fa fa-bell"></i><h3>${t('notif')}</h3><p>${t('notifsub')}</p></div>`;
 }
-function filterNotif(el) {
-  document.querySelectorAll('.nfbtn').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on');
-}
+function filterNotif(el){document.querySelectorAll('.nfbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
 
-// SEARCH
 async function doSearch(q) {
-  const res = document.getElementById('searchResults');
-  if(!q.trim()) { res.innerHTML='<div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div>'; return; }
+  const res=document.getElementById('searchResults');
+  if(!q.trim()){res.innerHTML='<div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div>';return;}
   try {
-    const posts = await sb(`/rest/v1/posts?caption=ilike.*${encodeURIComponent(q)}*&select=id,caption,created_at,user_id,post_images(image_url,order_index)&limit=10`);
-    res.innerHTML = posts.length ? posts.map(p=>renderPost({...p,profiles:{username:'user'},votes:[]})).join('') : '<div class="center-msg"><i class="fa fa-search"></i><h3>Tidak ditemukan</h3></div>';
-  } catch(e) {}
+    const posts=await sb(`/rest/v1/posts?caption=ilike.*${encodeURIComponent(q)}*&select=id,caption,created_at,user_id,post_images(image_url,order_index)&limit=10`);
+    res.innerHTML=posts.length?posts.map(p=>renderPost({...p,profiles:{username:'user'},votes:[]})).join(''):'<div class="center-msg"><i class="fa fa-search"></i><h3>Tidak ditemukan</h3></div>';
+  } catch(e){}
 }
 
-// SETTINGS
 function toggleDark() {
-  const el = document.getElementById('darkToggle');
-  el.classList.toggle('on');
-  document.documentElement.setAttribute('data-theme', el.classList.contains('on')?'dark':'light');
+  const el=document.getElementById('darkToggle');el.classList.toggle('on');
+  document.documentElement.setAttribute('data-theme',el.classList.contains('on')?'dark':'light');
 }
 
-const T = {
-  id: {
-    foryou:'For You', fresh:'Fresh', viral:'Viral',
-    search:'Cari post, user, topik...', searchtopik:'Cari topik...',
-    notopic:'Belum ada topik', notopicsub:'Jadilah yang pertama membuat topik!',
-    nopost:'Belum ada post', nopostsub:'Jadilah yang pertama posting!',
-    failload:'Gagal memuat', join:'Gabung', joined:'Gabung ✓',
-    login:'Masuk', register:'Daftar', loginwall:'Kamu harus login untuk mengakses halaman ini',
-    loginnow:'Login sekarang', caption:'Caption', hashtag:'Hashtag',
-    postnow:'Post Sekarang', creating:'Buat', createpost:'Buat Post',
-    createpostsub:'Bagikan meme atau konten gaming', createtopic:'Buat Topik',
-    createtopicsub:'Buat komunitas baru', topicname:'Nama Topik',
-    topicdesc:'Deskripsi', comment:'Komentar', nocomment:'Belum ada komentar',
-    writecomment:'Tulis komentar...', send:'Kirim',
-    pref:'Preferensi', darkmode:'Mode Gelap', darkmodesub:'Default aktif',
-    lang:'BAHASA', notif:'Belum ada notifikasi', notifsub:'Notifikasi akan muncul di sini',
-    all:'Semua', post:'Post', topic:'Topik', editprofil:'Edit Profil', logout:'Keluar',
-    uploading:'Mengupload...', postsuccess:'Post berhasil!', topicsuccess:'Topik dibuat!',
-    logoutsuccess:'Berhasil keluar', welcome:'Selamat datang!', welcomenew:'Selamat datang di Xentra!',
-    fillemail:'Isi email dan password', fillall:'Isi semua field', minpass:'Password min 6 karakter',
-    member:'member', typehere:'Tulis caption...', taghere:'#gaming #meme',
-    topicnamehere:'Nama topik...', topicdeschere:'Deskripsi topik...',
-    email:'Email', password:'Password', username:'Username', minpasshint:'Password (min 6 karakter)',
-  },
-  en: {
-    foryou:'For You', fresh:'Fresh', viral:'Viral',
-    search:'Search posts, users, topics...', searchtopik:'Search topics...',
-    notopic:'No topics yet', notopicsub:'Be the first to create a topic!',
-    nopost:'No posts yet', nopostsub:'Be the first to post!',
-    failload:'Failed to load', join:'Join', joined:'Joined ✓',
-    login:'Login', register:'Register', loginwall:'You must login to access this page',
-    loginnow:'Login now', caption:'Caption', hashtag:'Hashtag',
-    postnow:'Post Now', creating:'Create', createpost:'Create Post',
-    createpostsub:'Share your meme or gaming content', createtopic:'Create Topic',
-    createtopicsub:'Create a new community', topicname:'Topic Name',
-    topicdesc:'Description', comment:'Comments', nocomment:'No comments yet',
-    writecomment:'Write a comment...', send:'Send',
-    pref:'Preferences', darkmode:'Dark Mode', darkmodesub:'Active by default',
-    lang:'LANGUAGE', notif:'No notifications yet', notifsub:'Notifications will appear here',
-    all:'All', post:'Post', topic:'Topic', editprofil:'Edit Profile', logout:'Logout',
-    uploading:'Uploading...', postsuccess:'Post successful!', topicsuccess:'Topic created!',
-    logoutsuccess:'Logged out', welcome:'Welcome back!', welcomenew:'Welcome to Xentra!',
-    fillemail:'Fill in email and password', fillall:'Fill in all fields', minpass:'Password min 6 characters',
-    member:'members', typehere:'Write a caption...', taghere:'#gaming #meme',
-    topicnamehere:'Topic name...', topicdeschere:'Topic description...',
-    email:'Email', password:'Password', username:'Username', minpasshint:'Password (min 6 characters)',
-  }
+const T={
+  id:{foryou:'For You',fresh:'Fresh',viral:'Viral',search:'Cari post, user, topik...',searchtopik:'Cari topik...',notopic:'Belum ada topik',notopicsub:'Jadilah yang pertama membuat topik!',nopost:'Belum ada post',nopostsub:'Jadilah yang pertama posting!',failload:'Gagal memuat',login:'Masuk',register:'Daftar',loginwall:'Kamu harus login untuk mengakses halaman ini',loginnow:'Login sekarang',postnow:'Post Sekarang',createtopic:'Buat Topik',topicname:'Nama Topik',nocomment:'Belum ada komentar',notif:'Belum ada notifikasi',notifsub:'Notifikasi akan muncul di sini',all:'Semua',post:'Post',comment:'Komentar',topic:'Topik',editprofil:'Edit Profil',logout:'Keluar',uploading:'Mengupload...',postsuccess:'Post berhasil!',topicsuccess:'Topik dibuat!',logoutsuccess:'Berhasil keluar',welcome:'Selamat datang!',welcomenew:'Selamat datang di Xentra!',fillemail:'Isi email dan password',fillall:'Isi semua field',minpass:'Password min 6 karakter',member:'member'},
+  en:{foryou:'For You',fresh:'Fresh',viral:'Viral',search:'Search posts, users, topics...',searchtopik:'Search topics...',notopic:'No topics yet',notopicsub:'Be the first to create a topic!',nopost:'No posts yet',nopostsub:'Be the first to post!',failload:'Failed to load',login:'Login',register:'Register',loginwall:'You must login to access this page',loginnow:'Login now',postnow:'Post Now',createtopic:'Create Topic',topicname:'Topic Name',nocomment:'No comments yet',notif:'No notifications yet',notifsub:'Notifications will appear here',all:'All',post:'Post',comment:'Comments',topic:'Topic',editprofil:'Edit Profile',logout:'Logout',uploading:'Uploading...',postsuccess:'Post successful!',topicsuccess:'Topic created!',logoutsuccess:'Logged out',welcome:'Welcome back!',welcomenew:'Welcome to Xentra!',fillemail:'Fill in email and password',fillall:'Fill in all fields',minpass:'Password min 6 characters',member:'members'}
 };
-let lang = 'id';
-function t(key) { return T[lang][key] || T['id'][key] || key; }
-
+let lang='id';
+function t(key){return T[lang][key]||T['id'][key]||key;}
 function setLang(l) {
-  lang = l;
-  document.getElementById('langId').style.display = l==='id'?'block':'none';
-  document.getElementById('langEn').style.display = l==='en'?'block':'none';
+  lang=l;
+  document.getElementById('langId').style.display=l==='id'?'block':'none';
+  document.getElementById('langEn').style.display=l==='en'?'block':'none';
   applyLang();
 }
-
 function applyLang() {
-  document.querySelectorAll('.ftab').forEach((tab,i)=>{ const keys=['foryou','fresh','viral']; tab.textContent=t(keys[i]); });
-  const si = document.getElementById('searchInput');
-  if(si) si.placeholder = t('search');
-  const tabTopik = document.getElementById('tabTopik');
-  const tabSudah = document.getElementById('tabSudahGabung');
-  const topikSrch = document.getElementById('topikSearchInput');
-  if(tabTopik) tabTopik.textContent = lang==='en'?'Topics':'Topik';
-  if(tabSudah) tabSudah.textContent = lang==='en'?'Joined':'Sudah Gabung';
-  if(topikSrch) topikSrch.placeholder = t('searchtopik');
-  const activePage = document.querySelector('.page.on');
-  if(activePage?.id==='pg-home') loadFeed();
-  if(activePage?.id==='pg-topik') renderTopik();
-  if(activePage?.id==='pg-notif' && user) renderNotif();
+  document.querySelectorAll('.ftab').forEach((tab,i)=>{const keys=['foryou','fresh','viral'];tab.textContent=t(keys[i]);});
+  const si=document.getElementById('searchInput');if(si)si.placeholder=t('search');
+  const tabTopik=document.getElementById('tabTopik');const tabSudah=document.getElementById('tabSudahGabung');
+  if(tabTopik)tabTopik.textContent=lang==='en'?'Topics':'Topik';
+  if(tabSudah)tabSudah.textContent=lang==='en'?'Joined':'Sudah Gabung';
+  const activePage=document.querySelector('.page.on');
+  if(activePage?.id==='pg-home')loadFeed();
+  if(activePage?.id==='pg-topik')renderTopik();
+  if(activePage?.id==='pg-notif'&&user)renderNotif();
 }
 
-function showPostMenu(pid, el) {
-  // hapus menu lama kalau ada
-  const old = document.getElementById('postMenu');
-  if(old) old.remove();
-  const menu = document.createElement('div');
-  menu.id = 'postMenu';
-  menu.style.cssText = 'position:fixed;z-index:500;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px 0;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
-  const rect = el.getBoundingClientRect();
-  menu.style.top = (rect.bottom+4)+'px';
-  menu.style.right = '16px';
-  menu.innerHTML = `<div onclick="deletePost('${pid}')" style="padding:12px 16px;font-size:14px;font-weight:600;color:#ff4444;cursor:pointer;display:flex;align-items:center;gap:10px"><i class="fa fa-trash"></i> Hapus Post</div>`;
+function showPostMenu(pid,el) {
+  const old=document.getElementById('postMenu');if(old)old.remove();
+  const menu=document.createElement('div');menu.id='postMenu';
+  menu.style.cssText='position:fixed;z-index:500;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px 0;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
+  const rect=el.getBoundingClientRect();menu.style.top=(rect.bottom+4)+'px';menu.style.right='16px';
+  menu.innerHTML=`<div onclick="deletePost('${pid}')" style="padding:12px 16px;font-size:14px;font-weight:600;color:#ff4444;cursor:pointer;display:flex;align-items:center;gap:10px"><i class="fa fa-trash"></i> Hapus Post</div>`;
   document.body.appendChild(menu);
-  setTimeout(()=>document.addEventListener('click', ()=>menu.remove(), {once:true}), 10);
+  setTimeout(()=>document.addEventListener('click',()=>menu.remove(),{once:true}),10);
 }
-
 async function deletePost(pid) {
-  if(!confirm('Hapus post ini?')) return;
-  try {
-    await sb(`/rest/v1/posts?id=eq.${pid}`, {method:'DELETE'});
-    toast('Post dihapus');
-    loadFeed();
-  } catch(e) { toast('Gagal hapus: '+e.message); }
+  if(!confirm('Hapus post ini?'))return;
+  try{await sb(`/rest/v1/posts?id=eq.${pid}`,{method:'DELETE'});toast('Post dihapus');loadFeed();}
+  catch(e){toast('Gagal hapus: '+e.message);}
 }
+function sharePost(){if(navigator.share)navigator.share({title:'Xentra',url:location.href});else toast('Link disalin!');}
 
-function sharePost() { if(navigator.share) navigator.share({title:'Xentra',url:location.href}); else toast('Link disalin!'); }
-
-// PULL TO REFRESH
-let ptrStart = 0, ptrActive = false;
-const contentEl = document.getElementById('content');
-const ptrEl = document.getElementById('ptr-indicator');
-contentEl.addEventListener('touchstart', e=>{ if(contentEl.scrollTop===0){ptrStart=e.touches[0].clientY; ptrActive=true;} },{passive:true});
-contentEl.addEventListener('touchmove', e=>{ if(ptrActive && e.touches[0].clientY-ptrStart>50) ptrEl.style.display='block'; },{passive:true});
-contentEl.addEventListener('touchend', e=>{
-  if(!ptrActive) return;
-  ptrActive=false;
-  const diff = e.changedTouches[0].clientY - ptrStart;
-  if(diff>70) {
-    const activePage = document.querySelector('.page.on');
-    if(activePage?.id==='pg-home') loadFeed();
-    else if(activePage?.id==='pg-topik') renderTopik();
-    else if(activePage?.id==='pg-profil'&&user) renderProfil();
-  }
+let ptrStart=0,ptrActive=false;
+const contentEl=document.getElementById('content');
+const ptrEl=document.getElementById('ptr-indicator');
+contentEl.addEventListener('touchstart',e=>{if(contentEl.scrollTop===0){ptrStart=e.touches[0].clientY;ptrActive=true;}},{passive:true});
+contentEl.addEventListener('touchmove',e=>{if(ptrActive&&e.touches[0].clientY-ptrStart>50)ptrEl.style.display='block';},{passive:true});
+contentEl.addEventListener('touchend',e=>{
+  if(!ptrActive)return;ptrActive=false;
+  const diff=e.changedTouches[0].clientY-ptrStart;
+  if(diff>70){const ap=document.querySelector('.page.on');if(ap?.id==='pg-home')loadFeed();else if(ap?.id==='pg-topik')renderTopik();else if(ap?.id==='pg-profil'&&user)renderProfil();}
   ptrEl.style.display='none';
 },{passive:true});
 
-// INIT
-(async () => {
-  await restoreSession();
-  loadFeed();
-  renderTopik();
-})();
+(async()=>{await restoreSession();loadFeed();renderTopik();})();
 </script>
 </body>
 </html>
