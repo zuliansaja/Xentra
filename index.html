@@ -629,7 +629,7 @@ function renderPost(p) {
         <div class="pavatar"><i class="fa fa-user"></i></div>
         <div><div class="puname">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div>
       </div>
-      <i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px"></i>
+      ${user && (user.id === p.user_id || user.profile?.is_admin) ? `<i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px" onclick="showPostMenu('${p.id}',this)"></i>` : `<i class="fa fa-ellipsis-h" style="color:var(--text2);padding:4px"></i>`}
     </div>
     ${cap?`<div class="ptitle">${cap}</div>`:''}
     ${tags.length?`<div class="ptags">${tags.map(tg=>`<span class="ptag">${tg}</span>`).join('')}</div>`:''}
@@ -946,6 +946,30 @@ function applyLang() {
   if(activePage?.id==='pg-home') loadFeed();
   if(activePage?.id==='pg-topik') renderTopik();
   if(activePage?.id==='pg-notif' && user) renderNotif();
+}
+
+function showPostMenu(pid, el) {
+  // hapus menu lama kalau ada
+  const old = document.getElementById('postMenu');
+  if(old) old.remove();
+  const menu = document.createElement('div');
+  menu.id = 'postMenu';
+  menu.style.cssText = 'position:fixed;z-index:500;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px 0;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
+  const rect = el.getBoundingClientRect();
+  menu.style.top = (rect.bottom+4)+'px';
+  menu.style.right = '16px';
+  menu.innerHTML = `<div onclick="deletePost('${pid}')" style="padding:12px 16px;font-size:14px;font-weight:600;color:#ff4444;cursor:pointer;display:flex;align-items:center;gap:10px"><i class="fa fa-trash"></i> Hapus Post</div>`;
+  document.body.appendChild(menu);
+  setTimeout(()=>document.addEventListener('click', ()=>menu.remove(), {once:true}), 10);
+}
+
+async function deletePost(pid) {
+  if(!confirm('Hapus post ini?')) return;
+  try {
+    await sb(`/rest/v1/posts?id=eq.${pid}`, {method:'DELETE'});
+    toast('Post dihapus');
+    loadFeed();
+  } catch(e) { toast('Gagal hapus: '+e.message); }
 }
 
 function sharePost() { if(navigator.share) navigator.share({title:'Xentra',url:location.href}); else toast('Link disalin!'); }
