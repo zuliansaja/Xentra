@@ -136,22 +136,29 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 #pg-chat { display:none; flex-direction:column; height:100%; }
 #pg-chat.on { display:flex; }
 .chat-topbar { background:var(--bg2); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
-.chat-back { font-size:20px; color:var(--text2); cursor:pointer; }
+.chat-back { font-size:20px; color:var(--text2); cursor:pointer; padding:4px 8px 4px 0; }
 .chat-info { flex:1; }
 .chat-name { font-weight:700; font-size:16px; }
-.chat-member-count { font-size:12px; color:var(--text2); }
-.chat-msgs { flex:1; overflow-y:auto; padding:12px 16px; display:flex; flex-direction:column; gap:10px; }
-.chat-msg { display:flex; gap:8px; align-items:flex-end; }
-.chat-msg.mine { flex-direction:row-reverse; }
-.chat-bubble { max-width:75%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.5; }
-.chat-msg.mine .chat-bubble { background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
-.chat-msg:not(.mine) .chat-bubble { background:var(--bg3); color:var(--text); border-bottom-left-radius:4px; }
-.chat-uname { font-size:11px; color:var(--text2); margin-bottom:3px; }
-.chat-time { font-size:10px; color:var(--text2); flex-shrink:0; }
-.chat-input-row { display:flex; gap:8px; align-items:center; padding:10px 16px; border-top:1px solid var(--border); background:var(--bg2); flex-shrink:0; }
-.chat-input { flex:1; padding:10px 14px; border-radius:22px; border:1px solid var(--border); background:var(--input); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
-.chat-send { width:40px; height:40px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.chat-avatar { width:30px; height:30px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--text2); flex-shrink:0; }
+.chat-member-count { font-size:12px; color:var(--text2); margin-top:1px; }
+.chat-msgs { flex:1; overflow-y:auto; padding:16px 12px; display:flex; flex-direction:column; gap:2px; background:var(--bg); }
+.chat-group { display:flex; flex-direction:column; margin-bottom:8px; }
+.chat-group.mine { align-items:flex-end; }
+.chat-group:not(.mine) { align-items:flex-start; }
+.chat-group-header { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.chat-avatar { width:28px; height:28px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--text2); flex-shrink:0; }
+.chat-uname { font-size:12px; font-weight:600; color:var(--text2); }
+.chat-bubbles { display:flex; flex-direction:column; gap:3px; max-width:78%; }
+.chat-group.mine .chat-bubbles { align-items:flex-end; }
+.chat-group:not(.mine) .chat-bubbles { align-items:flex-start; padding-left:36px; }
+.chat-bubble { padding:10px 14px; font-size:14px; line-height:1.5; word-break:break-word; border-radius:18px; }
+.chat-group.mine .chat-bubble { background:var(--accent); color:#fff; border-top-right-radius:4px; }
+.chat-group:not(.mine) .chat-bubble { background:var(--bg2); color:var(--text); border:1px solid var(--border); border-top-left-radius:4px; }
+.chat-time-row { font-size:10px; color:var(--text2); margin-top:3px; padding:0 4px; }
+.chat-input-row { display:flex; gap:8px; align-items:center; padding:10px 12px; border-top:1px solid var(--border); background:var(--bg2); flex-shrink:0; }
+.chat-input { flex:1; padding:10px 16px; border-radius:22px; border:1px solid var(--border); background:var(--input); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
+.chat-input:focus { border-color:var(--accent); }
+.chat-send { width:40px; height:40px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:transform .1s; }
+.chat-send:active { transform:scale(0.92); }
 </style>
 </head>
 <body>
@@ -626,21 +633,25 @@ async function loadChatMsgs() {
     if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username`);profiles.forEach(p=>pmap[p.id]=p);}
     const container=document.getElementById('chatMsgs');
     const isBottom=container.scrollHeight-container.scrollTop-container.clientHeight<60;
-    container.innerHTML=msgs.length
-      ? msgs.map(m=>{
-          const mine=user&&m.user_id===user.id;
-          const uname=pmap[m.user_id]?.username||'user';
-          return `<div class="chat-msg ${mine?'mine':''}">
-            ${!mine?`<div class="chat-avatar"><i class="fa fa-user"></i></div>`:''}
-            <div>
-              ${!mine?`<div class="chat-uname">${uname}</div>`:''}
-              <div class="chat-bubble">${m.content}</div>
-            </div>
-            <div class="chat-time">${ago(m.created_at)}</div>
-          </div>`;
-        }).join('')
-      : '<div style="text-align:center;padding:40px;color:var(--text2)">Belum ada pesan. Mulai chat!</div>';
-    if(isBottom||msgs.length===1) container.scrollTop=container.scrollHeight;
+    if(!msgs.length){container.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">Belum ada pesan. Mulai chat!</div>';return;}
+    // Group messages by user & time proximity
+    const groups=[];
+    msgs.forEach((m,i)=>{
+      const prev=msgs[i-1];
+      const sameUser=prev&&prev.user_id===m.user_id;
+      const closeTime=prev&&(new Date(m.created_at)-new Date(prev.created_at))<120000;
+      if(sameUser&&closeTime){groups[groups.length-1].msgs.push(m);}
+      else{groups.push({user_id:m.user_id,uname:pmap[m.user_id]?.username||'user',mine:user&&m.user_id===user.id,msgs:[m]});}
+    });
+    container.innerHTML=groups.map(g=>`
+      <div class="chat-group ${g.mine?'mine':''}">
+        ${!g.mine?`<div class="chat-group-header"><div class="chat-avatar"><i class="fa fa-user" style="font-size:10px"></i></div><div class="chat-uname">${g.uname}</div></div>`:''}
+        <div class="chat-bubbles">
+          ${g.msgs.map(m=>`<div class="chat-bubble">${m.content}</div>`).join('')}
+          <div class="chat-time-row">${ago(g.msgs[g.msgs.length-1].created_at)}</div>
+        </div>
+      </div>`).join('');
+    if(isBottom) container.scrollTop=container.scrollHeight;
   } catch(e){}
 }
 
