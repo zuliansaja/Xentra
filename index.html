@@ -826,10 +826,14 @@ function showPostMenu(pid,el){
   menu.style.top=(rect.bottom+4)+'px';menu.style.right='16px';
   menu.innerHTML=`<div onclick="deletePost('${pid}')" style="padding:12px 16px;font-size:14px;font-weight:600;color:#ff4444;cursor:pointer;display:flex;align-items:center;gap:10px"><i class="fa fa-trash"></i> Hapus Post</div>`;
   document.body.appendChild(menu);
-  const closeMenu=()=>{const m=document.getElementById('postMenu');if(m)m.remove();};
+  function closeMenu(){
+    const m=document.getElementById('postMenu');if(m)m.remove();
+    document.removeEventListener('click',closeMenu);
+    document.getElementById('content').removeEventListener('scroll',closeMenu);
+  }
   setTimeout(()=>{
-    document.addEventListener('click',closeMenu,{once:true});
-    document.getElementById('content').addEventListener('scroll',closeMenu,{once:true});
+    document.addEventListener('click',closeMenu);
+    document.getElementById('content').addEventListener('scroll',closeMenu);
   },10);
 }
 async function deletePost(pid){
