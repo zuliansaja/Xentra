@@ -171,7 +171,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 /* GRUP DETAIL */
 #pg-grup { display:none; flex-direction:column; height:100%; overflow-y:auto; }
 #pg-grup.on { display:flex; }
-.grup-hero { position:relative; width:100%; height:180px; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:60px; overflow:hidden; flex-shrink:0; }
+.grup-hero { position:relative; width:100%; height:200px; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:60px; overflow:hidden; flex-shrink:0; }
 .grup-hero img { width:100%; height:100%; object-fit:cover; }
 .grup-hero-back { position:absolute; top:12px; left:12px; width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; cursor:pointer; z-index:10; }
 .grup-info { padding:16px; border-bottom:1px solid var(--border); }
@@ -684,13 +684,14 @@ async function openGrupDetail(){
     const tp=topicData[0]||{};
     const uids=members.map(m=>m.user_id).filter(Boolean);
     let profiles=[];
-    if(uids.length){profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username`);}
+    if(uids.length){profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username,avatar_url`);}
     const isJoined=user&&uids.includes(user.id);
     const avatarHero=tp.photo_url?`<img src="${tp.photo_url}">`:(tp.emoji||'👥');
     gc.innerHTML=`
       <div class="grup-hero">
         <div class="grup-hero-back" onclick="backToChat()"><i class="fa fa-arrow-left"></i></div>
         ${avatarHero}
+        ${user?`<div style="position:absolute;bottom:12px;right:12px;width:36px;height:36px;background:rgba(0,0,0,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:16px" onclick="document.getElementById('grupPhotoInput').click()"><i class="fa fa-camera"></i></div><input type="file" id="grupPhotoInput" accept="image/*" style="display:none" onchange="uploadGrupPhoto('${tp.id}',this)">`:''} 
       </div>
       <div class="grup-info">
         <div class="grup-name">${tp.name}</div>
@@ -699,16 +700,13 @@ async function openGrupDetail(){
           <div class="grup-stat"><span>${members.length}</span> anggota</div>
         </div>
       </div>
-      <div class="grup-actions">
-        <button class="btn-primary" style="flex:1" onclick="backToChat()"><i class="fa fa-comment"></i> Buka Chat</button>
-        ${user?`<button class="${isJoined?'btn-outline':'btn-primary'}" style="flex:1" onclick="toggleJoinGrup('${tp.id}',this)">${isJoined?'Keluar Grup':'Gabung'}</button>`:''}
-      </div>
       <div class="grup-members-title">ANGGOTA (${members.length})</div>
       ${profiles.map(p=>`
         <div class="member-item" onclick="openUserProfil('${p.id}')">
-          <div class="member-avatar"><i class="fa fa-user"></i></div>
+          <div class="member-avatar">${p.avatar_url?`<img src="${p.avatar_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`:'<i class="fa fa-user"></i>'}</div>
           <div class="member-name">${p.username}</div>
-        </div>`).join('')}`;
+        </div>`).join('')}
+      ${user?`<div style="padding:16px"><button class="${isJoined?'btn-outline':'btn-primary'}" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;${isJoined?'color:#ff4444;border-color:#ff4444':''}" onclick="toggleJoinGrup('${tp.id}',this)">${isJoined?'Keluar Grup':'Gabung Grup'}</button></div>`:''}`;
   }catch(e){gc.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
 }
 
@@ -872,6 +870,49 @@ async function toggleFollow(uid,btn){
     else{await sb('/rest/v1/follows',{method:'POST',body:JSON.stringify({follower_id:user.id,following_id:uid})});btn.textContent='Mengikuti';btn.style.background='var(--bg3)';btn.style.color='var(--text)';btn.style.border='1px solid var(--border)';}
     toast(isFollowing?'Berhenti mengikuti':'Mengikuti!');
   }catch(e){toast('Gagal: '+e.message);}
+}
+
+// UPLOAD AVATAR USER
+async function uploadAvatar(inp) {
+  const file=inp.files[0];if(!file)return;
+  if(!user)return;
+  try{
+    toast('Mengupload foto profil...');
+    const ext=file.name.split('.').pop();
+    const path=`avatars/${user.id}/avatar.${ext}`;
+    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
+    if(!r.ok){
+      // try upsert
+      const r2=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'PUT',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
+      if(!r2.ok)throw new Error('Gagal upload');
+    }
+    const url=`${SB}/storage/v1/object/public/meme-images/${path}?t=${Date.now()}`;
+    await sb(`/rest/v1/profiles?id=eq.${user.id}`,{method:'PATCH',body:JSON.stringify({avatar_url:url})});
+    if(user.profile)user.profile.avatar_url=url;
+    toast('Foto profil diperbarui!');
+    renderProfil();
+  }catch(e){toast(e.message);}
+}
+
+// UPLOAD FOTO GRUP
+async function uploadGrupPhoto(topicId,inp) {
+  const file=inp.files[0];if(!file)return;
+  if(!user)return;
+  try{
+    toast('Mengupload foto grup...');
+    const ext=file.name.split('.').pop();
+    const path=`groups/${topicId}/cover.${ext}`;
+    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
+    if(!r.ok){
+      const r2=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'PUT',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
+      if(!r2.ok)throw new Error('Gagal upload');
+    }
+    const url=`${SB}/storage/v1/object/public/meme-images/${path}?t=${Date.now()}`;
+    await sb(`/rest/v1/topics?id=eq.${topicId}`,{method:'PATCH',body:JSON.stringify({photo_url:url})});
+    if(currentTopic)currentTopic.photoUrl=url;
+    toast('Foto grup diperbarui!');
+    openGrupDetail();
+  }catch(e){toast(e.message);}
 }
 
 // NOTIF
