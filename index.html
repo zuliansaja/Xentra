@@ -822,10 +822,15 @@ function showPostMenu(pid,el){
   const old=document.getElementById('postMenu');if(old)old.remove();
   const menu=document.createElement('div');menu.id='postMenu';
   menu.style.cssText='position:fixed;z-index:500;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px 0;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
-  const rect=el.getBoundingClientRect();menu.style.top=(rect.bottom+4)+'px';menu.style.right='16px';
+  const rect=el.getBoundingClientRect();
+  menu.style.top=(rect.bottom+4)+'px';menu.style.right='16px';
   menu.innerHTML=`<div onclick="deletePost('${pid}')" style="padding:12px 16px;font-size:14px;font-weight:600;color:#ff4444;cursor:pointer;display:flex;align-items:center;gap:10px"><i class="fa fa-trash"></i> Hapus Post</div>`;
   document.body.appendChild(menu);
-  setTimeout(()=>document.addEventListener('click',()=>menu.remove(),{once:true}),10);
+  const closeMenu=()=>{const m=document.getElementById('postMenu');if(m)m.remove();};
+  setTimeout(()=>{
+    document.addEventListener('click',closeMenu,{once:true});
+    document.getElementById('content').addEventListener('scroll',closeMenu,{once:true});
+  },10);
 }
 async function deletePost(pid){
   if(!confirm('Hapus post ini?'))return;
