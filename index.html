@@ -250,6 +250,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
     <div class="page" id="pg-notif"><div id="notifWall"></div></div>
     <div class="page" id="pg-profil"><div id="profilWall"></div></div>
     <div class="page" id="pg-user"><div id="userWall"></div></div>
+    <div class="page" id="pg-profil-menu"><div id="profilMenuContent"></div></div>
   </div>
   <div id="navbar">
     <div class="nitem on" id="nb-home" onclick="goPage('home')"><i class="fa fa-home"></i></div>
@@ -928,6 +929,52 @@ async function uploadGrupPhoto(topicId,inp) {
     toast('Foto grup diperbarui!');
     openGrupDetail();
   }catch(e){toast(e.message);}
+}
+
+// PROFIL MENU PAGE
+function goProfilMenu(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
+  document.getElementById('feedtabs').style.display='none';
+  document.getElementById('pg-profil-menu').classList.add('on');
+  document.getElementById('nb-profil').classList.add('on');
+  const p=user?.profile||{};
+  document.getElementById('profilMenuContent').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)">
+      <button class="icon-btn" onclick="goPage('profil')"><i class="fa fa-arrow-left"></i></button>
+      <div style="font-weight:700;font-size:16px">Pengaturan Akun</div>
+    </div>
+    <div style="padding:20px 16px">
+      <div style="text-align:center;margin-bottom:24px">
+        <div class="pavatar-lg" onclick="document.getElementById('avatarInputMenu').click()" style="cursor:pointer;position:relative;margin:0 auto 12px">
+          \${p.avatar_url?'<img src="'+p.avatar_url+'">':'<i class="fa fa-user"></i>'}
+          <div style="position:absolute;bottom:0;right:0;width:26px;height:26px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff"><i class="fa fa-camera"></i></div>
+        </div>
+        <input type="file" id="avatarInputMenu" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+        <div style="font-size:14px;color:var(--text2)">Tap foto untuk ganti</div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+          <i class="fa fa-user" style="color:var(--accent);width:20px"></i>
+          <div>
+            <div style="font-size:12px;color:var(--text2)">Username</div>
+            <div style="font-size:15px;font-weight:600">\${p.username||'user'}</div>
+          </div>
+        </div>
+        <div style="padding:14px 16px;display:flex;align-items:center;gap:12px">
+          <i class="fa fa-envelope" style="color:var(--accent);width:20px"></i>
+          <div>
+            <div style="font-size:12px;color:var(--text2)">Email</div>
+            <div style="font-size:15px;font-weight:600">\${user?.email||'-'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="position:fixed;bottom:70px;left:0;right:0;max-width:480px;margin:0 auto;padding:16px">
+      <button onclick="doLogout()" style="width:100%;padding:14px;border-radius:12px;border:1px solid #ff4444;color:#ff4444;background:transparent;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
+        <i class="fa fa-sign-out-alt"></i> Keluar
+      </button>
+    </div>`;
 }
 
 // NOTIF
