@@ -436,9 +436,9 @@ async function openUserProfil(uid) {
         <div class="pname">${p.username||'User'}</div>
         <div class="pusername">@${p.username||'user'}</div>
         <div class="pstats">
-          <div><div class="pstat-num">${posts.length}</div><div class="pstat-label">Post</div></div>
           <div><div class="pstat-num">${followers.length}</div><div class="pstat-label">Followers</div></div>
           <div><div class="pstat-num">${following.length}</div><div class="pstat-label">Following</div></div>
+          <div><div class="pstat-num">${totalVotes}</div><div class="pstat-label">Like</div></div>
         </div>
         ${user?`<div class="profil-btns">
           <button class="btn-primary" id="followBtn" onclick="toggleFollow('${uid}',this)" style="${isFollowing?'background:var(--bg3);color:var(--text);border:1px solid var(--border)':''}">
@@ -807,7 +807,6 @@ async function renderProfil() {
       <div class="pname">${p.username||'User'}</div>
       <div class="pusername">@${p.username||'user'}</div>
       <div class="pstats">
-        <div><div class="pstat-num" id="statPost">0</div><div class="pstat-label">Post</div></div>
         <div><div class="pstat-num" id="statFollowers">0</div><div class="pstat-label">Followers</div></div>
         <div><div class="pstat-num" id="statFollowing">0</div><div class="pstat-label">Following</div></div>
         <div><div class="pstat-num" id="statVote">0</div><div class="pstat-label">Like</div></div>
