@@ -192,15 +192,13 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   <div id="topbar">
     <div class="logo">Xentra</div>
     <div class="topbar-right">
+      <button class="icon-btn" onclick="goSearch()"><i class="fa fa-search"></i></button>
       <button class="icon-btn" onclick="openSheet('settingsSheet')"><i class="fa fa-sliders-h"></i></button>
     </div>
   </div>
   <div id="ptr-indicator"><i class="fa fa-sync-alt spin"></i> Memuat ulang...</div>
   <div id="content">
-    <div class="page on" id="pg-home">
-      <div class="search-bar"><div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="feedSearchInput" placeholder="Cari postingan..." oninput="doFeedSearch(this.value)"></div></div>
-      <div id="feed"></div>
-    </div>
+    <div class="page on" id="pg-home"><div id="feed"></div></div>
     <div class="page" id="pg-topik">
       <div style="padding:12px 16px"><div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="topikSearchInput" placeholder="Cari topik..." oninput="renderTopik()"></div></div>
       <div style="display:flex;border-bottom:1px solid var(--border);padding:0 16px">
