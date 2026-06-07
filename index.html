@@ -75,7 +75,8 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .pavatar-lg { width:80px; height:80px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:32px; color:var(--text2); margin:0 auto 12px; overflow:hidden; }
 .pavatar-lg img { width:100%; height:100%; object-fit:cover; }
 .pname { font-size:20px; font-weight:800; } .pusername { font-size:14px; color:var(--text2); margin-top:2px; }
-.pstats { display:flex; justify-content:center; gap:24px; margin:16px 0; flex-wrap:wrap; }
+.pstats { display:flex; justify-content:center; gap:0; margin:16px 0; width:100%; }
+.pstats > div { flex:1; text-align:center; }
 .pstat-num { font-size:20px; font-weight:800; } .pstat-label { font-size:12px; color:var(--text2); }
 .profil-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
 .profil-thumb { aspect-ratio:1; overflow:hidden; background:var(--bg3); }
