@@ -473,10 +473,33 @@ function handleFiles(inp){
   prev.innerHTML=selFiles2.map((f,i)=>`<div class="upthumb"><img src="${URL.createObjectURL(f)}"><div class="upthumb-del" onclick="removeFile(${i})"><i class="fa fa-times"></i></div></div>`).join('');
 }
 function removeFile(i){selFiles2.splice(i,1);const dt=new DataTransfer();selFiles2.forEach(f=>dt.items.add(f));document.getElementById('fileInput').files=dt.files;handleFiles(document.getElementById('fileInput'));}
+
+// Kompres foto sebelum upload: max 1080px, quality 0.8, output jpeg
+function compressImage(file,maxSize=1080,quality=0.82){
+  return new Promise(resolve=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let{width,height}=img;
+      if(width>maxSize||height>maxSize){
+        if(width>height){height=Math.round(height*maxSize/width);width=maxSize;}
+        else{width=Math.round(width*maxSize/height);height=maxSize;}
+      }
+      const canvas=document.createElement('canvas');
+      canvas.width=width;canvas.height=height;
+      canvas.getContext('2d').drawImage(img,0,0,width,height);
+      canvas.toBlob(blob=>resolve(blob||file),'image/jpeg',quality);
+    };
+    img.onerror=()=>resolve(file);
+    img.src=url;
+  });
+}
+
 async function uploadImg(file){
-  const ext=file.name.split('.').pop();
-  const path=`posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-  const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
+  const compressed=await compressImage(file);
+  const path=`posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+  const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'image/jpeg'},body:compressed});
   if(!r.ok)throw new Error('Gagal upload');
   return `${SB}/storage/v1/object/public/meme-images/${path}`;
 }
@@ -641,8 +664,9 @@ async function sendChatImage(inp){
   const file=inp.files[0];if(!file)return;
   try{
     toast('Mengupload foto...');
-    const ext=file.name.split('.').pop(),path=`chat/${user.id}/${Date.now()}.${ext}`;
-    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
+    const compressed=await compressImage(file,1080,0.82);
+    const path=`chat/${user.id}/${Date.now()}.jpg`;
+    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'image/jpeg'},body:compressed});
     if(!r.ok)throw new Error('Gagal upload');
     const url=`${SB}/storage/v1/object/public/meme-images/${path}`;
     await sb('/rest/v1/topic_chats',{method:'POST',body:JSON.stringify({topic_id:currentTopic.id,user_id:user.id,content:`[img]${url}[/img]`})});
@@ -770,8 +794,9 @@ async function uploadAvatar(inp){
   const file=inp.files[0];if(!file||!user)return;
   try{
     toast('Mengupload foto profil...');
-    const ext=file.name.split('.').pop(),path=`avatars/${user.id}/avatar.${ext}`;
-    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type,'x-upsert':'true'},body:file});
+    const compressed=await compressImage(file,400,0.85);
+    const path=`avatars/${user.id}/avatar.jpg`;
+    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'image/jpeg','x-upsert':'true'},body:compressed});
     if(!r.ok){const err=await r.text();throw new Error('Gagal upload: '+err);}
     const url=`${SB}/storage/v1/object/public/meme-images/${path}?t=${Date.now()}`;
     const res=await fetch(`${SB}/rest/v1/profiles?id=eq.${user.id}`,{method:'PATCH',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({avatar_url:url})});
@@ -784,8 +809,9 @@ async function uploadGrupPhoto(topicId,inp){
   const file=inp.files[0];if(!file||!user)return;
   try{
     toast('Mengupload foto grup...');
-    const ext=file.name.split('.').pop(),path=`groups/${topicId}/cover.${ext}`;
-    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type,'x-upsert':'true'},body:file});
+    const compressed=await compressImage(file,800,0.82);
+    const path=`groups/${topicId}/cover.jpg`;
+    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'image/jpeg','x-upsert':'true'},body:compressed});
     if(!r.ok)throw new Error('Gagal upload');
     const url=`${SB}/storage/v1/object/public/meme-images/${path}?t=${Date.now()}`;
     await fetch(`${SB}/rest/v1/topics?id=eq.${topicId}`,{method:'PATCH',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({photo_url:url})});
