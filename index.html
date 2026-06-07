@@ -32,7 +32,8 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .nitem { flex:1; display:flex; align-items:center; justify-content:center; height:100%; color:var(--text2); font-size:22px; cursor:pointer; }
 .nitem.on { color:var(--accent); }
 .nplus { width:46px; height:46px; border-radius:14px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; cursor:pointer; flex-shrink:0; box-shadow:0 4px 14px rgba(74,158,255,0.4); }
-.page { display:none; } .page.on { display:block; }
+.page { display:none; } .page.on { display:block; animation:fadein .18s ease; }
+@keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 .pcard { border-bottom:1px solid var(--border); padding:14px 16px; }
 .phead { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .puser { display:flex; align-items:center; gap:10px; }
@@ -68,7 +69,8 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .btn-primary { display:inline-block; padding:12px 28px; border-radius:24px; background:var(--accent); color:#fff; font-size:15px; font-weight:700; cursor:pointer; border:none; font-family:inherit; }
 .titem { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
 .titem:hover { background:var(--bg3); }
-.tavatar { width:48px; height:48px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.tavatar { width:48px; height:48px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; overflow:hidden; }
+.tavatar img { width:100%; height:100%; object-fit:cover; }
 .tinfo { flex:1; } .tname { font-weight:700; font-size:15px; } .tmember { font-size:12px; color:var(--text2); margin-top:2px; }
 .tjoin { padding:7px 16px; border-radius:20px; border:1px solid var(--accent); color:var(--accent); background:transparent; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; flex-shrink:0; }
 .tjoin.joined { background:var(--accent); color:#fff; }
@@ -132,14 +134,17 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .toggle.on .tdot { transform:translateX(20px); }
 .toast { position:fixed; bottom:72px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--bg3); color:var(--text); padding:10px 20px; border-radius:20px; font-size:14px; font-weight:600; z-index:400; opacity:0; transition:all .25s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 16px rgba(0,0,0,0.4); }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-/* CHAT PAGE */
+
+/* CHAT */
 #pg-chat { display:none; flex-direction:column; height:100%; }
 #pg-chat.on { display:flex; }
-.chat-topbar { background:var(--bg2); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
-.chat-back { font-size:20px; color:var(--text2); cursor:pointer; padding:4px 8px 4px 0; }
-.chat-info { flex:1; }
-.chat-name { font-weight:700; font-size:16px; }
-.chat-member-count { font-size:12px; color:var(--text2); margin-top:1px; }
+.chat-topbar { background:var(--bg2); border-bottom:1px solid var(--border); padding:10px 16px; display:flex; align-items:center; gap:10px; flex-shrink:0; cursor:pointer; }
+.chat-back { font-size:20px; color:var(--text2); padding:4px 8px 4px 0; flex-shrink:0; }
+.chat-avatar-sm { width:38px; height:38px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; overflow:hidden; }
+.chat-avatar-sm img { width:100%; height:100%; object-fit:cover; }
+.chat-info { flex:1; min-width:0; }
+.chat-name { font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.chat-member-count { font-size:12px; color:var(--text2); }
 .chat-msgs { flex:1; overflow-y:auto; padding:16px 12px; display:flex; flex-direction:column; gap:2px; background:var(--bg); }
 .chat-group { display:flex; flex-direction:column; margin-bottom:8px; }
 .chat-group.mine { align-items:flex-end; }
@@ -160,13 +165,27 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .chat-send { width:40px; height:40px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:transform .1s; }
 .chat-send:active { transform:scale(0.92); }
 .chat-img-btn { width:38px; height:38px; border-radius:50%; background:transparent; border:1px solid var(--border); color:var(--text2); font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.chat-img-btn:active { background:var(--bg3); }
-.chat-bubble img { max-width:100%; border-radius:10px; display:block; margin-top:4px; cursor:pointer; }
+.chat-bubble img { max-width:100%; border-radius:10px; display:block; cursor:pointer; }
 .chat-bubble.img-only { padding:4px; background:transparent !important; border:none !important; }
-/* PAGE TRANSITIONS */
-.page { transition: opacity 0.18s ease; }
-.page.on { display:block; animation: fadein 0.18s ease; }
-@keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* GRUP DETAIL */
+#pg-grup { display:none; flex-direction:column; height:100%; overflow-y:auto; }
+#pg-grup.on { display:flex; }
+.grup-hero { position:relative; width:100%; height:180px; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:60px; overflow:hidden; flex-shrink:0; }
+.grup-hero img { width:100%; height:100%; object-fit:cover; }
+.grup-hero-back { position:absolute; top:12px; left:12px; width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; cursor:pointer; z-index:10; }
+.grup-info { padding:16px; border-bottom:1px solid var(--border); }
+.grup-name { font-size:20px; font-weight:800; margin-bottom:4px; }
+.grup-desc { font-size:14px; color:var(--text2); line-height:1.6; margin-bottom:12px; }
+.grup-stats { display:flex; gap:20px; }
+.grup-stat { font-size:13px; color:var(--text2); }
+.grup-stat span { font-weight:700; color:var(--text); }
+.grup-actions { padding:16px; border-bottom:1px solid var(--border); display:flex; gap:10px; }
+.grup-members-title { padding:14px 16px 8px; font-size:13px; font-weight:700; color:var(--text2); }
+.member-item { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
+.member-item:hover { background:var(--bg3); }
+.member-avatar { width:40px; height:40px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--text2); flex-shrink:0; }
+.member-name { font-weight:600; font-size:14px; }
 </style>
 </head>
 <body>
@@ -196,13 +215,17 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
       </div>
       <div id="topikList"></div>
     </div>
+
+    <!-- CHAT PAGE -->
     <div class="page" id="pg-chat">
-      <div class="chat-topbar">
-        <div class="chat-back" onclick="goPage('topik')"><i class="fa fa-arrow-left"></i></div>
+      <div class="chat-topbar" onclick="openGrupDetail()">
+        <div class="chat-back" onclick="event.stopPropagation();goPage('topik')"><i class="fa fa-arrow-left"></i></div>
+        <div class="chat-avatar-sm" id="chatAvatarSm">👥</div>
         <div class="chat-info">
           <div class="chat-name" id="chatName">-</div>
-          <div class="chat-member-count" id="chatMemberCount">0 member</div>
+          <div class="chat-member-count" id="chatMemberCount">0 member · Tap untuk info</div>
         </div>
+        <i class="fa fa-info-circle" style="color:var(--text2);font-size:18px;flex-shrink:0"></i>
       </div>
       <div class="chat-msgs" id="chatMsgs"></div>
       <div class="chat-input-row">
@@ -212,6 +235,12 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
         <button class="chat-send" onclick="sendChat()"><i class="fa fa-paper-plane"></i></button>
       </div>
     </div>
+
+    <!-- GRUP DETAIL PAGE -->
+    <div class="page" id="pg-grup">
+      <div id="grupContent"></div>
+    </div>
+
     <div class="page" id="pg-search">
       <div class="search-bar">
         <div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="searchInput" placeholder="Cari post, user, topik..." oninput="doSearch(this.value)"></div>
@@ -231,6 +260,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   </div>
 </div>
 
+<!-- SHEETS -->
 <div class="overlay" id="authSheet" onclick="closeSheet('authSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
@@ -327,161 +357,85 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 <div class="toast" id="toast"></div>
 
 <script>
-const SB = 'https://qlyybibfopmlqgoznuqp.supabase.co';
-const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFseXliaWJmb3BtbHFnb3pudXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTAwMTcsImV4cCI6MjA5NjMyNjAxN30.AWB9IXOBgqnh5UiBmfGj6kvmTpv9G3eVzSHmLPrbNS4';
+const SB='https://qlyybibfopmlqgoznuqp.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFseXliaWJmb3BtbHFnb3pudXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTAwMTcsImV4cCI6MjA5NjMyNjAxN30.AWB9IXOBgqnh5UiBmfGj6kvmTpv9G3eVzSHmLPrbNS4';
 
-let user=null, token=null, currentPost=null, currentTopic=null;
-let feedType='fresh', topikTab='all', chatInterval=null;
+let user=null,token=null,currentPost=null,currentTopic=null;
+let feedType='fresh',topikTab='all',chatInterval=null;
 
-function saveSession(rt) { if(user&&token){localStorage.setItem('xn_token',token);localStorage.setItem('xn_user',JSON.stringify(user));if(rt)localStorage.setItem('xn_refresh',rt);} }
-function clearSession() { localStorage.removeItem('xn_token');localStorage.removeItem('xn_user');localStorage.removeItem('xn_refresh'); }
-async function restoreSession() {
-  const rt=localStorage.getItem('xn_refresh'); if(!rt) return;
-  try {
+function saveSession(rt){if(user&&token){localStorage.setItem('xn_token',token);localStorage.setItem('xn_user',JSON.stringify(user));if(rt)localStorage.setItem('xn_refresh',rt);}}
+function clearSession(){localStorage.removeItem('xn_token');localStorage.removeItem('xn_user');localStorage.removeItem('xn_refresh');}
+async function restoreSession(){
+  const rt=localStorage.getItem('xn_refresh');if(!rt)return;
+  try{
     const r=await fetch(`${SB}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'Content-Type':'application/json','apikey':KEY},body:JSON.stringify({refresh_token:rt})});
     if(r.ok){const d=await r.json();token=d.access_token;user=d.user;saveSession(d.refresh_token);await loadProfile();}else clearSession();
-  } catch(e){clearSession();}
+  }catch(e){clearSession();}
 }
 
 const h=()=>({'Content-Type':'application/json','apikey':KEY,'Authorization':`Bearer ${token||KEY}`});
-async function sb(path,opts={}) {
+async function sb(path,opts={}){
   const r=await fetch(SB+path,{headers:h(),...opts});
   const txt=await r.text();
   if(!r.ok){const e=JSON.parse(txt||'{}');throw new Error(e.message||e.error_description||'Error');}
   return txt?JSON.parse(txt):{};
 }
-async function sbAuth(path,body) {
+async function sbAuth(path,body){
   const r=await fetch(`${SB}/auth/v1/${path}`,{method:'POST',headers:{'Content-Type':'application/json','apikey':KEY},body:JSON.stringify(body)});
-  const d=await r.json(); if(!r.ok) throw new Error(d.error_description||d.message||'Error'); return d;
+  const d=await r.json();if(!r.ok)throw new Error(d.error_description||d.message||'Error');return d;
 }
 
 function openSheet(id){document.getElementById(id).classList.add('open');}
 function closeSheet(id){document.getElementById(id).classList.remove('open');}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
-function ago(d) {
+function ago(d){
   const ds=d.endsWith('Z')||d.includes('+')?d:d+'Z';
   const s=(Date.now()-new Date(ds))/1000;
-  if(s<60) return 'Baru saja';
-  if(s<3600) return Math.floor(s/60)+' menit';
-  if(s<86400) return Math.floor(s/3600)+' jam';
+  if(s<60)return 'Baru saja';
+  if(s<3600)return Math.floor(s/60)+' menit';
+  if(s<86400)return Math.floor(s/3600)+' jam';
   return Math.floor(s/86400)+' hari';
 }
 
-function switchAuth(tab) {
+// AUTH
+function switchAuth(tab){
   document.querySelectorAll('.atab').forEach((el,i)=>el.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));
   document.getElementById('authLogin').style.display=tab==='login'?'block':'none';
   document.getElementById('authReg').style.display=tab==='register'?'block':'none';
 }
-async function doLogin() {
+async function doLogin(){
   const email=document.getElementById('lEmail').value.trim();
   const pass=document.getElementById('lPass').value;
-  if(!email||!pass) return toast(t('fillemail'));
-  try {
+  if(!email||!pass)return toast(t('fillemail'));
+  try{
     const d=await sbAuth('token?grant_type=password',{email,password:pass});
     token=d.access_token;user=d.user;await loadProfile();saveSession(d.refresh_token);
-    closeSheet('authSheet');toast(t('welcome'));goPage('home');loadFeed();
-  } catch(e){toast(e.message);}
+    closeSheet('authSheet');toast(t('welcome'));goPage('home');loadFeed(true);
+  }catch(e){toast(e.message);}
 }
-async function doRegister() {
+async function doRegister(){
   const username=document.getElementById('rUser').value.trim();
   const email=document.getElementById('rEmail').value.trim();
   const pass=document.getElementById('rPass').value;
-  if(!username||!email||!pass) return toast(t('fillall'));
-  if(pass.length<6) return toast(t('minpass'));
-  try {
+  if(!username||!email||!pass)return toast(t('fillall'));
+  if(pass.length<6)return toast(t('minpass'));
+  try{
     const d=await sbAuth('signup',{email,password:pass});
     token=d.access_token;user=d.user;
     await sb('/rest/v1/profiles',{method:'POST',body:JSON.stringify({id:user.id,username})});
     await loadProfile();saveSession(d.refresh_token);
-    closeSheet('authSheet');toast(t('welcomenew'));goPage('home');loadFeed();
-  } catch(e){toast(e.message);}
+    closeSheet('authSheet');toast(t('welcomenew'));goPage('home');loadFeed(true);
+  }catch(e){toast(e.message);}
 }
-async function loadProfile() {
+async function loadProfile(){
   try{const d=await sb(`/rest/v1/profiles?id=eq.${user.id}&select=*`);if(d[0])user.profile=d[0];}catch(e){}
 }
-function doLogout(){user=null;token=null;clearSession();goPage('home');loadFeed();toast(t('logoutsuccess'));}
+function doLogout(){user=null;token=null;clearSession();goPage('home');loadFeed(true);toast(t('logoutsuccess'));}
 
-// PROFIL ORANG LAIN
-async function openUserProfil(uid) {
-  if(!uid||uid==='undefined') return;
-  if(user&&uid===user.id){goPage('profil');return;}
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
-  document.getElementById('feedtabs').style.display='none';
-  document.getElementById('pg-user').classList.add('on');
-  document.getElementById('userWall').innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
-  try {
-    const [profiles, posts, followers, following] = await Promise.all([
-      sb(`/rest/v1/profiles?id=eq.${uid}&select=*`),
-      sb(`/rest/v1/posts?user_id=eq.${uid}&select=*,post_images(image_url,order_index),votes(type)&order=created_at.desc`),
-      sb(`/rest/v1/follows?following_id=eq.${uid}&select=id`),
-      sb(`/rest/v1/follows?follower_id=eq.${uid}&select=id`)
-    ]);
-    const p=profiles[0]||{};
-    const totalVotes=posts.reduce((sum,post)=>(post.votes||[]).filter(v=>v.type==='up').length+sum,0);
-    // Cek apakah user sudah follow
-    let isFollowing=false;
-    if(user) {
-      const myFollow=await sb(`/rest/v1/follows?follower_id=eq.${user.id}&following_id=eq.${uid}&select=id`);
-      isFollowing=myFollow.length>0;
-    }
-    document.getElementById('userWall').innerHTML=`
-      <div style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)">
-        <div class="chat-back" onclick="goPage('home')"><i class="fa fa-arrow-left"></i></div>
-        <div style="font-weight:700;font-size:16px">${p.username||'User'}</div>
-      </div>
-      <div class="profil-top">
-        <div class="pavatar-lg"><i class="fa fa-user"></i></div>
-        <div class="pname">${p.username||'User'}</div>
-        <div class="pusername">@${p.username||'user'}</div>
-        <div class="pstats">
-          <div><div class="pstat-num">${followers.length}</div><div class="pstat-label">Followers</div></div>
-          <div><div class="pstat-num">${following.length}</div><div class="pstat-label">Following</div></div>
-          <div><div class="pstat-num">${totalVotes}</div><div class="pstat-label">Like</div></div>
-        </div>
-        ${user?`<div class="profil-btns">
-          <button class="btn-primary" id="followBtn" onclick="toggleFollow('${uid}',this)" style="${isFollowing?'background:var(--bg3);color:var(--text);border:1px solid var(--border)':''}">
-            ${isFollowing?'Mengikuti':'Ikuti'}
-          </button>
-        </div>`:''}
-      </div>
-      <div class="profil-grid">${posts.map(post=>{
-        const img=(post.post_images||[])[0]?.image_url;
-        return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;
-      }).join('')}</div>`;
-  } catch(e) {
-    document.getElementById('userWall').innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;
-  }
-}
-
-async function toggleFollow(uid, btn) {
-  if(!user){openSheet('authSheet');return;}
-  const isFollowing=btn.textContent.trim()==='Mengikuti';
-  try {
-    if(isFollowing) {
-      await sb(`/rest/v1/follows?follower_id=eq.${user.id}&following_id=eq.${uid}`,{method:'DELETE'});
-      btn.textContent='Ikuti';
-      btn.style.background='var(--accent)';
-      btn.style.color='#fff';
-      btn.style.border='none';
-    } else {
-      await sb('/rest/v1/follows',{method:'POST',body:JSON.stringify({follower_id:user.id,following_id:uid})});
-      btn.textContent='Mengikuti';
-      btn.style.background='var(--bg3)';
-      btn.style.color='var(--text)';
-      btn.style.border='1px solid var(--border)';
-    }
-    // Update follower count
-    const followers=await sb(`/rest/v1/follows?following_id=eq.${uid}&select=id`);
-    const statsEl=document.querySelectorAll('.pstat-num');
-    if(statsEl[1]) statsEl[1].textContent=followers.length;
-    toast(isFollowing?'Berhenti mengikuti':'Mengikuti!');
-  } catch(e){toast('Gagal: '+e.message);}
-}
-
+// PAGES
 const needLogin=['notif','profil'];
-function goPage(page) {
+function goPage(page){
   if(chatInterval){clearInterval(chatInterval);chatInterval=null;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
@@ -497,62 +451,53 @@ function goPage(page) {
   tabs.style.display=page==='home'?'flex':'none';
   document.getElementById('pg-'+page).classList.add('on');
   document.getElementById('nb-'+page)&&document.getElementById('nb-'+page).classList.add('on');
-  if(page==='topik') renderTopik();
-  if(page==='profil'&&user) renderProfil();
-  if(page==='notif'&&user) renderNotif();
+  if(page==='topik')renderTopik();
+  if(page==='profil'&&user)renderProfil();
+  if(page==='notif'&&user)renderNotif();
 }
-function goSearch() {
+function goSearch(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
   document.getElementById('feedtabs').style.display='none';
   document.getElementById('pg-search').classList.add('on');
   setTimeout(()=>document.getElementById('searchInput').focus(),100);
 }
-function loginWall() {
+function loginWall(){
   return `<div class="login-wall"><i class="fa fa-lock"></i><h3>${t('loginwall')}</h3><button class="btn-primary" onclick="openSheet('authSheet')">${t('loginnow')}</button></div>`;
 }
 
-let feedPage=0, feedLoading=false, feedDone=false;
-
-function switchTab(type,el) {
-  feedType=type;
-  document.querySelectorAll('.ftab').forEach(tab=>tab.classList.remove('on'));
-  el.classList.add('on');
-  feedPage=0;feedDone=false;
-  loadFeed(true);
+// FEED
+let feedPage=0,feedLoading=false,feedDone=false;
+function switchTab(type,el){
+  feedType=type;document.querySelectorAll('.ftab').forEach(tab=>tab.classList.remove('on'));
+  el.classList.add('on');feedPage=0;feedDone=false;loadFeed(true);
 }
-
-async function loadFeed(reset=false) {
-  if(feedLoading||feedDone) return;
+async function loadFeed(reset=false){
+  if(feedLoading||feedDone)return;
   feedLoading=true;
   const feed=document.getElementById('feed');
   if(reset){feed.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';feedPage=0;feedDone=false;}
-  else {
-    const loader=document.createElement('div');
-    loader.id='feed-loader';loader.className='center-msg';loader.style.padding='20px';
-    loader.innerHTML='<i class="fa fa-spinner spin"></i>';
-    feed.appendChild(loader);
-  }
-  try {
-    const limit=20, offset=feedPage*limit;
+  else{const loader=document.createElement('div');loader.id='feed-loader';loader.className='center-msg';loader.style.padding='20px';loader.innerHTML='<i class="fa fa-spinner spin"></i>';feed.appendChild(loader);}
+  try{
+    const limit=20,offset=feedPage*limit;
     const posts=await sb(`/rest/v1/posts?select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=${limit}&offset=${offset}`);
     document.getElementById('feed-loader')?.remove();
     if(reset&&!posts.length){feed.innerHTML=`<div class="center-msg"><i class="fa fa-wind"></i><h3>${t('nopost')}</h3><p>${t('nopostsub')}</p></div>`;feedLoading=false;return;}
-    if(posts.length<limit) feedDone=true;
+    if(posts.length<limit)feedDone=true;
     const userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))];
     let profileMap={};
     if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>profileMap[p.id]=p);}
     posts.forEach(p=>p.profiles=profileMap[p.user_id]||null);
-    if(reset) feed.innerHTML=posts.map(p=>renderPost(p)).join('');
+    if(reset)feed.innerHTML=posts.map(p=>renderPost(p)).join('');
     else feed.insertAdjacentHTML('beforeend',posts.map(p=>renderPost(p)).join(''));
     feedPage++;
-  } catch(e){
+  }catch(e){
     document.getElementById('feed-loader')?.remove();
-    if(reset) feed.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>${t('failload')}</h3><p>${e.message}</p></div>`;
+    if(reset)feed.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>${t('failload')}</h3><p>${e.message}</p></div>`;
   }
   feedLoading=false;
 }
-function renderPost(p) {
+function renderPost(p){
   const imgs=(p.post_images||[]).sort((a,b)=>a.order_index-b.order_index);
   const upvotes=(p.votes||[]).filter(v=>v.type==='up').length;
   const myVote=user&&(p.votes||[]).find(v=>v.user_id===user.id&&v.type==='up');
@@ -560,9 +505,9 @@ function renderPost(p) {
   const cap=(p.caption||'').replace(/#\w+/g,'').trim();
   const uname=p.profiles?.username||'user';
   let imgHtml='';
-  if(imgs.length===1) imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy"></div>`;
-  else if(imgs.length===2) imgHtml=`<div class="pimgs s2">${imgs.map(i=>`<img src="${i.image_url}" loading="lazy">`).join('')}</div>`;
-  else if(imgs.length>=3) imgHtml=`<div class="pimgs s3"><img class="pm" src="${imgs[0].image_url}" loading="lazy"><img src="${imgs[1].image_url}" loading="lazy"><img src="${imgs[2].image_url}" loading="lazy"></div>`;
+  if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy"></div>`;
+  else if(imgs.length===2)imgHtml=`<div class="pimgs s2">${imgs.map(i=>`<img src="${i.image_url}" loading="lazy">`).join('')}</div>`;
+  else if(imgs.length>=3)imgHtml=`<div class="pimgs s3"><img class="pm" src="${imgs[0].image_url}" loading="lazy"><img src="${imgs[1].image_url}" loading="lazy"><img src="${imgs[2].image_url}" loading="lazy"></div>`;
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
       <div class="puser"><div class="pavatar"><i class="fa fa-user"></i></div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
@@ -579,20 +524,20 @@ function renderPost(p) {
     </div>
   </div>`;
 }
-async function vote(pid,el) {
-  if(!user) return openSheet('authSheet');
+async function vote(pid,el){
+  if(!user)return openSheet('authSheet');
   const isOn=el.classList.contains('upvoted');
   const cnt=document.getElementById('vc-'+pid);
-  try {
+  try{
     if(isOn){await sb(`/rest/v1/votes?post_id=eq.${pid}&user_id=eq.${user.id}`,{method:'DELETE'});el.classList.remove('upvoted');cnt.textContent=parseInt(cnt.textContent)-1;}
     else{await sb('/rest/v1/votes',{method:'POST',body:JSON.stringify({post_id:pid,user_id:user.id,type:'up'})});el.classList.add('upvoted');cnt.textContent=parseInt(cnt.textContent)+1;}
-  } catch(e){toast('Gagal vote');}
+  }catch(e){toast('Gagal vote');}
 }
-async function openKomentar(pid) {
+async function openKomentar(pid){
   currentPost=pid;openSheet('komentarSheet');
   const list=document.getElementById('komentarList');
   list.innerHTML='<div class="center-msg" style="padding:20px"><i class="fa fa-spinner spin"></i></div>';
-  try {
+  try{
     const cs=await sb(`/rest/v1/comments?post_id=eq.${pid}&select=*&order=created_at.asc`);
     const ccEl=document.getElementById('cc-'+pid);if(ccEl)ccEl.textContent=cs.length;
     if(!cs.length){list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text2)">${t('nocomment')}</div>`;return;}
@@ -600,40 +545,38 @@ async function openKomentar(pid) {
     let pmap={};
     if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username`);profiles.forEach(p=>pmap[p.id]=p);}
     list.innerHTML=cs.map(c=>`<div class="kitem"><div class="kavatar"><i class="fa fa-user"></i></div><div><div class="kuname">${pmap[c.user_id]?.username||'user'}</div><div class="ktext">${c.content}</div></div></div>`).join('');
-  } catch(e){list.innerHTML=`<div style="padding:20px;color:var(--text2)">Gagal memuat: ${e.message}</div>`;}
+  }catch(e){list.innerHTML=`<div style="padding:20px;color:var(--text2)">Gagal memuat</div>`;}
 }
-async function submitKomentar() {
+async function submitKomentar(){
   const inp=document.getElementById('kinput');const txt=inp.value.trim();if(!txt)return;
   if(!user)return openSheet('authSheet');
   try{await sb('/rest/v1/comments',{method:'POST',body:JSON.stringify({post_id:currentPost,user_id:user.id,content:txt})});inp.value='';openKomentar(currentPost);}
-  catch(e){toast('Gagal kirim: '+e.message);}
+  catch(e){toast('Gagal kirim');}
 }
 
+// UPLOAD
 let selFiles2=[];
-function handleFiles(inp) {
+function handleFiles(inp){
   selFiles2=Array.from(inp.files).slice(0,3);
   const prev=document.getElementById('uppreviews');
   prev.style.display=selFiles2.length?'grid':'none';
   prev.innerHTML=selFiles2.map((f,i)=>`<div class="upthumb"><img src="${URL.createObjectURL(f)}"><div class="upthumb-del" onclick="removeFile(${i})"><i class="fa fa-times"></i></div></div>`).join('');
 }
-function removeFile(i) {
-  selFiles2.splice(i,1);const dt=new DataTransfer();selFiles2.forEach(f=>dt.items.add(f));
-  document.getElementById('fileInput').files=dt.files;handleFiles(document.getElementById('fileInput'));
-}
-async function uploadImg(file) {
+function removeFile(i){selFiles2.splice(i,1);const dt=new DataTransfer();selFiles2.forEach(f=>dt.items.add(f));document.getElementById('fileInput').files=dt.files;handleFiles(document.getElementById('fileInput'));}
+async function uploadImg(file){
   const ext=file.name.split('.').pop();
   const path=`posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
   const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
-  if(!r.ok){const err=await r.text();throw new Error('Gagal upload: '+err);}
+  if(!r.ok)throw new Error('Gagal upload');
   return `${SB}/storage/v1/object/public/meme-images/${path}`;
 }
-async function submitPost() {
+async function submitPost(){
   if(!user)return openSheet('authSheet');
   if(!selFiles2.length)return toast('Pilih foto dulu');
   const cap=document.getElementById('postCaption').value.trim();
   const tags=document.getElementById('postTags').value.trim();
   const full=cap+(tags?' '+tags:'');
-  try {
+  try{
     toast(t('uploading'));
     const urls=await Promise.all(selFiles2.map(f=>uploadImg(f)));
     const post=await sb('/rest/v1/posts',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({user_id:user.id,caption:full})});
@@ -642,104 +585,156 @@ async function submitPost() {
     closeSheet('uploadPostSheet');selFiles2=[];
     document.getElementById('uppreviews').innerHTML='';document.getElementById('uppreviews').style.display='none';
     document.getElementById('postCaption').value='';document.getElementById('postTags').value='';
-    toast(t('postsuccess'));loadFeed();
-  } catch(e){toast(e.message);}
+    toast(t('postsuccess'));loadFeed(true);
+  }catch(e){toast(e.message);}
 }
 function openUploadPost(){closeSheet('uploadOptSheet');if(!user){openSheet('authSheet');return;}openSheet('uploadPostSheet');}
 function openBuatTopik(){closeSheet('uploadOptSheet');if(!user){openSheet('authSheet');return;}openSheet('buatTopikSheet');}
 
 // TOPIK
-function switchTopikTab(tab) {
+function switchTopikTab(tab){
   topikTab=tab;
   const tabAll=document.getElementById('tabTopik');const tabJoined=document.getElementById('tabSudahGabung');
   tabAll.style.color=tab==='all'?'var(--accent)':'var(--text2)';tabAll.style.borderBottom=tab==='all'?'2px solid var(--accent)':'2px solid transparent';
   tabJoined.style.color=tab==='joined'?'var(--accent)':'var(--text2)';tabJoined.style.borderBottom=tab==='joined'?'2px solid var(--accent)':'2px solid transparent';
   renderTopik();
 }
-
-async function renderTopik() {
+async function renderTopik(){
   const list=document.getElementById('topikList');
   list.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
-  try {
+  try{
     let topics=await sb(`/rest/v1/topics?select=*&order=created_at.desc`);
-    // Ambil member count dari topic_members
     const memberCounts={};
     if(topics.length){
       const counts=await sb(`/rest/v1/topic_members?select=topic_id&topic_id=in.(${topics.map(t=>t.id).join(',')})`);
       counts.forEach(c=>{memberCounts[c.topic_id]=(memberCounts[c.topic_id]||0)+1;});
     }
-    // Cek user sudah join topik mana
     let userJoined=[];
     if(user&&topics.length){
       const joined=await sb(`/rest/v1/topic_members?user_id=eq.${user.id}&select=topic_id`);
       userJoined=joined.map(j=>j.topic_id);
     }
-    if(topikTab==='joined') topics=topics.filter(tp=>userJoined.includes(tp.id));
+    if(topikTab==='joined')topics=topics.filter(tp=>userJoined.includes(tp.id));
     if(!topics.length){list.innerHTML=`<div class="center-msg"><i class="fa fa-users"></i><h3>${topikTab==='joined'?'Belum ada topik diikuti':t('notopic')}</h3><p>${topikTab==='joined'?'Ikuti topik dulu':t('notopicsub')}</p></div>`;return;}
     list.innerHTML=topics.map(tp=>{
       const isJoined=userJoined.includes(tp.id);
       const count=memberCounts[tp.id]||0;
-      return `<div class="titem" onclick="openChat('${tp.id}','${tp.name.replace(/'/g,"\\'")}',${count})">
-        <div class="tavatar">${tp.emoji||'👥'}</div>
+      const avatar=tp.photo_url?`<img src="${tp.photo_url}" loading="lazy">`:(tp.emoji||'👥');
+      return `<div class="titem" onclick="openChat('${tp.id}','${tp.name.replace(/'/g,"\\'")}',${count},'${tp.photo_url||''}','${(tp.description||'').replace(/'/g,"\\'")}')">
+        <div class="tavatar">${avatar}</div>
         <div class="tinfo"><div class="tname">${tp.name}</div><div class="tmember">${count} ${t('member')}</div></div>
         <button class="tjoin ${isJoined?'joined':''}" onclick="event.stopPropagation();toggleJoin(this,'${tp.id}')">${isJoined?'Gabung ✓':'Gabung'}</button>
       </div>`;
     }).join('');
-  } catch(e){list.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
+  }catch(e){list.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
 }
-
-async function toggleJoin(btn,id) {
+async function toggleJoin(btn,id){
   if(!user){openSheet('authSheet');return;}
   const isJoined=btn.classList.contains('joined');
-  try {
-    if(isJoined){
-      await sb(`/rest/v1/topic_members?topic_id=eq.${id}&user_id=eq.${user.id}`,{method:'DELETE'});
-      btn.classList.remove('joined');btn.textContent='Gabung';
-    } else {
-      await sb('/rest/v1/topic_members',{method:'POST',body:JSON.stringify({topic_id:id,user_id:user.id})});
-      btn.classList.add('joined');btn.textContent='Gabung ✓';
-    }
-    // Update member count di UI
-    const titem=btn.closest('.titem');
-    const memberEl=titem?.querySelector('.tmember');
-    if(memberEl){
-      const cur=parseInt(memberEl.textContent)||0;
-      memberEl.textContent=(isJoined?cur-1:cur+1)+' '+t('member');
-    }
-  } catch(e){toast('Gagal: '+e.message);}
+  try{
+    if(isJoined){await sb(`/rest/v1/topic_members?topic_id=eq.${id}&user_id=eq.${user.id}`,{method:'DELETE'});btn.classList.remove('joined');btn.textContent='Gabung';}
+    else{await sb('/rest/v1/topic_members',{method:'POST',body:JSON.stringify({topic_id:id,user_id:user.id})});btn.classList.add('joined');btn.textContent='Gabung ✓';}
+    const titem=btn.closest('.titem');const memberEl=titem?.querySelector('.tmember');
+    if(memberEl){const cur=parseInt(memberEl.textContent)||0;memberEl.textContent=(isJoined?cur-1:cur+1)+' '+t('member');}
+  }catch(e){toast('Gagal: '+e.message);}
 }
-
-async function submitTopik() {
+async function submitTopik(){
   const name=document.getElementById('topikName').value.trim();
   const desc=document.getElementById('topikDesc').value.trim();
   if(!name)return toast(t('topicname'));
-  try {
+  try{
     await sb('/rest/v1/topics',{method:'POST',body:JSON.stringify({name,description:desc,member_count:0,emoji:'👥'})});
     toast(t('topicsuccess'));closeSheet('buatTopikSheet');
     document.getElementById('topikName').value='';document.getElementById('topikDesc').value='';
     renderTopik();
-  } catch(e){toast(e.message);}
+  }catch(e){toast(e.message);}
 }
 
-// CHAT TOPIK
-async function openChat(topicId, topicName, memberCount) {
+// CHAT
+async function openChat(topicId,topicName,memberCount,photoUrl,description){
   if(!user){openSheet('authSheet');return;}
-  currentTopic={id:topicId,name:topicName};
+  currentTopic={id:topicId,name:topicName,memberCount,photoUrl,description};
   document.getElementById('chatName').textContent=topicName;
-  document.getElementById('chatMemberCount').textContent=memberCount+' member';
+  document.getElementById('chatMemberCount').textContent=memberCount+' member · Tap untuk info';
+  const avatarEl=document.getElementById('chatAvatarSm');
+  avatarEl.innerHTML=photoUrl?`<img src="${photoUrl}">`:(topicName.slice(0,1).toUpperCase()||'👥');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
   document.getElementById('feedtabs').style.display='none';
   document.getElementById('pg-chat').classList.add('on');
   document.getElementById('nb-topik').classList.add('on');
   await loadChatMsgs();
-  // Auto refresh setiap 3 detik
   chatInterval=setInterval(loadChatMsgs,3000);
 }
 
-async function loadChatMsgs() {
+async function openGrupDetail(){
   if(!currentTopic)return;
-  try {
+  if(chatInterval){clearInterval(chatInterval);chatInterval=null;}
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('feedtabs').style.display='none';
+  document.getElementById('pg-grup').classList.add('on');
+  document.getElementById('nb-topik').classList.add('on');
+  const gc=document.getElementById('grupContent');
+  gc.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  try{
+    const [members,topicData]=await Promise.all([
+      sb(`/rest/v1/topic_members?topic_id=eq.${currentTopic.id}&select=user_id`),
+      sb(`/rest/v1/topics?id=eq.${currentTopic.id}&select=*`)
+    ]);
+    const tp=topicData[0]||{};
+    const uids=members.map(m=>m.user_id).filter(Boolean);
+    let profiles=[];
+    if(uids.length){profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username`);}
+    const isJoined=user&&uids.includes(user.id);
+    const avatarHero=tp.photo_url?`<img src="${tp.photo_url}">`:(tp.emoji||'👥');
+    gc.innerHTML=`
+      <div class="grup-hero">
+        <div class="grup-hero-back" onclick="backToChat()"><i class="fa fa-arrow-left"></i></div>
+        ${avatarHero}
+      </div>
+      <div class="grup-info">
+        <div class="grup-name">${tp.name}</div>
+        ${tp.description?`<div class="grup-desc">${tp.description}</div>`:'<div class="grup-desc" style="font-style:italic">Belum ada deskripsi</div>'}
+        <div class="grup-stats">
+          <div class="grup-stat"><span>${members.length}</span> anggota</div>
+        </div>
+      </div>
+      <div class="grup-actions">
+        <button class="btn-primary" style="flex:1" onclick="backToChat()"><i class="fa fa-comment"></i> Buka Chat</button>
+        ${user?`<button class="${isJoined?'btn-outline':'btn-primary'}" style="flex:1" onclick="toggleJoinGrup('${tp.id}',this)">${isJoined?'Keluar Grup':'Gabung'}</button>`:''}
+      </div>
+      <div class="grup-members-title">ANGGOTA (${members.length})</div>
+      ${profiles.map(p=>`
+        <div class="member-item" onclick="openUserProfil('${p.id}')">
+          <div class="member-avatar"><i class="fa fa-user"></i></div>
+          <div class="member-name">${p.username}</div>
+        </div>`).join('')}`;
+  }catch(e){gc.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
+}
+
+async function toggleJoinGrup(id,btn){
+  if(!user){openSheet('authSheet');return;}
+  const isJoined=btn.textContent.trim()==='Keluar Grup';
+  try{
+    if(isJoined){await sb(`/rest/v1/topic_members?topic_id=eq.${id}&user_id=eq.${user.id}`,{method:'DELETE'});}
+    else{await sb('/rest/v1/topic_members',{method:'POST',body:JSON.stringify({topic_id:id,user_id:user.id})});}
+    toast(isJoined?'Keluar dari grup':'Berhasil bergabung!');
+    openGrupDetail();
+  }catch(e){toast('Gagal: '+e.message);}
+}
+
+function backToChat(){
+  if(chatInterval)clearInterval(chatInterval);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-chat').classList.add('on');
+  document.getElementById('nb-topik').classList.add('on');
+  chatInterval=setInterval(loadChatMsgs,3000);
+  loadChatMsgs();
+}
+
+async function loadChatMsgs(){
+  if(!currentTopic)return;
+  try{
     const msgs=await sb(`/rest/v1/topic_chats?topic_id=eq.${currentTopic.id}&select=*&order=created_at.asc&limit=100`);
     const uids=[...new Set(msgs.map(m=>m.user_id).filter(Boolean))];
     let pmap={};
@@ -747,7 +742,6 @@ async function loadChatMsgs() {
     const container=document.getElementById('chatMsgs');
     const isBottom=container.scrollHeight-container.scrollTop-container.clientHeight<60;
     if(!msgs.length){container.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">Belum ada pesan. Mulai chat!</div>';return;}
-    // Group messages by user & time proximity
     const groups=[];
     msgs.forEach((m,i)=>{
       const prev=msgs[i-1];
@@ -762,44 +756,39 @@ async function loadChatMsgs() {
         <div class="chat-bubbles">
           ${g.msgs.map(m=>{
             const imgMatch=m.content.match(/\[img\](.*?)\[\/img\]/);
-            if(imgMatch) return `<div class="chat-bubble img-only"><img src="${imgMatch[1]}" loading="lazy" onclick="window.open('${imgMatch[1]}','_blank')"></div>`;
+            if(imgMatch)return `<div class="chat-bubble img-only"><img src="${imgMatch[1]}" loading="lazy" onclick="window.open('${imgMatch[1]}','_blank')"></div>`;
             return `<div class="chat-bubble">${m.content}</div>`;
           }).join('')}
           <div class="chat-time-row">${ago(g.msgs[g.msgs.length-1].created_at)}</div>
         </div>
       </div>`).join('');
-    if(isBottom) container.scrollTop=container.scrollHeight;
-  } catch(e){}
+    if(isBottom)container.scrollTop=container.scrollHeight;
+  }catch(e){}
 }
-
-async function sendChat() {
+async function sendChat(){
   if(!user){openSheet('authSheet');return;}
   const inp=document.getElementById('chatInput');
   const txt=inp.value.trim();if(!txt)return;
-  try {
-    await sb('/rest/v1/topic_chats',{method:'POST',body:JSON.stringify({topic_id:currentTopic.id,user_id:user.id,content:txt})});
-    inp.value='';await loadChatMsgs();
-  } catch(e){toast('Gagal kirim: '+e.message);}
+  try{await sb('/rest/v1/topic_chats',{method:'POST',body:JSON.stringify({topic_id:currentTopic.id,user_id:user.id,content:txt})});inp.value='';await loadChatMsgs();}
+  catch(e){toast('Gagal kirim');}
 }
-
-async function sendChatImage(inp) {
+async function sendChatImage(inp){
   if(!user){openSheet('authSheet');return;}
   const file=inp.files[0];if(!file)return;
-  try {
+  try{
     toast('Mengupload foto...');
     const ext=file.name.split('.').pop();
     const path=`chat/${user.id}/${Date.now()}.${ext}`;
     const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
-    if(!r.ok) throw new Error('Gagal upload');
+    if(!r.ok)throw new Error('Gagal upload');
     const url=`${SB}/storage/v1/object/public/meme-images/${path}`;
     await sb('/rest/v1/topic_chats',{method:'POST',body:JSON.stringify({topic_id:currentTopic.id,user_id:user.id,content:`[img]${url}[/img]`})});
-    inp.value='';
-    await loadChatMsgs();
-  } catch(e){toast(e.message);}
+    inp.value='';await loadChatMsgs();
+  }catch(e){toast(e.message);}
 }
 
 // PROFIL
-async function renderProfil() {
+async function renderProfil(){
   const p=user?.profile||{};
   document.getElementById('pg-profil').innerHTML=`
     <div class="profil-top">
@@ -818,35 +807,75 @@ async function renderProfil() {
     </div>
     <div class="profil-grid" id="profilGrid"></div>`;
   loadProfilPosts();
-  // Load followers/following count
-  try {
-    const [followers, following] = await Promise.all([
-      sb(`/rest/v1/follows?following_id=eq.${user.id}&select=id`),
-      sb(`/rest/v1/follows?follower_id=eq.${user.id}&select=id`)
-    ]);
+  try{
+    const [followers,following]=await Promise.all([sb(`/rest/v1/follows?following_id=eq.${user.id}&select=id`),sb(`/rest/v1/follows?follower_id=eq.${user.id}&select=id`)]);
     document.getElementById('statFollowers').textContent=followers.length;
     document.getElementById('statFollowing').textContent=following.length;
-  } catch(e){}
+  }catch(e){}
 }
-async function loadProfilPosts() {
-  try {
+async function loadProfilPosts(){
+  try{
     const posts=await sb(`/rest/v1/posts?user_id=eq.${user.id}&select=id,caption,created_at,post_images(image_url,order_index),votes(type)&order=created_at.desc`);
-    const statPost=document.getElementById('statPost');
-    const statVote=document.getElementById('statVote');
-    const profilGrid=document.getElementById('profilGrid');
-    if(statPost) statPost.textContent=posts.length;
+    const statVote=document.getElementById('statVote');const profilGrid=document.getElementById('profilGrid');
     const totalVotes=posts.reduce((sum,p)=>(p.votes||[]).filter(v=>v.type==='up').length+sum,0);
-    if(statVote) statVote.textContent=totalVotes;
-    if(profilGrid) profilGrid.innerHTML=posts.length
-      ? posts.map(p=>{
-          const img=(p.post_images||[]).sort((a,b)=>a.order_index-b.order_index)[0]?.image_url;
-          return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;
-        }).join('')
-      : '<div style="grid-column:span 3;text-align:center;padding:40px;color:var(--text2)">Belum ada post</div>';
-  } catch(e){ console.error('loadProfilPosts error:',e); }
+    if(statVote)statVote.textContent=totalVotes;
+    if(profilGrid)profilGrid.innerHTML=posts.length
+      ?posts.map(p=>{const img=(p.post_images||[]).sort((a,b)=>a.order_index-b.order_index)[0]?.image_url;return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;}).join('')
+      :'<div style="grid-column:span 3;text-align:center;padding:40px;color:var(--text2)">Belum ada post</div>';
+  }catch(e){}
 }
 
-function renderNotif() {
+// PROFIL ORANG LAIN
+async function openUserProfil(uid){
+  if(!uid||uid==='undefined')return;
+  if(user&&uid===user.id){goPage('profil');return;}
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
+  document.getElementById('feedtabs').style.display='none';
+  document.getElementById('pg-user').classList.add('on');
+  document.getElementById('userWall').innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  try{
+    const [profiles,posts,followers,following]=await Promise.all([
+      sb(`/rest/v1/profiles?id=eq.${uid}&select=*`),
+      sb(`/rest/v1/posts?user_id=eq.${uid}&select=*,post_images(image_url,order_index),votes(type)&order=created_at.desc`),
+      sb(`/rest/v1/follows?following_id=eq.${uid}&select=id`),
+      sb(`/rest/v1/follows?follower_id=eq.${uid}&select=id`)
+    ]);
+    const p=profiles[0]||{};
+    const totalVotes=posts.reduce((sum,post)=>(post.votes||[]).filter(v=>v.type==='up').length+sum,0);
+    let isFollowing=false;
+    if(user){const myFollow=await sb(`/rest/v1/follows?follower_id=eq.${user.id}&following_id=eq.${uid}&select=id`);isFollowing=myFollow.length>0;}
+    document.getElementById('userWall').innerHTML=`
+      <div style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)">
+        <div class="chat-back" onclick="goPage('home')"><i class="fa fa-arrow-left"></i></div>
+        <div style="font-weight:700;font-size:16px">${p.username||'User'}</div>
+      </div>
+      <div class="profil-top">
+        <div class="pavatar-lg"><i class="fa fa-user"></i></div>
+        <div class="pname">${p.username||'User'}</div>
+        <div class="pusername">@${p.username||'user'}</div>
+        <div class="pstats">
+          <div><div class="pstat-num">${followers.length}</div><div class="pstat-label">Followers</div></div>
+          <div><div class="pstat-num">${following.length}</div><div class="pstat-label">Following</div></div>
+          <div><div class="pstat-num">${totalVotes}</div><div class="pstat-label">Like</div></div>
+        </div>
+        ${user?`<div class="profil-btns"><button class="btn-primary" id="followBtn" onclick="toggleFollow('${uid}',this)" style="${isFollowing?'background:var(--bg3);color:var(--text);border:1px solid var(--border)':''}">${isFollowing?'Mengikuti':'Ikuti'}</button></div>`:''}
+      </div>
+      <div class="profil-grid">${posts.map(post=>{const img=(post.post_images||[])[0]?.image_url;return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;}).join('')}</div>`;
+  }catch(e){document.getElementById('userWall').innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
+}
+async function toggleFollow(uid,btn){
+  if(!user){openSheet('authSheet');return;}
+  const isFollowing=btn.textContent.trim()==='Mengikuti';
+  try{
+    if(isFollowing){await sb(`/rest/v1/follows?follower_id=eq.${user.id}&following_id=eq.${uid}`,{method:'DELETE'});btn.textContent='Ikuti';btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.border='none';}
+    else{await sb('/rest/v1/follows',{method:'POST',body:JSON.stringify({follower_id:user.id,following_id:uid})});btn.textContent='Mengikuti';btn.style.background='var(--bg3)';btn.style.color='var(--text)';btn.style.border='1px solid var(--border)';}
+    toast(isFollowing?'Berhenti mengikuti':'Mengikuti!');
+  }catch(e){toast('Gagal: '+e.message);}
+}
+
+// NOTIF
+function renderNotif(){
   document.getElementById('pg-notif').innerHTML=`
     <div class="nfilters">
       <button class="nfbtn on" onclick="filterNotif(this)">${t('all')}</button>
@@ -858,19 +887,18 @@ function renderNotif() {
 }
 function filterNotif(el){document.querySelectorAll('.nfbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
 
-async function doSearch(q) {
+// SEARCH
+async function doSearch(q){
   const res=document.getElementById('searchResults');
   if(!q.trim()){res.innerHTML='<div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div>';return;}
-  try {
+  try{
     const posts=await sb(`/rest/v1/posts?caption=ilike.*${encodeURIComponent(q)}*&select=id,caption,created_at,user_id,post_images(image_url,order_index)&limit=10`);
     res.innerHTML=posts.length?posts.map(p=>renderPost({...p,profiles:{username:'user'},votes:[]})).join(''):'<div class="center-msg"><i class="fa fa-search"></i><h3>Tidak ditemukan</h3></div>';
-  } catch(e){}
+  }catch(e){}
 }
 
-function toggleDark() {
-  const el=document.getElementById('darkToggle');el.classList.toggle('on');
-  document.documentElement.setAttribute('data-theme',el.classList.contains('on')?'dark':'light');
-}
+// SETTINGS
+function toggleDark(){const el=document.getElementById('darkToggle');el.classList.toggle('on');document.documentElement.setAttribute('data-theme',el.classList.contains('on')?'dark':'light');}
 
 const T={
   id:{foryou:'For You',fresh:'Fresh',viral:'Viral',search:'Cari post, user, topik...',searchtopik:'Cari topik...',notopic:'Belum ada topik',notopicsub:'Jadilah yang pertama membuat topik!',nopost:'Belum ada post',nopostsub:'Jadilah yang pertama posting!',failload:'Gagal memuat',login:'Masuk',register:'Daftar',loginwall:'Kamu harus login untuk mengakses halaman ini',loginnow:'Login sekarang',postnow:'Post Sekarang',createtopic:'Buat Topik',topicname:'Nama Topik',nocomment:'Belum ada komentar',notif:'Belum ada notifikasi',notifsub:'Notifikasi akan muncul di sini',all:'Semua',post:'Post',comment:'Komentar',topic:'Topik',editprofil:'Edit Profil',logout:'Keluar',uploading:'Mengupload...',postsuccess:'Post berhasil!',topicsuccess:'Topik dibuat!',logoutsuccess:'Berhasil keluar',welcome:'Selamat datang!',welcomenew:'Selamat datang di Xentra!',fillemail:'Isi email dan password',fillall:'Isi semua field',minpass:'Password min 6 karakter',member:'member'},
@@ -878,25 +906,20 @@ const T={
 };
 let lang='id';
 function t(key){return T[lang][key]||T['id'][key]||key;}
-function setLang(l) {
-  lang=l;
-  document.getElementById('langId').style.display=l==='id'?'block':'none';
-  document.getElementById('langEn').style.display=l==='en'?'block':'none';
-  applyLang();
-}
-function applyLang() {
+function setLang(l){lang=l;document.getElementById('langId').style.display=l==='id'?'block':'none';document.getElementById('langEn').style.display=l==='en'?'block':'none';applyLang();}
+function applyLang(){
   document.querySelectorAll('.ftab').forEach((tab,i)=>{const keys=['foryou','fresh','viral'];tab.textContent=t(keys[i]);});
   const si=document.getElementById('searchInput');if(si)si.placeholder=t('search');
   const tabTopik=document.getElementById('tabTopik');const tabSudah=document.getElementById('tabSudahGabung');
   if(tabTopik)tabTopik.textContent=lang==='en'?'Topics':'Topik';
   if(tabSudah)tabSudah.textContent=lang==='en'?'Joined':'Sudah Gabung';
   const activePage=document.querySelector('.page.on');
-  if(activePage?.id==='pg-home')loadFeed();
+  if(activePage?.id==='pg-home')loadFeed(true);
   if(activePage?.id==='pg-topik')renderTopik();
   if(activePage?.id==='pg-notif'&&user)renderNotif();
 }
 
-function showPostMenu(pid,el) {
+function showPostMenu(pid,el){
   const old=document.getElementById('postMenu');if(old)old.remove();
   const menu=document.createElement('div');menu.id='postMenu';
   menu.style.cssText='position:fixed;z-index:500;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px 0;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
@@ -905,13 +928,14 @@ function showPostMenu(pid,el) {
   document.body.appendChild(menu);
   setTimeout(()=>document.addEventListener('click',()=>menu.remove(),{once:true}),10);
 }
-async function deletePost(pid) {
+async function deletePost(pid){
   if(!confirm('Hapus post ini?'))return;
-  try{await sb(`/rest/v1/posts?id=eq.${pid}`,{method:'DELETE'});toast('Post dihapus');loadFeed();}
+  try{await sb(`/rest/v1/posts?id=eq.${pid}`,{method:'DELETE'});toast('Post dihapus');loadFeed(true);}
   catch(e){toast('Gagal hapus: '+e.message);}
 }
 function sharePost(){if(navigator.share)navigator.share({title:'Xentra',url:location.href});else toast('Link disalin!');}
 
+// PULL TO REFRESH
 let ptrStart=0,ptrActive=false;
 const contentEl=document.getElementById('content');
 const ptrEl=document.getElementById('ptr-indicator');
@@ -920,16 +944,16 @@ contentEl.addEventListener('touchmove',e=>{if(ptrActive&&e.touches[0].clientY-pt
 contentEl.addEventListener('touchend',e=>{
   if(!ptrActive)return;ptrActive=false;
   const diff=e.changedTouches[0].clientY-ptrStart;
-  if(diff>70){const ap=document.querySelector('.page.on');if(ap?.id==='pg-home')loadFeed();else if(ap?.id==='pg-topik')renderTopik();else if(ap?.id==='pg-profil'&&user)renderProfil();}
+  if(diff>70){const ap=document.querySelector('.page.on');if(ap?.id==='pg-home')loadFeed(true);else if(ap?.id==='pg-topik')renderTopik();else if(ap?.id==='pg-profil'&&user)renderProfil();}
   ptrEl.style.display='none';
 },{passive:true});
 
 // INFINITE SCROLL
-document.getElementById('content').addEventListener('scroll', function() {
+document.getElementById('content').addEventListener('scroll',function(){
   const activePage=document.querySelector('.page.on');
-  if(activePage?.id!=='pg-home') return;
+  if(activePage?.id!=='pg-home')return;
   const {scrollTop,scrollHeight,clientHeight}=this;
-  if(scrollHeight-scrollTop-clientHeight<200) loadFeed(false);
+  if(scrollHeight-scrollTop-clientHeight<200)loadFeed(false);
 },{passive:true});
 
 (async()=>{await restoreSession();loadFeed(true);renderTopik();})();
