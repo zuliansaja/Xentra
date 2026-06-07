@@ -197,7 +197,10 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   </div>
   <div id="ptr-indicator"><i class="fa fa-sync-alt spin"></i> Memuat ulang...</div>
   <div id="content">
-    <div class="page on" id="pg-home"><div id="feed"></div></div>
+    <div class="page on" id="pg-home">
+      <div class="search-bar"><div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="feedSearchInput" placeholder="Cari postingan..." oninput="doFeedSearch(this.value)"></div></div>
+      <div id="feed"></div>
+    </div>
     <div class="page" id="pg-topik">
       <div style="padding:12px 16px"><div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="topikSearchInput" placeholder="Cari topik..." oninput="renderTopik()"></div></div>
       <div style="display:flex;border-bottom:1px solid var(--border);padding:0 16px">
@@ -396,7 +399,7 @@ let feedPage=0,feedLoading=false,feedDone=false;
 async function loadFeed(reset=false){
   if(feedLoading||feedDone)return;feedLoading=true;
   const feed=document.getElementById('feed');
-  if(reset){feed.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';feedPage=0;feedDone=false;}
+  if(reset){feed.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';feedPage=0;feedDone=false;const si=document.getElementById('feedSearchInput');if(si)si.value='';}
   else{const l=document.createElement('div');l.id='feed-loader';l.className='center-msg';l.style.padding='20px';l.innerHTML='<i class="fa fa-spinner spin"></i>';feed.appendChild(l);}
   try{
     const limit=20,offset=feedPage*limit;
@@ -835,6 +838,21 @@ function renderNotif(){
     <div class="center-msg"><i class="fa fa-bell"></i><h3>Belum ada notifikasi</h3><p>Notifikasi akan muncul di sini</p></div>`;
 }
 function filterNotif(el){document.querySelectorAll('.nfbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+
+async function doFeedSearch(q){
+  const feed=document.getElementById('feed');
+  if(!q.trim()){loadFeed(true);return;}
+  feed.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  try{
+    const posts=await sb(`/rest/v1/posts?caption=ilike.*${encodeURIComponent(q)}*&select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=20`);
+    if(!posts.length){feed.innerHTML='<div class="center-msg"><i class="fa fa-search"></i><h3>Tidak ditemukan</h3><p>Coba kata kunci lain</p></div>';return;}
+    const userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))];
+    let profileMap={};
+    if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>profileMap[p.id]=p);}
+    posts.forEach(p=>p.profiles=profileMap[p.user_id]||null);
+    feed.innerHTML=posts.map(p=>renderPost(p)).join('');
+  }catch(e){feed.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal</h3><p>${e.message}</p></div>`;}
+}
 
 async function doSearch(q){
   const res=document.getElementById('searchResults');
