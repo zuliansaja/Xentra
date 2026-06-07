@@ -76,7 +76,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .pavatar-lg { width:80px; height:80px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:32px; color:var(--text2); margin:0 auto 12px; overflow:hidden; }
 .pavatar-lg img { width:100%; height:100%; object-fit:cover; }
 .pname { font-size:20px; font-weight:800; } .pusername { font-size:14px; color:var(--text2); margin-top:2px; }
-.pstats { display:flex; justify-content:center; gap:36px; margin:16px 0; }
+.pstats { display:flex; justify-content:center; gap:24px; margin:16px 0; flex-wrap:wrap; }
 .pstat-num { font-size:20px; font-weight:800; } .pstat-label { font-size:12px; color:var(--text2); }
 .profil-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
 .profil-thumb { aspect-ratio:1; overflow:hidden; background:var(--bg3); }
@@ -810,6 +810,7 @@ async function renderProfil() {
         <div><div class="pstat-num" id="statPost">0</div><div class="pstat-label">Post</div></div>
         <div><div class="pstat-num" id="statFollowers">0</div><div class="pstat-label">Followers</div></div>
         <div><div class="pstat-num" id="statFollowing">0</div><div class="pstat-label">Following</div></div>
+        <div><div class="pstat-num" id="statVote">0</div><div class="pstat-label">Like</div></div>
       </div>
       <div class="profil-btns">
         <button class="btn-primary" onclick="toast('Segera hadir')">${t('editprofil')}</button>
@@ -830,15 +831,20 @@ async function renderProfil() {
 }
 async function loadProfilPosts() {
   try {
-    const posts=await sb(`/rest/v1/posts?user_id=eq.${user.id}&select=*,post_images(image_url,order_index),votes(type)&order=created_at.desc`);
-    document.getElementById('statPost').textContent=posts.length;
+    const posts=await sb(`/rest/v1/posts?user_id=eq.${user.id}&select=id,caption,created_at,post_images(image_url,order_index),votes(type)&order=created_at.desc`);
+    const statPost=document.getElementById('statPost');
+    const statVote=document.getElementById('statVote');
+    const profilGrid=document.getElementById('profilGrid');
+    if(statPost) statPost.textContent=posts.length;
     const totalVotes=posts.reduce((sum,p)=>(p.votes||[]).filter(v=>v.type==='up').length+sum,0);
-    document.getElementById('statVote').textContent=totalVotes;
-    document.getElementById('profilGrid').innerHTML=posts.map(p=>{
-      const img=(p.post_images||[])[0]?.image_url;
-      return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;
-    }).join('');
-  } catch(e){}
+    if(statVote) statVote.textContent=totalVotes;
+    if(profilGrid) profilGrid.innerHTML=posts.length
+      ? posts.map(p=>{
+          const img=(p.post_images||[]).sort((a,b)=>a.order_index-b.order_index)[0]?.image_url;
+          return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;
+        }).join('')
+      : '<div style="grid-column:span 3;text-align:center;padding:40px;color:var(--text2)">Belum ada post</div>';
+  } catch(e){ console.error('loadProfilPosts error:',e); }
 }
 
 function renderNotif() {
