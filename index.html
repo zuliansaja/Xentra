@@ -880,15 +880,28 @@ async function uploadAvatar(inp) {
     toast('Mengupload foto profil...');
     const ext=file.name.split('.').pop();
     const path=`avatars/${user.id}/avatar.${ext}`;
-    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
-    if(!r.ok){
-      // try upsert
-      const r2=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'PUT',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
-      if(!r2.ok)throw new Error('Gagal upload');
+    // Coba POST dulu, kalau gagal PUT (upsert)
+    let uploadOk=false;
+    for(const method of ['POST','PUT']){
+      const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{
+        method,
+        headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type,'x-upsert':'true'},
+        body:file
+      });
+      if(r.ok){uploadOk=true;break;}
     }
+    if(!uploadOk)throw new Error('Gagal upload foto');
     const url=`${SB}/storage/v1/object/public/meme-images/${path}?t=${Date.now()}`;
-    await sb(`/rest/v1/profiles?id=eq.${user.id}`,{method:'PATCH',body:JSON.stringify({avatar_url:url})});
-    if(user.profile)user.profile.avatar_url=url;
+    // Update profile dengan token auth
+    const res=await fetch(`${SB}/rest/v1/profiles?id=eq.${user.id}`,{
+      method:'PATCH',
+      headers:{...h(),'Prefer':'return=representation'},
+      body:JSON.stringify({avatar_url:url})
+    });
+    if(!res.ok){const err=await res.text();throw new Error('Gagal update profil: '+err);}
+    if(!user.profile)user.profile={};
+    user.profile.avatar_url=url;
+    saveSession(localStorage.getItem('xn_refresh'));
     toast('Foto profil diperbarui!');
     renderProfil();
   }catch(e){toast(e.message);}
@@ -902,13 +915,22 @@ async function uploadGrupPhoto(topicId,inp) {
     toast('Mengupload foto grup...');
     const ext=file.name.split('.').pop();
     const path=`groups/${topicId}/cover.${ext}`;
-    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
-    if(!r.ok){
-      const r2=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'PUT',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type},body:file});
-      if(!r2.ok)throw new Error('Gagal upload');
+    let uploadOk=false;
+    for(const method of ['POST','PUT']){
+      const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{
+        method,
+        headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type,'x-upsert':'true'},
+        body:file
+      });
+      if(r.ok){uploadOk=true;break;}
     }
+    if(!uploadOk)throw new Error('Gagal upload foto');
     const url=`${SB}/storage/v1/object/public/meme-images/${path}?t=${Date.now()}`;
-    await sb(`/rest/v1/topics?id=eq.${topicId}`,{method:'PATCH',body:JSON.stringify({photo_url:url})});
+    await fetch(`${SB}/rest/v1/topics?id=eq.${topicId}`,{
+      method:'PATCH',
+      headers:{...h(),'Prefer':'return=representation'},
+      body:JSON.stringify({photo_url:url})
+    });
     if(currentTopic)currentTopic.photoUrl=url;
     toast('Foto grup diperbarui!');
     openGrupDetail();
