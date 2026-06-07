@@ -159,6 +159,10 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .chat-input:focus { border-color:var(--accent); }
 .chat-send { width:40px; height:40px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:transform .1s; }
 .chat-send:active { transform:scale(0.92); }
+/* PAGE TRANSITIONS */
+.page { transition: opacity 0.18s ease; }
+.page.on { display:block; animation: fadein 0.18s ease; }
+@keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 </style>
 </head>
 <body>
@@ -210,6 +214,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
     </div>
     <div class="page" id="pg-notif"><div id="notifWall"></div></div>
     <div class="page" id="pg-profil"><div id="profilWall"></div></div>
+    <div class="page" id="pg-user"><div id="userWall"></div></div>
   </div>
   <div id="navbar">
     <div class="nitem on" id="nb-home" onclick="goPage('home')"><i class="fa fa-home"></i></div>
@@ -391,6 +396,43 @@ async function loadProfile() {
 }
 function doLogout(){user=null;token=null;clearSession();goPage('home');loadFeed();toast(t('logoutsuccess'));}
 
+// PROFIL ORANG LAIN
+async function openUserProfil(uid) {
+  if(!uid||uid==='undefined') return;
+  if(user&&uid===user.id){goPage('profil');return;}
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
+  document.getElementById('feedtabs').style.display='none';
+  document.getElementById('pg-user').classList.add('on');
+  document.getElementById('userWall').innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  try {
+    const profiles=await sb(`/rest/v1/profiles?id=eq.${uid}&select=*`);
+    const p=profiles[0]||{};
+    const posts=await sb(`/rest/v1/posts?user_id=eq.${uid}&select=*,post_images(image_url,order_index),votes(type)&order=created_at.desc`);
+    const totalVotes=posts.reduce((sum,post)=>(post.votes||[]).filter(v=>v.type==='up').length+sum,0);
+    document.getElementById('userWall').innerHTML=`
+      <div style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)">
+        <div class="chat-back" onclick="history.back()||goPage('home')"><i class="fa fa-arrow-left"></i></div>
+        <div style="font-weight:700;font-size:16px">${p.username||'User'}</div>
+      </div>
+      <div class="profil-top">
+        <div class="pavatar-lg"><i class="fa fa-user"></i></div>
+        <div class="pname">${p.username||'User'}</div>
+        <div class="pusername">@${p.username||'user'}</div>
+        <div class="pstats">
+          <div><div class="pstat-num">${posts.length}</div><div class="pstat-label">Post</div></div>
+          <div><div class="pstat-num">${totalVotes}</div><div class="pstat-label">Upvote</div></div>
+        </div>
+      </div>
+      <div class="profil-grid">${posts.map(post=>{
+        const img=(post.post_images||[])[0]?.image_url;
+        return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;
+      }).join('')}</div>`;
+  } catch(e) {
+    document.getElementById('userWall').innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;
+  }
+}
+
 const needLogin=['notif','profil'];
 function goPage(page) {
   if(chatInterval){clearInterval(chatInterval);chatInterval=null;}
@@ -423,21 +465,45 @@ function loginWall() {
   return `<div class="login-wall"><i class="fa fa-lock"></i><h3>${t('loginwall')}</h3><button class="btn-primary" onclick="openSheet('authSheet')">${t('loginnow')}</button></div>`;
 }
 
+let feedPage=0, feedLoading=false, feedDone=false;
+
 function switchTab(type,el) {
-  feedType=type;document.querySelectorAll('.ftab').forEach(tab=>tab.classList.remove('on'));el.classList.add('on');loadFeed();
+  feedType=type;
+  document.querySelectorAll('.ftab').forEach(tab=>tab.classList.remove('on'));
+  el.classList.add('on');
+  feedPage=0;feedDone=false;
+  loadFeed(true);
 }
-async function loadFeed() {
+
+async function loadFeed(reset=false) {
+  if(feedLoading||feedDone) return;
+  feedLoading=true;
   const feed=document.getElementById('feed');
-  feed.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  if(reset){feed.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';feedPage=0;feedDone=false;}
+  else {
+    const loader=document.createElement('div');
+    loader.id='feed-loader';loader.className='center-msg';loader.style.padding='20px';
+    loader.innerHTML='<i class="fa fa-spinner spin"></i>';
+    feed.appendChild(loader);
+  }
   try {
-    const posts=await sb(`/rest/v1/posts?select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=30`);
-    if(!posts.length){feed.innerHTML=`<div class="center-msg"><i class="fa fa-wind"></i><h3>${t('nopost')}</h3><p>${t('nopostsub')}</p></div>`;return;}
+    const limit=20, offset=feedPage*limit;
+    const posts=await sb(`/rest/v1/posts?select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=${limit}&offset=${offset}`);
+    document.getElementById('feed-loader')?.remove();
+    if(reset&&!posts.length){feed.innerHTML=`<div class="center-msg"><i class="fa fa-wind"></i><h3>${t('nopost')}</h3><p>${t('nopostsub')}</p></div>`;feedLoading=false;return;}
+    if(posts.length<limit) feedDone=true;
     const userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))];
     let profileMap={};
     if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>profileMap[p.id]=p);}
     posts.forEach(p=>p.profiles=profileMap[p.user_id]||null);
-    feed.innerHTML=posts.map(p=>renderPost(p)).join('');
-  } catch(e){feed.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>${t('failload')}</h3><p>${e.message}</p></div>`;}
+    if(reset) feed.innerHTML=posts.map(p=>renderPost(p)).join('');
+    else feed.insertAdjacentHTML('beforeend',posts.map(p=>renderPost(p)).join(''));
+    feedPage++;
+  } catch(e){
+    document.getElementById('feed-loader')?.remove();
+    if(reset) feed.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>${t('failload')}</h3><p>${e.message}</p></div>`;
+  }
+  feedLoading=false;
 }
 function renderPost(p) {
   const imgs=(p.post_images||[]).sort((a,b)=>a.order_index-b.order_index);
@@ -452,7 +518,7 @@ function renderPost(p) {
   else if(imgs.length>=3) imgHtml=`<div class="pimgs s3"><img class="pm" src="${imgs[0].image_url}" loading="lazy"><img src="${imgs[1].image_url}" loading="lazy"><img src="${imgs[2].image_url}" loading="lazy"></div>`;
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
-      <div class="puser"><div class="pavatar"><i class="fa fa-user"></i></div><div><div class="puname">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
+      <div class="puser"><div class="pavatar"><i class="fa fa-user"></i></div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
       ${user&&(user.id===p.user_id||user.profile?.is_admin)?`<i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px" onclick="showPostMenu('${p.id}',this)"></i>`:`<i class="fa fa-ellipsis-h" style="color:var(--text2);padding:4px"></i>`}
     </div>
     ${cap?`<div class="ptitle">${cap}</div>`:''}
@@ -776,7 +842,15 @@ contentEl.addEventListener('touchend',e=>{
   ptrEl.style.display='none';
 },{passive:true});
 
-(async()=>{await restoreSession();loadFeed();renderTopik();})();
+// INFINITE SCROLL
+document.getElementById('content').addEventListener('scroll', function() {
+  const activePage=document.querySelector('.page.on');
+  if(activePage?.id!=='pg-home') return;
+  const {scrollTop,scrollHeight,clientHeight}=this;
+  if(scrollHeight-scrollTop-clientHeight<200) loadFeed(false);
+},{passive:true});
+
+(async()=>{await restoreSession();loadFeed(true);renderTopik();})();
 </script>
 </body>
 </html>
