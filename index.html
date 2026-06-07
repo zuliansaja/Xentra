@@ -412,13 +412,23 @@ async function openUserProfil(uid) {
   document.getElementById('pg-user').classList.add('on');
   document.getElementById('userWall').innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
   try {
-    const profiles=await sb(`/rest/v1/profiles?id=eq.${uid}&select=*`);
+    const [profiles, posts, followers, following] = await Promise.all([
+      sb(`/rest/v1/profiles?id=eq.${uid}&select=*`),
+      sb(`/rest/v1/posts?user_id=eq.${uid}&select=*,post_images(image_url,order_index),votes(type)&order=created_at.desc`),
+      sb(`/rest/v1/follows?following_id=eq.${uid}&select=id`),
+      sb(`/rest/v1/follows?follower_id=eq.${uid}&select=id`)
+    ]);
     const p=profiles[0]||{};
-    const posts=await sb(`/rest/v1/posts?user_id=eq.${uid}&select=*,post_images(image_url,order_index),votes(type)&order=created_at.desc`);
     const totalVotes=posts.reduce((sum,post)=>(post.votes||[]).filter(v=>v.type==='up').length+sum,0);
+    // Cek apakah user sudah follow
+    let isFollowing=false;
+    if(user) {
+      const myFollow=await sb(`/rest/v1/follows?follower_id=eq.${user.id}&following_id=eq.${uid}&select=id`);
+      isFollowing=myFollow.length>0;
+    }
     document.getElementById('userWall').innerHTML=`
       <div style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)">
-        <div class="chat-back" onclick="history.back()||goPage('home')"><i class="fa fa-arrow-left"></i></div>
+        <div class="chat-back" onclick="goPage('home')"><i class="fa fa-arrow-left"></i></div>
         <div style="font-weight:700;font-size:16px">${p.username||'User'}</div>
       </div>
       <div class="profil-top">
@@ -427,8 +437,14 @@ async function openUserProfil(uid) {
         <div class="pusername">@${p.username||'user'}</div>
         <div class="pstats">
           <div><div class="pstat-num">${posts.length}</div><div class="pstat-label">Post</div></div>
-          <div><div class="pstat-num">${totalVotes}</div><div class="pstat-label">Upvote</div></div>
+          <div><div class="pstat-num">${followers.length}</div><div class="pstat-label">Followers</div></div>
+          <div><div class="pstat-num">${following.length}</div><div class="pstat-label">Following</div></div>
         </div>
+        ${user?`<div class="profil-btns">
+          <button class="btn-primary" id="followBtn" onclick="toggleFollow('${uid}',this)" style="${isFollowing?'background:var(--bg3);color:var(--text);border:1px solid var(--border)':''}">
+            ${isFollowing?'Mengikuti':'Ikuti'}
+          </button>
+        </div>`:''}
       </div>
       <div class="profil-grid">${posts.map(post=>{
         const img=(post.post_images||[])[0]?.image_url;
@@ -437,6 +453,31 @@ async function openUserProfil(uid) {
   } catch(e) {
     document.getElementById('userWall').innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;
   }
+}
+
+async function toggleFollow(uid, btn) {
+  if(!user){openSheet('authSheet');return;}
+  const isFollowing=btn.textContent.trim()==='Mengikuti';
+  try {
+    if(isFollowing) {
+      await sb(`/rest/v1/follows?follower_id=eq.${user.id}&following_id=eq.${uid}`,{method:'DELETE'});
+      btn.textContent='Ikuti';
+      btn.style.background='var(--accent)';
+      btn.style.color='#fff';
+      btn.style.border='none';
+    } else {
+      await sb('/rest/v1/follows',{method:'POST',body:JSON.stringify({follower_id:user.id,following_id:uid})});
+      btn.textContent='Mengikuti';
+      btn.style.background='var(--bg3)';
+      btn.style.color='var(--text)';
+      btn.style.border='1px solid var(--border)';
+    }
+    // Update follower count
+    const followers=await sb(`/rest/v1/follows?following_id=eq.${uid}&select=id`);
+    const statsEl=document.querySelectorAll('.pstat-num');
+    if(statsEl[1]) statsEl[1].textContent=followers.length;
+    toast(isFollowing?'Berhenti mengikuti':'Mengikuti!');
+  } catch(e){toast('Gagal: '+e.message);}
 }
 
 const needLogin=['notif','profil'];
@@ -758,7 +799,7 @@ async function sendChatImage(inp) {
 }
 
 // PROFIL
-function renderProfil() {
+async function renderProfil() {
   const p=user?.profile||{};
   document.getElementById('pg-profil').innerHTML=`
     <div class="profil-top">
@@ -767,7 +808,8 @@ function renderProfil() {
       <div class="pusername">@${p.username||'user'}</div>
       <div class="pstats">
         <div><div class="pstat-num" id="statPost">0</div><div class="pstat-label">Post</div></div>
-        <div><div class="pstat-num" id="statVote">0</div><div class="pstat-label">Upvote</div></div>
+        <div><div class="pstat-num" id="statFollowers">0</div><div class="pstat-label">Followers</div></div>
+        <div><div class="pstat-num" id="statFollowing">0</div><div class="pstat-label">Following</div></div>
       </div>
       <div class="profil-btns">
         <button class="btn-primary" onclick="toast('Segera hadir')">${t('editprofil')}</button>
@@ -776,6 +818,15 @@ function renderProfil() {
     </div>
     <div class="profil-grid" id="profilGrid"></div>`;
   loadProfilPosts();
+  // Load followers/following count
+  try {
+    const [followers, following] = await Promise.all([
+      sb(`/rest/v1/follows?following_id=eq.${user.id}&select=id`),
+      sb(`/rest/v1/follows?follower_id=eq.${user.id}&select=id`)
+    ]);
+    document.getElementById('statFollowers').textContent=followers.length;
+    document.getElementById('statFollowing').textContent=following.length;
+  } catch(e){}
 }
 async function loadProfilPosts() {
   try {
