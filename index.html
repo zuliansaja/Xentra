@@ -881,16 +881,13 @@ async function uploadAvatar(inp) {
     const ext=file.name.split('.').pop();
     const path=`avatars/${user.id}/avatar.${ext}`;
     // Coba POST dulu, kalau gagal PUT (upsert)
-    let uploadOk=false;
-    for(const method of ['POST','PUT']){
-      const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{
-        method,
-        headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type,'x-upsert':'true'},
-        body:file
-      });
-      if(r.ok){uploadOk=true;break;}
-    }
-    if(!uploadOk)throw new Error('Gagal upload foto');
+    // Pakai upsert langsung
+    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{
+      method:'POST',
+      headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type,'x-upsert':'true'},
+      body:file
+    });
+    if(!r.ok){const err=await r.text();throw new Error('Gagal upload: '+err);}
     const url=`${SB}/storage/v1/object/public/meme-images/${path}?t=${Date.now()}`;
     // Update profile dengan token auth
     const res=await fetch(`${SB}/rest/v1/profiles?id=eq.${user.id}`,{
@@ -915,16 +912,12 @@ async function uploadGrupPhoto(topicId,inp) {
     toast('Mengupload foto grup...');
     const ext=file.name.split('.').pop();
     const path=`groups/${topicId}/cover.${ext}`;
-    let uploadOk=false;
-    for(const method of ['POST','PUT']){
-      const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{
-        method,
-        headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type,'x-upsert':'true'},
-        body:file
-      });
-      if(r.ok){uploadOk=true;break;}
-    }
-    if(!uploadOk)throw new Error('Gagal upload foto');
+    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{
+      method:'POST',
+      headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':file.type,'x-upsert':'true'},
+      body:file
+    });
+    if(!r.ok){const err=await r.text();throw new Error('Gagal upload: '+err);}
     const url=`${SB}/storage/v1/object/public/meme-images/${path}?t=${Date.now()}`;
     await fetch(`${SB}/rest/v1/topics?id=eq.${topicId}`,{
       method:'PATCH',
