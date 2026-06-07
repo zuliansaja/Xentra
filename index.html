@@ -512,13 +512,14 @@ function renderPost(p){
   const tags=(p.caption||'').match(/#\w+/g)||[];
   const cap=(p.caption||'').replace(/#\w+/g,'').trim();
   const uname=p.profiles?.username||'user';
+  const uavatar=p.profiles?.avatar_url;
   let imgHtml='';
   if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy"></div>`;
   else if(imgs.length===2)imgHtml=`<div class="pimgs s2">${imgs.map(i=>`<img src="${i.image_url}" loading="lazy">`).join('')}</div>`;
   else if(imgs.length>=3)imgHtml=`<div class="pimgs s3"><img class="pm" src="${imgs[0].image_url}" loading="lazy"><img src="${imgs[1].image_url}" loading="lazy"><img src="${imgs[2].image_url}" loading="lazy"></div>`;
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
-      <div class="puser"><div class="pavatar"><i class="fa fa-user"></i></div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
+      <div class="puser"><div class="pavatar">${uavatar?`<img src="${uavatar}" loading="lazy">`:'<i class="fa fa-user"></i>'}</div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
       ${user&&(user.id===p.user_id||user.profile?.is_admin)?`<i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px" onclick="showPostMenu('${p.id}',this)"></i>`:`<i class="fa fa-ellipsis-h" style="color:var(--text2);padding:4px"></i>`}
     </div>
     ${cap?`<div class="ptitle">${cap}</div>`:''}
@@ -744,7 +745,7 @@ async function loadChatMsgs(){
     const msgs=await sb(`/rest/v1/topic_chats?topic_id=eq.${currentTopic.id}&select=*&order=created_at.asc&limit=100`);
     const uids=[...new Set(msgs.map(m=>m.user_id).filter(Boolean))];
     let pmap={};
-    if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username`);profiles.forEach(p=>pmap[p.id]=p);}
+    if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>pmap[p.id]=p);}
     const container=document.getElementById('chatMsgs');
     const isBottom=container.scrollHeight-container.scrollTop-container.clientHeight<60;
     if(!msgs.length){container.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">Belum ada pesan. Mulai chat!</div>';return;}
@@ -754,11 +755,11 @@ async function loadChatMsgs(){
       const sameUser=prev&&prev.user_id===m.user_id;
       const closeTime=prev&&(new Date(m.created_at)-new Date(prev.created_at))<120000;
       if(sameUser&&closeTime){groups[groups.length-1].msgs.push(m);}
-      else{groups.push({user_id:m.user_id,uname:pmap[m.user_id]?.username||'user',mine:user&&m.user_id===user.id,msgs:[m]});}
+      else{const prof=pmap[m.user_id];groups.push({user_id:m.user_id,uname:prof?.username||'user',avatar:prof?.avatar_url||'',mine:user&&m.user_id===user.id,msgs:[m]});}
     });
     container.innerHTML=groups.map(g=>`
       <div class="chat-group ${g.mine?'mine':''}">
-        ${!g.mine?`<div class="chat-group-header"><div class="chat-avatar"><i class="fa fa-user" style="font-size:10px"></i></div><div class="chat-uname">${g.uname}</div></div>`:''}
+        ${!g.mine?`<div class="chat-group-header"><div class="chat-avatar" style="overflow:hidden">${g.avatar?`<img src="${g.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'<i class="fa fa-user" style="font-size:10px"></i>'}</div><div class="chat-uname">${g.uname}</div></div>`:''}
         <div class="chat-bubbles">
           ${g.msgs.map(m=>{
             const imgMatch=m.content.match(/\[img\](.*?)\[\/img\]/);
@@ -856,9 +857,8 @@ function goProfilMenu(){
     '</div>'+
     '<div style="padding:24px 16px 0">'+
       '<div style="text-align:center;margin-bottom:28px">'+
-        '<div class="pavatar-lg" onclick="document.getElementById(\'avatarInputMenu\').click()" style="cursor:pointer;position:relative;margin:0 auto 10px">'+
+        '<div class="pavatar-lg" onclick="document.getElementById(\'avatarInputMenu\').click()" style="cursor:pointer;margin:0 auto 10px">'+
           avatarHtml+
-          '<div style="position:absolute;bottom:0;right:0;width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff"><i class="fa fa-camera"></i></div>'+
         '</div>'+
         '<input type="file" id="avatarInputMenu" accept="image/*" style="display:none" onchange="uploadAvatar(this)">'+
         '<div style="font-size:13px;color:var(--text2);margin-top:6px">Tap foto untuk ganti</div>'+
