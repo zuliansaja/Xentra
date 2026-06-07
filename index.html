@@ -913,7 +913,7 @@ async function openUserProfil(uid){
         <div style="font-weight:700;font-size:16px">${p.username||'User'}</div>
       </div>
       <div class="profil-top">
-        <div class="pavatar-lg"><i class="fa fa-user"></i></div>
+        <div class="pavatar-lg">${p.avatar_url?`<img src="${p.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
         <div class="pname">${p.username||'User'}</div>
         <div class="pusername">@${p.username||'user'}</div>
         <div class="pstats">
