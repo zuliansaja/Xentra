@@ -117,6 +117,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .uopt-title { font-weight:600; font-size:15px; } .uopt-sub { font-size:13px; color:var(--text2); }
 .klist { max-height:45vh; overflow-y:auto; }
 .kitem { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); }
+.kreply { background:var(--bg); border-left:2px solid var(--border); margin-left:8px; padding-left:12px !important; }
 .kavatar { width:32px; height:32px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--text2); flex-shrink:0; overflow:hidden; }
 .kavatar img { width:100%; height:100%; object-fit:cover; }
 .kuname { font-weight:700; font-size:13px; } .ktext { font-size:13px; color:var(--text2); margin-top:2px; }
@@ -455,9 +456,12 @@ async function vote(pid,el){
   try{if(isOn){await sb(`/rest/v1/votes?post_id=eq.${pid}&user_id=eq.${user.id}`,{method:'DELETE'});el.classList.remove('upvoted');cnt.textContent=parseInt(cnt.textContent)-1;}
     else{await sb('/rest/v1/votes',{method:'POST',body:JSON.stringify({post_id:pid,user_id:user.id,type:'up'})});el.classList.add('upvoted');cnt.textContent=parseInt(cnt.textContent)+1;}}catch(e){toast('Gagal vote');}
 }
+let replyTo=null;
 async function openKomentar(pid){
-  currentPost=pid;openSheet('komentarSheet');
+  currentPost=pid;replyTo=null;openSheet('komentarSheet');
   const list=document.getElementById('komentarList');
+  const inp=document.getElementById('kinput');
+  inp.placeholder='Tulis komentar...';
   list.innerHTML='<div class="center-msg" style="padding:20px"><i class="fa fa-spinner spin"></i></div>';
   try{
     const cs=await sb(`/rest/v1/comments?post_id=eq.${pid}&select=*&order=created_at.asc`);
@@ -466,13 +470,84 @@ async function openKomentar(pid){
     const uids=[...new Set(cs.map(c=>c.user_id).filter(Boolean))];
     let pmap={};
     if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>pmap[p.id]=p);}
-    list.innerHTML=cs.map(c=>`<div class="kitem"><div class="kavatar">${pmap[c.user_id]?.avatar_url?`<img src="${pmap[c.user_id].avatar_url}">`:'<i class="fa fa-user"></i>'}</div><div><div class="kuname">${pmap[c.user_id]?.username||'user'}</div><div class="ktext">${c.content}</div></div></div>`).join('');
+    // Fetch like counts dan my likes
+    const cids=cs.map(c=>c.id);
+    let likeCounts={},myLikes={};
+    if(cids.length){
+      const likes=await sb(`/rest/v1/comment_likes?comment_id=in.(${cids.join(',')})&select=comment_id,user_id`);
+      likes.forEach(l=>{likeCounts[l.comment_id]=(likeCounts[l.comment_id]||0)+1;if(user&&l.user_id===user.id)myLikes[l.comment_id]=true;});
+    }
+    // Pisah top-level dan replies
+    const topLevel=cs.filter(c=>!c.parent_id);
+    const replies=cs.filter(c=>c.parent_id);
+    const repliesMap={};
+    replies.forEach(r=>{if(!repliesMap[r.parent_id])repliesMap[r.parent_id]=[];repliesMap[r.parent_id].push(r);});
+    function renderComment(c,isReply=false){
+      const prof=pmap[c.user_id]||{};
+      const lc=likeCounts[c.id]||0;
+      const liked=myLikes[c.id]||false;
+      return `<div class="kitem ${isReply?'kreply':''}" id="kc-${c.id}" style="${isReply?'padding-left:40px;':''}">
+        <div class="kavatar">${prof.avatar_url?`<img src="${prof.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
+        <div style="flex:1">
+          <div class="kuname">${prof.username||'user'}</div>
+          <div class="ktext">${c.content}</div>
+          <div style="display:flex;gap:14px;margin-top:6px;align-items:center">
+            <div onclick="likeKomentar('${c.id}',this)" style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;color:${liked?'var(--accent)':'var(--text2)'}">
+              <i class="fa fa-heart${liked?'':'-o'}" style="font-size:13px"></i><span id="klc-${c.id}">${lc||''}</span>
+            </div>
+            <div onclick="setReply('${c.id}','${(prof.username||'user').replace(/'/g,"\\'")}',this)" style="font-size:12px;color:var(--text2);cursor:pointer"><i class="fa fa-reply" style="font-size:12px"></i> Balas</div>
+          </div>
+        </div>
+      </div>`;
+    }
+    list.innerHTML=topLevel.map(c=>{
+      let html=renderComment(c,false);
+      if(repliesMap[c.id])html+=repliesMap[c.id].map(r=>renderComment(r,true)).join('');
+      return html;
+    }).join('');
   }catch(e){list.innerHTML='<div style="padding:20px;color:var(--text2)">Gagal memuat</div>';}
 }
+
+function setReply(cid,uname,el){
+  if(!user)return openSheet('authSheet');
+  replyTo=cid;
+  const inp=document.getElementById('kinput');
+  inp.placeholder=`Membalas @${uname}...`;
+  inp.focus();
+  // Highlight active reply
+  document.querySelectorAll('.kitem').forEach(k=>k.style.background='');
+  document.getElementById('kc-'+cid)?.style.setProperty('background','var(--bg3)');
+}
+
+async function likeKomentar(cid,el){
+  if(!user)return openSheet('authSheet');
+  const icon=el.querySelector('i');
+  const cnt=el.querySelector('span');
+  const liked=icon.classList.contains('fa-heart')&&!icon.classList.contains('fa-heart-o');
+  try{
+    if(liked){
+      await sb(`/rest/v1/comment_likes?comment_id=eq.${cid}&user_id=eq.${user.id}`,{method:'DELETE'});
+      icon.className='fa fa-heart-o';el.style.color='var(--text2)';
+      cnt.textContent=Math.max(0,(parseInt(cnt.textContent)||1)-1)||'';
+    }else{
+      await sb('/rest/v1/comment_likes',{method:'POST',body:JSON.stringify({comment_id:cid,user_id:user.id})});
+      icon.className='fa fa-heart';el.style.color='var(--accent)';
+      cnt.textContent=(parseInt(cnt.textContent)||0)+1;
+    }
+  }catch(e){toast('Gagal');}
+}
+
 async function submitKomentar(){
   const inp=document.getElementById('kinput');const txt=inp.value.trim();if(!txt)return;
   if(!user)return openSheet('authSheet');
-  try{await sb('/rest/v1/comments',{method:'POST',body:JSON.stringify({post_id:currentPost,user_id:user.id,content:txt})});inp.value='';openKomentar(currentPost);}catch(e){toast('Gagal kirim');}
+  try{
+    const body={post_id:currentPost,user_id:user.id,content:txt};
+    if(replyTo)body.parent_id=replyTo;
+    await sb('/rest/v1/comments',{method:'POST',body:JSON.stringify(body)});
+    inp.value='';replyTo=null;inp.placeholder='Tulis komentar...';
+    document.querySelectorAll('.kitem').forEach(k=>k.style.background='');
+    openKomentar(currentPost);
+  }catch(e){toast('Gagal kirim');}
 }
 
 let selFiles2=[];
