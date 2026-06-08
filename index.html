@@ -116,7 +116,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .uopt i { font-size:20px; color:var(--accent); width:24px; text-align:center; }
 .uopt-title { font-weight:600; font-size:15px; } .uopt-sub { font-size:13px; color:var(--text2); }
 .klist { max-height:45vh; overflow-y:auto; }
-.kitem { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); }
+.kitem { display:flex; gap:10px; padding:11px 0; }
 .kreply { background:var(--bg); border-left:2px solid var(--border); margin-left:8px; padding-left:12px !important; }
 .kavatar { width:32px; height:32px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--text2); flex-shrink:0; overflow:hidden; }
 .kavatar img { width:100%; height:100%; object-fit:cover; }
@@ -313,7 +313,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
     </div>
     <!-- Input -->
     <div style="display:flex;gap:10px;align-items:center;padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0">
-      <div class="kavatar" style="flex-shrink:0">${''}</div>
+      <div class="kavatar" style="flex-shrink:0"></div>
       <input type="text" class="kinput" id="kinput" placeholder="Tulis komentarmu disini" style="flex:1;border-radius:22px">
       <button class="ksend" onclick="submitKomentar()"><i class="fa fa-paper-plane"></i></button>
     </div>
@@ -454,7 +454,10 @@ function renderPost(p){
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
       <div class="puser"><div class="pavatar">${uavatar?`<img src="${uavatar}" loading="lazy">`:'<i class="fa fa-user"></i>'}</div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
-      ${user&&(user.id===p.user_id||user.profile?.is_admin)?`<i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px" onclick="showPostMenu('${p.id}',this)"></i>`:`<i class="fa fa-ellipsis-h" style="color:var(--text2);padding:4px"></i>`}
+      <div style="display:flex;align-items:center;gap:6px">
+        <i class="fa fa-heart" id="save-${p.id}" onclick="toggleSave('${p.id}',this)" style="font-size:18px;color:var(--text2);cursor:pointer;padding:4px;transition:color .2s"></i>
+        ${user&&(user.id===p.user_id||user.profile?.is_admin)?`<i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px" onclick="showPostMenu('${p.id}',this)"></i>`:`<i class="fa fa-ellipsis-h" style="color:var(--text2);padding:4px"></i>`}
+      </div>
     </div>
     ${cap?`<div class="ptitle">${cap}</div>`:''}
     ${tags.length?`<div class="ptags">${tags.map(tg=>`<span class="ptag">${tg}</span>`).join('')}</div>`:''}
@@ -467,6 +470,14 @@ function renderPost(p){
     </div>
   </div>`;
 }
+
+// Toggle save/love icon pada post
+function toggleSave(pid,el){
+  const saved=el.style.color==='rgb(255, 68, 68)'||el.dataset.saved==='1';
+  if(saved){el.style.color='var(--text2)';el.dataset.saved='0';}
+  else{el.style.color='#ff4444';el.dataset.saved='1';}
+}
+
 async function vote(pid,el){
   if(!user)return openSheet('authSheet');
   const isOn=el.classList.contains('upvoted');const cnt=document.getElementById('vc-'+pid);
@@ -509,7 +520,6 @@ async function openKomentar(pid){
       const likes=await sb(`/rest/v1/comment_likes?comment_id=in.(${cids.join(',')})&select=comment_id,user_id`);
       likes.forEach(l=>{likeCounts[l.comment_id]=(likeCounts[l.comment_id]||0)+1;if(user&&l.user_id===user.id)myLikes[l.comment_id]=true;});
     }
-    // Sort: populer by like count
     let sorted=[...cs];
     if(komenTab==='populer')sorted.sort((a,b)=>(likeCounts[b.id]||0)-(likeCounts[a.id]||0));
     const topLevel=sorted.filter(c=>!c.parent_id);
@@ -521,7 +531,7 @@ async function openKomentar(pid){
       const liked=myLikes[c.id]||false;
       const uname=prof.username||'user';
       const avatarHtml=prof.avatar_url?`<img src="${prof.avatar_url}">`:'<i class="fa fa-user"></i>';
-      return `<div class="kitem" id="kc-${c.id}" style="${isReply?'padding-left:48px;':''}border-bottom:1px solid var(--border);padding-top:12px;padding-bottom:8px">
+      return `<div class="kitem" id="kc-${c.id}" style="${isReply?'padding-left:48px;':''}padding-top:12px;padding-bottom:8px">
         <div class="kavatar" style="flex-shrink:0">${avatarHtml}</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
@@ -618,7 +628,6 @@ function handleFiles(inp){
 }
 function removeFile(i){selFiles2.splice(i,1);const dt=new DataTransfer();selFiles2.forEach(f=>dt.items.add(f));document.getElementById('fileInput').files=dt.files;handleFiles(document.getElementById('fileInput'));}
 
-// Kompres foto sebelum upload: max 1080px, quality 0.8, output jpeg
 function compressImage(file,maxSize=1080,quality=0.82){
   return new Promise(resolve=>{
     const img=new Image();
@@ -1088,7 +1097,6 @@ function doChatSearch(q){
   const results=document.getElementById('chatSearchResults');
   if(!q.trim()){results.style.display='none';msgs.style.display='flex';return;}
   msgs.style.display='none';results.style.display='block';
-  // Cari dari semua bubble yang ada di chatMsgs (sudah di-render)
   const allBubbles=Array.from(document.getElementById('chatMsgs').querySelectorAll('.chat-bubble:not(.img-only)'));
   const keyword=q.toLowerCase();
   const matched=allBubbles.filter(b=>b.textContent.toLowerCase().includes(keyword));
