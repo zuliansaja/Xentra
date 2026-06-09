@@ -186,6 +186,15 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .member-name { font-weight:600; font-size:14px; }
 #pg-profil-menu { display:none; }
 #pg-profil-menu.on { display:block; }
+/* LIGHTBOX */
+#lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:999; display:none; align-items:center; justify-content:center; flex-direction:column; }
+#lightbox.open { display:flex; }
+#lightbox-img { max-width:100%; max-height:90vh; object-fit:contain; border-radius:6px; touch-action:pinch-zoom; user-select:none; }
+#lightbox-close { position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.15); border:none; color:#fff; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+#lightbox-counter { position:absolute; bottom:24px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.6); font-size:13px; font-weight:600; }
+#lightbox-prev, #lightbox-next { position:absolute; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.15); border:none; color:#fff; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+#lightbox-prev { left:12px; }
+#lightbox-next { right:12px; }
 </style>
 </head>
 <body>
@@ -331,6 +340,13 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
     <div class="sitem" onclick="setLang('en')" style="cursor:pointer"><div class="sitem-l"><i class="fa fa-globe"></i><div class="slabel">English</div></div><i class="fa fa-check" id="langEn" style="display:none;color:var(--accent)"></i></div>
   </div>
 </div>
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()"><i class="fa fa-times"></i></button>
+  <button id="lightbox-prev" onclick="event.stopPropagation();lightboxNav(-1)"><i class="fa fa-chevron-left"></i></button>
+  <img id="lightbox-img" onclick="event.stopPropagation()">
+  <button id="lightbox-next" onclick="event.stopPropagation();lightboxNav(1)"><i class="fa fa-chevron-right"></i></button>
+  <div id="lightbox-counter"></div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -448,9 +464,9 @@ function renderPost(p){
   const uname=p.profiles?.username||'user';
   const uavatar=p.profiles?.avatar_url;
   let imgHtml='';
-  if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy"></div>`;
-  else if(imgs.length===2)imgHtml=`<div class="pimgs s2">${imgs.map(i=>`<img src="${i.image_url}" loading="lazy">`).join('')}</div>`;
-  else if(imgs.length>=3)imgHtml=`<div class="pimgs s3"><img class="pm" src="${imgs[0].image_url}" loading="lazy"><img src="${imgs[1].image_url}" loading="lazy"><img src="${imgs[2].image_url}" loading="lazy"></div>`;
+  if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy" onclick="openLightbox(${JSON.stringify(imgs.map(i=>i.image_url))},0)"></div>`;
+  else if(imgs.length===2)imgHtml=`<div class="pimgs s2">${imgs.map((i,idx)=>`<img src="${i.image_url}" loading="lazy" onclick="openLightbox(${JSON.stringify(imgs.map(x=>x.image_url))},${idx})">`).join('')}</div>`;
+  else if(imgs.length>=3)imgHtml=`<div class="pimgs s3"><img class="pm" src="${imgs[0].image_url}" loading="lazy" onclick="openLightbox(${JSON.stringify(imgs.map(x=>x.image_url))},0)"><img src="${imgs[1].image_url}" loading="lazy" onclick="openLightbox(${JSON.stringify(imgs.map(x=>x.image_url))},1)"><img src="${imgs[2].image_url}" loading="lazy" onclick="openLightbox(${JSON.stringify(imgs.map(x=>x.image_url))},2)"></div>`;
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
       <div class="puser"><div class="pavatar">${uavatar?`<img src="${uavatar}" loading="lazy">`:'<i class="fa fa-user"></i>'}</div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
@@ -1129,6 +1145,51 @@ document.getElementById('content').addEventListener('scroll',function(){
 },{passive:true});
 
 (async()=>{await restoreSession();loadFeed(true);renderTopik();})();
+
+// LIGHTBOX
+let lbImgs=[],lbIdx=0,lbTouchX=0;
+function openLightbox(imgs,idx){
+  lbImgs=imgs;lbIdx=idx;
+  const lb=document.getElementById('lightbox');
+  const img=document.getElementById('lightbox-img');
+  img.src=lbImgs[lbIdx];
+  lb.classList.add('open');
+  document.body.style.overflow='hidden';
+  updateLightboxCounter();
+  const prev=document.getElementById('lightbox-prev');
+  const next=document.getElementById('lightbox-next');
+  prev.style.display=lbImgs.length>1?'flex':'none';
+  next.style.display=lbImgs.length>1?'flex':'none';
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow='';
+}
+function lightboxNav(dir){
+  lbIdx=(lbIdx+dir+lbImgs.length)%lbImgs.length;
+  const img=document.getElementById('lightbox-img');
+  img.style.opacity='0';
+  img.style.transition='opacity .15s';
+  setTimeout(()=>{img.src=lbImgs[lbIdx];img.style.opacity='1';},150);
+  updateLightboxCounter();
+}
+function updateLightboxCounter(){
+  const el=document.getElementById('lightbox-counter');
+  el.textContent=lbImgs.length>1?`${lbIdx+1} / ${lbImgs.length}`:'';
+}
+// Swipe gesture lightbox
+const lb=document.getElementById('lightbox');
+lb.addEventListener('touchstart',e=>{lbTouchX=e.touches[0].clientX;},{passive:true});
+lb.addEventListener('touchend',e=>{
+  const diff=e.changedTouches[0].clientX-lbTouchX;
+  if(Math.abs(diff)>50&&lbImgs.length>1)lightboxNav(diff<0?1:-1);
+},{passive:true});
+// Tutup dengan tombol back di Android
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeLightbox();
+  if(e.key==='ArrowLeft')lightboxNav(-1);
+  if(e.key==='ArrowRight')lightboxNav(1);
+});
 </script>
 </body>
 </html>
