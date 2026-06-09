@@ -116,7 +116,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .tinfo { flex:1; } .tname { font-weight:700; font-size:15px; } .tmember { font-size:12px; color:var(--text2); margin-top:2px; }
 .tjoin { padding:7px 16px; border-radius:20px; border:1px solid var(--accent); color:var(--accent); background:transparent; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; flex-shrink:0; }
 .tjoin.joined { background:var(--accent); color:#fff; }
-.profil-top { text-align:center; padding:24px 16px 16px; }
+.profil-top { text-align:center; padding:24px 16px 16px; background:var(--bg); }
 .pavatar-lg { width:80px; height:80px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:32px; color:var(--text2); margin:0 auto 12px; overflow:hidden; }
 .pavatar-lg img { width:100%; height:100%; object-fit:cover; }
 .pname { font-size:20px; font-weight:800; } .pusername { font-size:14px; color:var(--text2); margin-top:2px; }
@@ -128,7 +128,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .profil-tabs {
   display: flex;
   border-bottom: 1px solid var(--border);
-  background: var(--bg2);
+  background: var(--bg);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -138,12 +138,13 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 46px;
+  height: 44px;
   cursor: pointer;
   color: var(--text2);
-  font-size: 20px;
+  font-size: 22px;
   border-bottom: 2px solid transparent;
   transition: color .2s, border-color .2s;
+  background: var(--bg);
 }
 .profil-tab.on {
   color: var(--text);
@@ -940,12 +941,8 @@ async function renderProfil(){
       </div>
     </div>
     <div class="profil-tabs">
-      <div class="profil-tab on" id="ptab-posts" onclick="switchProfilTab('posts')">
-        <i class="fa fa-th"></i>
-      </div>
-      <div class="profil-tab liked" id="ptab-liked" onclick="switchProfilTab('liked')">
-        <i class="fa fa-heart"></i>
-      </div>
+      <div class="profil-tab on" id="ptab-posts" onclick="switchProfilTab('posts')" style="font-size:26px;font-weight:700;letter-spacing:-1px">&#8801;</div>
+      <div class="profil-tab liked" id="ptab-liked" onclick="switchProfilTab('liked')"><i class="fa fa-heart" style="font-size:18px"></i></div>
     </div>
     <div class="profil-grid" id="profilGrid"></div>`;
   profilActiveTab='posts';
