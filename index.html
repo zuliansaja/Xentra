@@ -63,37 +63,42 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   position: relative;
   overflow: hidden;
   height: 0;
-  transition: height 0.2s ease;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg);
+  transition: height 0.25s cubic-bezier(0.4,0,0.2,1);
 }
-#ptr-wrap.visible { height: 56px; }
-#ptr-wrap.releasing { height: 56px; }
+#ptr-wrap.pulling { height: 60px; transition: none; }
+#ptr-wrap.releasing { height: 60px; transition: height 0.25s cubic-bezier(0.4,0,0.2,1); }
+#ptr-wrap.loading { height: 60px; transition: height 0.25s cubic-bezier(0.4,0,0.2,1); }
+#ptr-wrap.hiding { height: 0; transition: height 0.3s cubic-bezier(0.4,0,0.2,1); }
 
 #ptr-spinner {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: var(--bg3);
+  background: var(--bg2);
   border: 1.5px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent);
-  font-size: 15px;
+  color: var(--text2);
+  font-size: 16px;
   transform-origin: center;
-  transition: transform 0.1s linear;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  transition: opacity 0.2s;
 }
-#ptr-spinner.spin {
-  animation: ptrSpin 0.7s linear infinite;
+#ptr-spinner i {
+  transition: none;
 }
 @keyframes ptrSpin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+#ptr-spinner.spin i {
+  animation: ptrSpin 0.65s linear infinite;
 }
 
 @keyframes spin { to{transform:rotate(360deg);} }
@@ -248,7 +253,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 
   <!-- PTR Indicator -->
   <div id="ptr-wrap">
-    <div id="ptr-spinner"><i class="fa fa-sync-alt"></i></div>
+    <div id="ptr-spinner"><i class="fa fa-redo-alt"></i></div>
   </div>
 
   <div id="content">
@@ -1122,53 +1127,77 @@ function doChatSearch(q){
 
 // === PTR (Pull to Refresh) ===
 (function(){
-  var ptrStart=0, ptrActive=false, ptrTriggered=false;
-  var PTR_THRESHOLD=70;
+  var ptrStart=0, ptrActive=false, ptrTriggered=false, ptrLoading=false;
+  var PTR_THRESHOLD=75;
   var contentEl=document.getElementById('content');
   var ptrWrap=document.getElementById('ptr-wrap');
   var ptrSpinner=document.getElementById('ptr-spinner');
 
+  function resetPtr(){
+    ptrWrap.classList.remove('pulling','releasing','loading');
+    ptrWrap.classList.add('hiding');
+    ptrSpinner.classList.remove('spin');
+    ptrSpinner.querySelector('i').style.transform='';
+    setTimeout(function(){ ptrWrap.classList.remove('hiding'); }, 320);
+    ptrActive=false; ptrTriggered=false; ptrLoading=false;
+  }
+
   contentEl.addEventListener('touchstart',function(e){
+    if(ptrLoading) return;
     var ap=document.querySelector('.page.on');
     if(ap&&(ap.id==='pg-chat'||ap.id==='pg-grup'))return;
-    if(contentEl.scrollTop===0){ptrStart=e.touches[0].clientY;ptrActive=true;ptrTriggered=false;}
+    if(contentEl.scrollTop===0){
+      ptrStart=e.touches[0].clientY;
+      ptrActive=true;
+      ptrTriggered=false;
+    }
   },{passive:true});
 
   contentEl.addEventListener('touchmove',function(e){
-    if(!ptrActive)return;
-    var diff=e.touches[0].clientY-ptrStart;
-    if(diff<=0)return;
-    var pull=Math.min(diff,PTR_THRESHOLD*1.5);
-    var deg=Math.floor((pull/PTR_THRESHOLD)*300);
-    ptrWrap.classList.add('visible');
-    if(!ptrTriggered) ptrSpinner.style.transform='rotate('+deg+'deg)';
-    if(pull>=PTR_THRESHOLD&&!ptrTriggered){
+    if(!ptrActive||ptrLoading)return;
+    var diff=e.touches[0].clientY - ptrStart;
+    if(diff<=0){ return; }
+    // resistance
+    var pull=Math.min(diff * 0.45, PTR_THRESHOLD * 1.2);
+    var deg=Math.floor((pull / PTR_THRESHOLD) * 270);
+    ptrWrap.classList.add('pulling');
+    ptrWrap.classList.remove('hiding');
+    if(!ptrTriggered){
+      ptrSpinner.querySelector('i').style.transform='rotate('+deg+'deg)';
+      ptrSpinner.querySelector('i').style.transition='none';
+    }
+    if(pull >= PTR_THRESHOLD && !ptrTriggered){
       ptrTriggered=true;
-      ptrSpinner.classList.add('spin');
-      ptrSpinner.style.transform='';
     }
   },{passive:true});
 
   contentEl.addEventListener('touchend',function(e){
-    if(!ptrActive)return;
+    if(!ptrActive||ptrLoading)return;
     ptrActive=false;
     if(ptrTriggered){
+      ptrLoading=true;
+      ptrWrap.classList.remove('pulling');
+      ptrWrap.classList.add('releasing','loading');
+      // icon spin
+      ptrSpinner.querySelector('i').style.transform='';
+      ptrSpinner.querySelector('i').style.transition='';
+      ptrSpinner.classList.add('spin');
+      // actually refresh
       var ap=document.querySelector('.page.on');
       var done=function(){
-        ptrWrap.classList.remove('visible');
-        ptrSpinner.classList.remove('spin');
-        ptrSpinner.style.transform='rotate(0deg)';
-        ptrTriggered=false;
+        // spin 400ms more then hide
+        setTimeout(resetPtr, 400);
       };
       if(ap&&ap.id==='pg-home') loadFeed(true).then(done).catch(done);
       else if(ap&&ap.id==='pg-topik') renderTopik().then(done).catch(done);
       else if(ap&&ap.id==='pg-profil'&&user) renderProfil().then(done).catch(done);
       else done();
-    }else{
-      ptrWrap.classList.remove('visible');
-      ptrSpinner.classList.remove('spin');
-      ptrSpinner.style.transform='rotate(0deg)';
-      ptrTriggered=false;
+    } else {
+      // didn't pull enough - snap back
+      ptrWrap.classList.remove('pulling');
+      ptrWrap.classList.add('hiding');
+      ptrSpinner.querySelector('i').style.transform='';
+      setTimeout(function(){ ptrWrap.classList.remove('hiding'); ptrTriggered=false; }, 320);
     }
   },{passive:true});
 })();
