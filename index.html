@@ -464,9 +464,10 @@ function renderPost(p){
   const uname=p.profiles?.username||'user';
   const uavatar=p.profiles?.avatar_url;
   let imgHtml='';
-  if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy" onclick="openLightbox(${JSON.stringify(imgs.map(i=>i.image_url))},0)"></div>`;
-  else if(imgs.length===2)imgHtml=`<div class="pimgs s2">${imgs.map((i,idx)=>`<img src="${i.image_url}" loading="lazy" onclick="openLightbox(${JSON.stringify(imgs.map(x=>x.image_url))},${idx})">`).join('')}</div>`;
-  else if(imgs.length>=3)imgHtml=`<div class="pimgs s3"><img class="pm" src="${imgs[0].image_url}" loading="lazy" onclick="openLightbox(${JSON.stringify(imgs.map(x=>x.image_url))},0)"><img src="${imgs[1].image_url}" loading="lazy" onclick="openLightbox(${JSON.stringify(imgs.map(x=>x.image_url))},1)"><img src="${imgs[2].image_url}" loading="lazy" onclick="openLightbox(${JSON.stringify(imgs.map(x=>x.image_url))},2)"></div>`;
+  const urlsAttr=imgs.map(i=>i.image_url).join('||');
+  if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="0"></div>`;
+  else if(imgs.length===2)imgHtml=`<div class="pimgs s2">${imgs.map((i,idx)=>`<img src="${i.image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="${idx}">`).join('')}</div>`;
+  else if(imgs.length>=3)imgHtml=`<div class="pimgs s3"><img class="pm pimg-click" src="${imgs[0].image_url}" loading="lazy" data-urls="${urlsAttr}" data-idx="0"><img src="${imgs[1].image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="1"><img src="${imgs[2].image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="2"></div>`;
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
       <div class="puser"><div class="pavatar">${uavatar?`<img src="${uavatar}" loading="lazy">`:'<i class="fa fa-user"></i>'}</div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
@@ -1146,7 +1147,14 @@ document.getElementById('content').addEventListener('scroll',function(){
 
 (async()=>{await restoreSession();loadFeed(true);renderTopik();})();
 
-// LIGHTBOX
+// Event delegation klik foto feed
+document.getElementById('feed').addEventListener('click',e=>{
+  const img=e.target.closest('.pimg-click');
+  if(!img)return;
+  const urls=img.dataset.urls.split('||');
+  const idx=parseInt(img.dataset.idx)||0;
+  openLightbox(urls,idx);
+});
 let lbImgs=[],lbIdx=0,lbTouchX=0;
 function openLightbox(imgs,idx){
   lbImgs=imgs;lbIdx=idx;
