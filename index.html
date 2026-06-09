@@ -454,10 +454,7 @@ function renderPost(p){
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
       <div class="puser"><div class="pavatar">${uavatar?`<img src="${uavatar}" loading="lazy">`:'<i class="fa fa-user"></i>'}</div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <i class="fa fa-heart" id="save-${p.id}" onclick="toggleSave('${p.id}',this)" style="font-size:18px;color:var(--text2);cursor:pointer;padding:4px;transition:color .2s"></i>
-        ${user&&(user.id===p.user_id||user.profile?.is_admin)?`<i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px" onclick="showPostMenu('${p.id}',this)"></i>`:`<i class="fa fa-ellipsis-h" style="color:var(--text2);padding:4px"></i>`}
-      </div>
+      ${user&&(user.id===p.user_id||user.profile?.is_admin)?`<i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px" onclick="showPostMenu('${p.id}',this)"></i>`:`<i class="fa fa-ellipsis-h" style="color:var(--text2);padding:4px"></i>`}
     </div>
     ${cap?`<div class="ptitle">${cap}</div>`:''}
     ${tags.length?`<div class="ptags">${tags.map(tg=>`<span class="ptag">${tg}</span>`).join('')}</div>`:''}
@@ -471,11 +468,11 @@ function renderPost(p){
   </div>`;
 }
 
-// Toggle save/love icon pada post
-function toggleSave(pid,el){
-  const saved=el.style.color==='rgb(255, 68, 68)'||el.dataset.saved==='1';
-  if(saved){el.style.color='var(--text2)';el.dataset.saved='0';}
-  else{el.style.color='#ff4444';el.dataset.saved='1';}
+// Toggle love icon pada komentar
+function toggleLoveKomen(cid,el){
+  const loved=el.dataset.loved==='1';
+  if(loved){el.style.color='var(--text2)';el.dataset.loved='0';}
+  else{el.style.color='#ff4444';el.dataset.loved='1';}
 }
 
 async function vote(pid,el){
@@ -545,7 +542,8 @@ async function openKomentar(pid){
               <i class="fa fa-heart${liked?'':'-o'}" style="font-size:14px"></i>
               <span id="klc-${c.id}" style="font-weight:600">${lc||''}</span>
             </span>
-            <span onclick="showKomenMenu('${c.id}','${c.content.replace(/'/g,"\\'")}')" style="margin-left:auto;cursor:pointer;color:var(--text2);padding:2px 4px"><i class="fa fa-ellipsis-h"></i></span>
+            <span onclick="toggleLoveKomen('${c.id}',this)" id="klove-${c.id}" style="margin-left:auto;cursor:pointer;color:var(--text2);padding:2px 6px;font-size:16px;transition:color .2s"><i class="fa fa-heart"></i></span>
+            <span onclick="showKomenMenu('${c.id}','${c.content.replace(/'/g,"\\'")}')" style="cursor:pointer;color:var(--text2);padding:2px 4px"><i class="fa fa-ellipsis-h"></i></span>
           </div>
         </div>
       </div>`;
