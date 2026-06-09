@@ -52,7 +52,6 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .pactions { display:flex; }
 .pact { display:flex; align-items:center; gap:5px; padding:6px 0; color:var(--text2); font-size:14px; cursor:pointer; flex:1; }
 .pact i { font-size:17px; } .pact span { font-size:13px; font-weight:600; }
-/* HEART upvoted = merah/pink */
 .pact.upvoted { color:#ff4b6e; }
 .center-msg { text-align:center; padding:60px 20px; color:var(--text2); }
 .center-msg i { font-size:40px; margin-bottom:12px; display:block; color:var(--border); }
@@ -280,7 +279,8 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
     <div class="logo">Xentra</div>
     <div class="topbar-right">
       <button id="topbarSearch" class="icon-btn" onclick="goSearch()"><i class="fa fa-search"></i></button>
-      <button class="icon-btn" onclick="openSheet('settingsSheet')"><i class="fa fa-sliders-h"></i></button>
+      <!-- CHANGED: fa-sliders-h -> fa-bars (≡ hamburger) -->
+      <button class="icon-btn" onclick="openSheet('settingsSheet')"><i class="fa fa-bars"></i></button>
     </div>
   </div>
 
@@ -532,6 +532,7 @@ async function loadFeed(reset=false){
   }catch(e){document.getElementById('feed-loader')?.remove();if(reset)feed.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
   feedLoading=false;
 }
+
 function renderPost(p){
   const imgs=(p.post_images||[]).sort((a,b)=>a.order_index-b.order_index);
   const upvotes=(p.votes||[]).filter(v=>v.type==='up').length;
@@ -540,6 +541,9 @@ function renderPost(p){
   const cap=(p.caption||'').replace(/#\w+/g,'').trim();
   const uname=p.profiles?.username||'user';
   const uavatar=p.profiles?.avatar_url;
+  // Escape caption for use in onclick attribute (remove quotes & newlines)
+  const capEsc=(p.caption||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,' ');
+  const firstImg=imgs[0]?.image_url||'';
   let imgHtml='';
   const urlsAttr=imgs.map(i=>i.image_url).join('||');
   if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="0"></div>`;
@@ -548,7 +552,7 @@ function renderPost(p){
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
       <div class="puser"><div class="pavatar">${uavatar?`<img src="${uavatar}" loading="lazy">`:'<i class="fa fa-user"></i>'}</div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
-      ${user&&(user.id===p.user_id||user.profile?.is_admin)?`<i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px" onclick="showPostMenu('${p.id}',this)"></i>`:`<i class="fa fa-ellipsis-h" style="color:var(--text2);padding:4px"></i>`}
+      <i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px 8px;font-size:18px" onclick="showPostMenu('${p.id}','${p.user_id}','${firstImg}','${capEsc}')"></i>
     </div>
     ${cap?`<div class="ptitle">${cap}</div>`:''}
     ${tags.length?`<div class="ptags">${tags.map(tg=>`<span class="ptag">${tg}</span>`).join('')}</div>`:''}
@@ -556,10 +560,70 @@ function renderPost(p){
     <div class="pactions">
       <div class="pact ${myVote?'upvoted':''}" id="vb-${p.id}" onclick="vote('${p.id}',this)"><i class="fa fa-heart"></i><span id="vc-${p.id}">${upvotes}</span></div>
       <div class="pact" onclick="openKomentar('${p.id}')"><i class="fa fa-comment"></i><span id="cc-${p.id}">0</span></div>
-      <div class="pact" onclick="downloadPost('${p.id}','${imgs[0]?.image_url||''}')"><i class="fa fa-download"></i></div>
+      <div class="pact" onclick="downloadPost('${p.id}','${firstImg}')"><i class="fa fa-download"></i></div>
       <div class="pact" onclick="sharePost()"><i class="fa fa-share-alt"></i><span>Kirim</span></div>
     </div>
   </div>`;
+}
+
+// =============================================
+// POST MENU — bottom sheet style (like lahelu)
+// =============================================
+function showPostMenu(pid, ownerUid, imgUrl, caption) {
+  const old = document.getElementById('postMenu');
+  if (old) old.remove();
+
+  // Check if current user is the owner or admin
+  const isOwner = user && (user.id === ownerUid || user.profile?.is_admin);
+
+  // Decode caption
+  const capText = caption || '';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'postMenu';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+
+  const deleteRow = isOwner ? `
+    <div onclick="deletePost('${pid}');document.getElementById('postMenu')?.remove()" style="display:flex;align-items:center;gap:16px;padding:17px 20px;cursor:pointer;font-size:15px;font-weight:500;color:#ff4444;border-top:1px solid var(--border)">
+      <i class="fa fa-trash" style="width:22px;text-align:center;font-size:17px"></i>
+      <span>Hapus</span>
+    </div>` : '';
+
+  overlay.innerHTML = `
+    <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:0 0 20px" onclick="event.stopPropagation()">
+      <div style="width:38px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 8px"></div>
+      <div onclick="downloadPost('${pid}','${imgUrl}');document.getElementById('postMenu')?.remove()" style="display:flex;align-items:center;gap:16px;padding:17px 20px;cursor:pointer;font-size:15px;font-weight:500">
+        <i class="fa fa-download" style="width:22px;text-align:center;font-size:17px;color:var(--text2)"></i>
+        <span>Download</span>
+      </div>
+      <div onclick="copyCaption('${capText.replace(/'/g, "\\'")}');document.getElementById('postMenu')?.remove()" style="display:flex;align-items:center;gap:16px;padding:17px 20px;cursor:pointer;font-size:15px;font-weight:500">
+        <i class="fa fa-copy" style="width:22px;text-align:center;font-size:17px;color:var(--text2)"></i>
+        <span>Salin Caption</span>
+      </div>
+      ${deleteRow}
+    </div>`;
+
+  overlay.onclick = () => overlay.remove();
+  document.body.appendChild(overlay);
+}
+
+function copyCaption(txt) {
+  if (!txt || txt === 'undefined' || txt.trim() === '') { toast('Caption kosong'); return; }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt)
+      .then(() => toast('Caption disalin!'))
+      .catch(() => { fallbackCopy(txt); });
+  } else {
+    fallbackCopy(txt);
+  }
+}
+function fallbackCopy(txt) {
+  const ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  toast('Caption disalin!');
 }
 
 function toggleLoveKomen(cid,el){
@@ -922,7 +986,7 @@ async function sendChatImage(inp){
 }
 
 // ===== PROFIL TABS (TikTok style) =====
-let profilActiveTab = 'posts'; // 'posts' | 'liked'
+let profilActiveTab = 'posts';
 
 async function renderProfil(){
   const p=user?.profile||{};
@@ -956,7 +1020,6 @@ async function renderProfil(){
 
 function switchProfilTab(tab){
   profilActiveTab=tab;
-  // update tab styles
   const tabPosts=document.getElementById('ptab-posts');
   const tabLiked=document.getElementById('ptab-liked');
   if(tab==='posts'){
@@ -989,7 +1052,6 @@ async function loadLikedPosts(){
   if(!grid)return;
   grid.innerHTML='<div style="grid-column:span 3;text-align:center;padding:30px;color:var(--text2)"><i class="fa fa-spinner spin"></i></div>';
   try{
-    // Get post IDs yang di-like user
     const votes=await sb(`/rest/v1/votes?user_id=eq.${user.id}&type=eq.up&select=post_id`);
     if(!votes.length){grid.innerHTML='<div style="grid-column:span 3;text-align:center;padding:40px;color:var(--text2)"><i class="fa fa-heart" style="font-size:32px;display:block;margin-bottom:12px;color:var(--border)"></i>Belum ada post yang dilike</div>';return;}
     const postIds=votes.map(v=>v.post_id).filter(Boolean);
@@ -1155,6 +1217,7 @@ async function doSearch(q){
 }
 
 async function downloadPost(pid,imgUrl){
+  if(!imgUrl||imgUrl==='undefined'||imgUrl===''){toast('Tidak ada gambar');return;}
   try{
     toast('Mengunduh...');
     const r=await fetch(imgUrl);const blob=await r.blob();
@@ -1165,16 +1228,7 @@ async function downloadPost(pid,imgUrl){
 }
 function toggleDark(){const el=document.getElementById('darkToggle');el.classList.toggle('on');document.documentElement.setAttribute('data-theme',el.classList.contains('on')?'dark':'light');}
 function setLang(l){document.getElementById('langId').style.display=l==='id'?'block':'none';document.getElementById('langEn').style.display=l==='en'?'block':'none';}
-function showPostMenu(pid,el){
-  const old=document.getElementById('postMenu');if(old)old.remove();
-  const menu=document.createElement('div');menu.id='postMenu';
-  menu.style.cssText='position:fixed;z-index:500;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px 0;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
-  const rect=el.getBoundingClientRect();menu.style.top=(rect.bottom+4)+'px';menu.style.right='16px';
-  menu.innerHTML=`<div onclick="deletePost('${pid}')" style="padding:12px 16px;font-size:14px;font-weight:600;color:#ff4444;cursor:pointer;display:flex;align-items:center;gap:10px"><i class="fa fa-trash"></i> Hapus Post</div>`;
-  document.body.appendChild(menu);
-  function closeMenu(){const m=document.getElementById('postMenu');if(m)m.remove();document.removeEventListener('click',closeMenu);document.getElementById('content').removeEventListener('scroll',closeMenu);}
-  setTimeout(()=>{document.addEventListener('click',closeMenu);document.getElementById('content').addEventListener('scroll',closeMenu);},10);
-}
+
 async function deletePost(pid){
   if(!confirm('Hapus post ini?'))return;
   try{await sb(`/rest/v1/posts?id=eq.${pid}`,{method:'DELETE'});toast('Post dihapus');loadFeed(true);}catch(e){toast('Gagal hapus: '+e.message);}
