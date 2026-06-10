@@ -1692,7 +1692,49 @@ function toggleDark(){const el=document.getElementById('darkToggle');el.classLis
 function setLang(l){document.getElementById('langId').style.display=l==='id'?'block':'none';document.getElementById('langEn').style.display=l==='en'?'block':'none';}
 async function deletePost(pid){
   if(!confirm('Hapus post ini?'))return;
-  try{await sb(`/rest/v1/posts?id=eq.${pid}`,{method:'DELETE'});toast('Post dihapus');loadFeed(true);}catch(e){toast('Gagal hapus: '+e.message);}
+  try{
+    // 1. Ambil semua foto post
+    const imgs = await sb(`/rest/v1/post_images?post_id=eq.${pid}&select=image_url`);
+
+    // 2. Hapus foto dari storage
+    if(imgs.length){
+      const paths = imgs.map(i => {
+        const url = i.image_url;
+        if(url.includes('meme-images/')){
+          return url.split('meme-images/')[1].split('?')[0];
+        }
+        return null;
+      }).filter(Boolean);
+
+      if(paths.length){
+        await fetch(`${SB}/storage/v1/object/meme-images`,{
+          method:'DELETE',
+          headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+          body:JSON.stringify({prefixes:paths})
+        }).catch(()=>{});
+      }
+    }
+
+    // 3. Hapus komentar & likes terkait
+    const comments = await sb(`/rest/v1/comments?post_id=eq.${pid}&select=id`);
+    if(comments.length){
+      const cids = comments.map(c=>c.id);
+      await sb(`/rest/v1/comment_likes?comment_id=in.(${cids.join(',')})`,{method:'DELETE'}).catch(()=>{});
+      await sb(`/rest/v1/comments?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});
+    }
+
+    // 4. Hapus votes
+    await sb(`/rest/v1/votes?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});
+
+    // 5. Hapus post_images row
+    await sb(`/rest/v1/post_images?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});
+
+    // 6. Hapus post
+    await sb(`/rest/v1/posts?id=eq.${pid}`,{method:'DELETE'});
+
+    toast('Post dihapus');
+    loadFeed(true);
+  }catch(e){toast('Gagal hapus: '+e.message);}
 }
 function sharePost(){if(navigator.share)navigator.share({title:'Xentra',url:location.href});else toast('Link disalin!');}
 function toggleChatSearch(){
