@@ -106,6 +106,33 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 @keyframes spin { to{transform:rotate(360deg);} }
 .spin { animation:spin 1s linear infinite; }
 
+/* ===== SKELETON ===== */
+@keyframes shimmer {
+  0% { background-position:-400px 0; }
+  100% { background-position:400px 0; }
+}
+.sk {
+  background:linear-gradient(90deg,var(--bg3) 25%,var(--border) 50%,var(--bg3) 75%);
+  background-size:800px 100%;
+  animation:shimmer 1.4s infinite linear;
+  border-radius:6px;
+  display:block;
+}
+.sk-card { padding:14px 16px; border-bottom:1px solid var(--border); }
+.sk-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.sk-avatar { width:38px; height:38px; border-radius:50%; flex-shrink:0; }
+.sk-line { height:13px; margin-bottom:5px; }
+.sk-line-sm { height:11px; }
+.sk-img { width:100%; border-radius:10px; margin-bottom:10px; }
+.sk-actions { display:flex; gap:20px; }
+.sk-act { width:48px; height:13px; }
+.sk-titem { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); }
+.sk-tavatar { width:48px; height:48px; border-radius:50%; flex-shrink:0; }
+.sk-tjoin { width:70px; height:32px; border-radius:20px; flex-shrink:0; }
+.sk-nitem { display:flex; align-items:flex-start; gap:12px; padding:14px 16px; }
+.sk-navatar { width:44px; height:44px; border-radius:50%; flex-shrink:0; }
+.sk-nthumb { width:44px; height:44px; border-radius:10px; flex-shrink:0; }
+
 .login-wall { padding:80px 24px; text-align:center; }
 .login-wall i { font-size:54px; color:var(--accent); margin-bottom:16px; display:block; }
 .login-wall h3 { font-size:17px; font-weight:700; margin-bottom:20px; }
@@ -565,10 +592,39 @@ function goSearch(){
 }
 
 let feedPage=0,feedLoading=false,feedDone=false;
+
+function skFeed(n=3){
+  return Array(n).fill(0).map(()=>`
+    <div class="sk-card">
+      <div class="sk-head">
+        <div class="sk sk-avatar"></div>
+        <div style="flex:1"><div class="sk sk-line" style="width:100px"></div><div class="sk sk-line-sm" style="width:60px"></div></div>
+      </div>
+      <div class="sk sk-line" style="width:70%;margin-bottom:8px"></div>
+      <div class="sk sk-img" style="height:${220+Math.floor(Math.random()*120)}px"></div>
+      <div class="sk-actions"><div class="sk sk-act"></div><div class="sk sk-act"></div><div class="sk sk-act"></div></div>
+    </div>`).join('');
+}
+function skTopik(n=4){
+  return Array(n).fill(0).map(()=>`
+    <div class="sk-titem">
+      <div class="sk sk-tavatar"></div>
+      <div style="flex:1"><div class="sk sk-line" style="width:${80+Math.floor(Math.random()*80)}px;margin-bottom:6px"></div><div class="sk sk-line-sm" style="width:60px"></div></div>
+      <div class="sk sk-tjoin"></div>
+    </div>`).join('');
+}
+function skNotif(n=4){
+  return Array(n).fill(0).map(()=>`
+    <div class="sk-nitem">
+      <div class="sk sk-navatar"></div>
+      <div style="flex:1"><div class="sk sk-line" style="width:${120+Math.floor(Math.random()*100)}px;margin-bottom:6px"></div><div class="sk sk-line-sm" style="width:60px"></div></div>
+      <div class="sk sk-nthumb"></div>
+    </div>`).join('');
+}
 async function loadFeed(reset=false){
   if(feedLoading||feedDone)return;feedLoading=true;
   const feed=document.getElementById('feed');
-  if(reset){feed.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';feedPage=0;feedDone=false;}
+  if(reset){feed.innerHTML=skFeed(3);feedPage=0;feedDone=false;}
   else{const l=document.createElement('div');l.id='feed-loader';l.className='center-msg';l.style.padding='20px';l.innerHTML='<i class="fa fa-spinner spin"></i>';feed.appendChild(l);}
   try{
     const limit=20,offset=feedPage*limit;
@@ -717,6 +773,7 @@ async function openKomentar(pid){
       const liked=myLikes[c.id]||false;
       const uname=prof.username||'user';
       const avatarHtml=prof.avatar_url?`<img src="${prof.avatar_url}">`:'<i class="fa fa-user"></i>';
+      const canDel=user&&(user.id===c.user_id||user.profile?.is_admin);
       return `<div class="kitem" id="kc-${c.id}" style="${isReply?'padding-left:48px;':''}padding-top:12px;padding-bottom:8px">
         <div class="kavatar" style="flex-shrink:0">${avatarHtml}</div>
         <div style="flex:1;min-width:0">
@@ -731,7 +788,7 @@ async function openKomentar(pid){
               <i class="fa fa-heart${liked?'':'-o'}" style="font-size:14px"></i>
               <span id="klc-${c.id}" style="font-weight:600">${lc||''}</span>
             </span>
-            <span onclick="showKomenMenu('${c.id}','${c.content.replace(/'/g,"\\'")}')" style="margin-left:auto;cursor:pointer;color:var(--text2);padding:2px 4px"><i class="fa fa-ellipsis-h"></i></span>
+            <span onclick="showKomenMenu('${c.id}','${c.content.replace(/'/g,"\\'")}',${canDel})" style="margin-left:auto;cursor:pointer;color:var(--text2);padding:2px 4px"><i class="fa fa-ellipsis-h"></i></span>
           </div>
         </div>
       </div>`;
@@ -744,22 +801,42 @@ async function openKomentar(pid){
   }catch(e){list.innerHTML=`<div style="padding:16px;color:var(--text2)">Gagal memuat: ${e.message}</div>`;}
 }
 
-function showKomenMenu(cid,content){
+function showKomenMenu(cid,content,canDel=false){
   const old=document.getElementById('komenMenu');if(old)old.remove();
   const overlay=document.createElement('div');overlay.id='komenMenu';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
+  const delRow=canDel?`<div onclick="deleteKomentar('${cid}');document.getElementById('komenMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px;color:#ff4444;border-top:1px solid var(--border)"><i class="fa fa-trash" style="width:22px"></i> Hapus komentar</div>`:'';
   overlay.innerHTML=`
     <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:8px 0 24px" onclick="event.stopPropagation()">
       <div style="width:38px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 16px"></div>
       <div onclick="navigator.clipboard?.writeText('${content.replace(/'/g,"\\'")}');toast('Disalin!');document.getElementById('komenMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px">
         <i class="fa fa-copy" style="width:22px;color:var(--text2)"></i> Salin komentar
       </div>
-      <div onclick="toast('Laporan terkirim');document.getElementById('komenMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px;color:#ff4444">
+      <div onclick="toast('Laporan terkirim');document.getElementById('komenMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px;color:var(--text2)">
         <i class="fa fa-flag" style="width:22px"></i> Report
       </div>
+      ${delRow}
     </div>`;
   overlay.onclick=()=>overlay.remove();
   document.body.appendChild(overlay);
+}
+
+async function deleteKomentar(cid){
+  try{
+    // Hapus likes balasan dulu
+    const replies=await sb(`/rest/v1/comments?parent_id=eq.${cid}&select=id`).catch(()=>[]);
+    if(replies.length){
+      const rids=replies.map(r=>r.id);
+      await sb(`/rest/v1/comment_likes?comment_id=in.(${rids.join(',')})`,{method:'DELETE'}).catch(()=>{});
+      await sb(`/rest/v1/comments?parent_id=eq.${cid}`,{method:'DELETE'}).catch(()=>{});
+    }
+    // Hapus likes komentar ini
+    await sb(`/rest/v1/comment_likes?comment_id=eq.${cid}`,{method:'DELETE'}).catch(()=>{});
+    // Hapus komentar
+    await sb(`/rest/v1/comments?id=eq.${cid}`,{method:'DELETE'});
+    toast('Komentar dihapus');
+    openKomentar(currentPost);
+  }catch(e){toast('Gagal hapus: '+e.message);}
 }
 
 function setReply(cid,uname){
@@ -870,7 +947,7 @@ function switchTopikTab(tab){
 async function renderTopik(){
   const list=document.getElementById('topikList');
   const keyword=(document.getElementById('topikSearchInput')?.value||'').trim().toLowerCase();
-  list.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  list.innerHTML=skTopik(4);
   try{
     let topics=await sb('/rest/v1/topics?select=*&order=created_at.desc');
     if(keyword)topics=topics.filter(tp=>tp.name.toLowerCase().includes(keyword)||(tp.description||'').toLowerCase().includes(keyword));
@@ -1492,9 +1569,7 @@ async function fetchAllNotifItems(){
 async function loadNotif(){
   const pg = document.getElementById('pg-notif');
   pg.innerHTML = `
-    <div id="notifList">
-      <div class="center-msg"><i class="fa fa-spinner spin"></i></div>
-    </div>`;
+    <div id="notifList">${skNotif(4)}</div>`;
 
   // Mark as seen: timestamp sekarang
   notifLastSeen = Date.now();
@@ -1688,7 +1763,13 @@ async function downloadPost(pid,imgUrl){
     toast('Tersimpan!');
   }catch(e){toast('Gagal download');}
 }
-function toggleDark(){const el=document.getElementById('darkToggle');el.classList.toggle('on');document.documentElement.setAttribute('data-theme',el.classList.contains('on')?'dark':'light');}
+function toggleDark(){
+  const el=document.getElementById('darkToggle');
+  el.classList.toggle('on');
+  const theme=el.classList.contains('on')?'dark':'light';
+  document.documentElement.setAttribute('data-theme',theme);
+  localStorage.setItem('xn_theme',theme);
+}
 function setLang(l){document.getElementById('langId').style.display=l==='id'?'block':'none';document.getElementById('langEn').style.display=l==='en'?'block':'none';}
 async function deletePost(pid){
   if(!confirm('Hapus post ini?'))return;
@@ -1821,6 +1902,12 @@ document.getElementById('content').addEventListener('scroll',function(){
 
 // Init
 (async function(){
+  // Restore theme
+  const savedTheme=localStorage.getItem('xn_theme')||'dark';
+  document.documentElement.setAttribute('data-theme',savedTheme);
+  const dt=document.getElementById('darkToggle');
+  if(dt){if(savedTheme==='dark')dt.classList.add('on');else dt.classList.remove('on');}
+
   await restoreSession();
   loadFeed(true);
   renderTopik();
