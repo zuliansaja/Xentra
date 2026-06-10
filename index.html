@@ -1238,14 +1238,14 @@ async function fetchAllNotifItems(){
 
   if(myPostIds.length){
     // --- LIKE POST (votes orang lain di post kita) ---
-    const votes = await sb(`/rest/v1/votes?post_id=in.(${myPostIds.join(',')})&select=post_id,user_id,type,created_at&order=created_at.desc&limit=100`);
+    const votes = await sb(`/rest/v1/votes?post_id=in.(${myPostIds.join(',')})&select=post_id,user_id,type&limit=100`);
     const myVotesOnMyPosts = votes.filter(v => v.type === 'up' && v.user_id !== user.id);
     myVotesOnMyPosts.forEach(v => {
       items.push({
         type: 'like_post',
         actor_id: v.user_id,
         post_id: v.post_id,
-        created_at: v.created_at,
+        created_at: new Date().toISOString(), // votes tabel tidak punya created_at
         thumb: postThumbMap[v.post_id] || '',
         preview: postCaptionMap[v.post_id] || '',
       });
@@ -1294,7 +1294,7 @@ async function fetchAllNotifItems(){
 
     // --- LIKE KOMENTAR KITA ---
     if(myCommentIds.length){
-      const commentLikes = await sb(`/rest/v1/comment_likes?comment_id=in.(${myCommentIds.join(',')})&select=comment_id,user_id,created_at&order=created_at.desc&limit=100`);
+      const commentLikes = await sb(`/rest/v1/comment_likes?comment_id=in.(${myCommentIds.join(',')})&select=comment_id,user_id&limit=100`);
       const otherLikes = commentLikes.filter(cl => cl.user_id !== user.id);
       // Resolve post_id dari comment
       const allCMap = await sb(`/rest/v1/comments?id=in.(${myCommentIds.join(',')})&select=id,post_id`);
@@ -1307,7 +1307,7 @@ async function fetchAllNotifItems(){
           actor_id: cl.user_id,
           post_id: postId || null,
           comment_id: cl.comment_id,
-          created_at: cl.created_at,
+          created_at: new Date().toISOString(), // comment_likes mungkin tidak punya created_at
           thumb: postId ? (postThumbMap[postId]||'') : '',
           preview: '',
         });
