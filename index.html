@@ -169,7 +169,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .notif-avatar {
   width:44px; height:44px; border-radius:50%; background:var(--bg3);
   display:flex; align-items:center; justify-content:center;
-  font-size:18px; flex-shrink:0; overflow:hidden; position:relative;
+  font-size:18px; flex-shrink:0; overflow:hidden;
 }
 .notif-avatar img { width:100%; height:100%; object-fit:cover; }
 .notif-icon {
@@ -1494,16 +1494,21 @@ function renderNotifItem(n, actorMap){
       ? `onclick="closeSheet('komentarSheet');openKomentar('${n.post_id}')"`
       : '';
 
+  // Sisipkan iconEl ke dalam thumbHtml
+  let finalThumb = thumbHtml;
+  if(thumbHtml && iconEl){
+    finalThumb = thumbHtml.replace(/(<div class="notif-thumb[^>]*>)/, '$1' + iconEl);
+  }
+
   return `<div class="notif-item ${isUnread?'unread':''}" ${clickAction}>
     <div class="notif-avatar">
       ${avatarHtml}
-      ${iconEl}
     </div>
     <div class="notif-body">
       ${textHtml}
       <div class="notif-sub"><span>${timeStr}</span></div>
     </div>
-    ${thumbHtml}
+    ${finalThumb}
   </div>`;
 }
 
