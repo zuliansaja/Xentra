@@ -160,21 +160,12 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   align-items:flex-start;
   gap:12px;
   padding:14px 16px;
-  border-bottom:1px solid var(--border);
   cursor:pointer;
   transition:background .15s;
   position:relative;
 }
 .notif-item:active { background:var(--bg3); }
 .notif-item.unread { background:rgba(74,158,255,0.05); }
-.notif-item.unread::before {
-  content:'';
-  position:absolute;
-  left:0; top:0; bottom:0;
-  width:3px;
-  background:var(--accent);
-  border-radius:0 2px 2px 0;
-}
 .notif-avatar {
   width:44px; height:44px; border-radius:50%; background:var(--bg3);
   display:flex; align-items:center; justify-content:center;
@@ -183,13 +174,14 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .notif-avatar img { width:100%; height:100%; object-fit:cover; }
 .notif-icon {
   position:absolute;
-  bottom:-2px; right:-2px;
+  bottom:-3px; right:-3px;
   width:20px; height:20px;
   border-radius:50%;
   display:flex; align-items:center; justify-content:center;
   font-size:10px;
   border:2px solid var(--bg2);
   font-weight:700;
+  z-index:2;
 }
 .notif-icon.like { background:#ff4b6e; color:#fff; }
 .notif-icon.comment { background:var(--accent); color:#fff; }
@@ -202,10 +194,11 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .notif-sub { font-size:12px; color:var(--text2); margin-top:4px; display:flex; align-items:center; gap:6px; }
 .notif-preview { font-size:13px; color:var(--text2); margin-top:5px; background:var(--bg3); padding:7px 10px; border-radius:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
 .notif-thumb {
-  width:44px; height:44px; border-radius:8px; overflow:hidden;
+  width:46px; height:46px; border-radius:10px; overflow:visible;
   background:var(--bg3); flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  position:relative;
 }
-.notif-thumb img { width:100%; height:100%; object-fit:cover; }
+.notif-thumb img { width:46px; height:46px; object-fit:cover; border-radius:10px; display:block; }
 
 .notif-date-sep {
   padding:10px 16px 6px;
@@ -215,7 +208,6 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   text-transform:uppercase;
   letter-spacing:0.05em;
   background:var(--bg);
-  border-bottom:1px solid var(--border);
 }
 
 /* ===== END NOTIF STYLES ===== */
