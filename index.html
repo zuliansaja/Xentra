@@ -904,7 +904,13 @@ async function toggleJoin(btn,id){
 async function submitTopik(){
   const name=document.getElementById('topikName').value.trim(),desc=document.getElementById('topikDesc').value.trim();
   if(!name)return toast('Isi nama topik');
-  try{await sb('/rest/v1/topics',{method:'POST',body:JSON.stringify({name,description:desc,member_count:0,emoji:'👥'})});toast('Topik dibuat!');closeSheet('buatTopikSheet');document.getElementById('topikName').value='';document.getElementById('topikDesc').value='';renderTopik();}catch(e){toast(e.message);}
+  try{
+    const tp=await sb('/rest/v1/topics',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({name,description:desc,member_count:0,emoji:'👥',created_by:user?.id||null})});
+    const tpId=Array.isArray(tp)?tp[0].id:tp.id;
+    // Auto join sebagai creator
+    if(user&&tpId){await sb('/rest/v1/topic_members',{method:'POST',body:JSON.stringify({topic_id:tpId,user_id:user.id})});}
+    toast('Topik dibuat!');closeSheet('buatTopikSheet');document.getElementById('topikName').value='';document.getElementById('topikDesc').value='';renderTopik();
+  }catch(e){toast(e.message);}
 }
 
 async function openChat(topicId,topicName,memberCount,photoUrl,description){
@@ -932,12 +938,36 @@ async function openGrupDetail(){
   const gc=document.getElementById('grupContent');
   gc.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
   try{
-    const [members,topicData]=await Promise.all([sb(`/rest/v1/topic_members?topic_id=eq.${currentTopic.id}&select=user_id`),sb(`/rest/v1/topics?id=eq.${currentTopic.id}&select=*`)]);
+    const [members,topicData]=await Promise.all([
+      sb(`/rest/v1/topic_members?topic_id=eq.${currentTopic.id}&select=user_id`),
+      sb(`/rest/v1/topics?id=eq.${currentTopic.id}&select=*`)
+    ]);
     const tp=topicData[0]||{};
     const uids=members.map(m=>m.user_id).filter(Boolean);
     let profiles=[];
     if(uids.length){profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username,avatar_url`);}
     const isJoined=user&&uids.includes(user.id);
+    const isCreator=user&&tp.created_by===user.id;
+    const isDev=user&&user.profile?.is_admin;
+    const canManage=isCreator||isDev; // bisa hapus grup, kick, edit deskripsi
+
+    // Render member list dengan admin badge + titik tiga jika canManage
+    const memberHtml=profiles.map(p=>{
+      const isThisCreator=tp.created_by===p.id;
+      const isMe=user&&p.id===user.id;
+      const canKick=canManage&&!isMe&&!isThisCreator; // ga bisa kick diri sendiri atau creator
+      return `<div class="member-item">
+        <div class="member-avatar" onclick="openUserProfil('${p.id}')">${p.avatar_url?`<img src="${p.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
+        <div style="flex:1;min-width:0;cursor:pointer" onclick="openUserProfil('${p.id}')">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="member-name">${p.username}</span>
+            ${isThisCreator?'<span style="font-size:11px;font-weight:700;color:#27ae60;background:rgba(39,174,96,0.12);padding:2px 7px;border-radius:10px">Admin</span>':''}
+          </div>
+        </div>
+        ${canKick?`<button onclick="kickMember('${tp.id}','${p.id}','${p.username.replace(/'/g,"\'")}',this)" style="background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:18px;padding:6px 8px;border-radius:8px;flex-shrink:0"><i class="fa fa-ellipsis-v"></i></button>`:''}
+      </div>`;
+    }).join('');
+
     gc.innerHTML=`
       <div class="grup-hero">
         <div class="grup-hero-back" onclick="backToChat()"><i class="fa fa-arrow-left"></i></div>
@@ -946,13 +976,103 @@ async function openGrupDetail(){
       </div>
       <div class="grup-info">
         <div class="grup-name">${tp.name}</div>
-        ${tp.description?`<div class="grup-desc">${tp.description}</div>`:'<div class="grup-desc" style="font-style:italic">Belum ada deskripsi</div>'}
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <div class="grup-desc" id="grupDescText" style="flex:1">${tp.description||'<span style="font-style:italic;color:var(--text2)">Belum ada deskripsi</span>'}</div>
+          ${canManage?`<button onclick="editDeskripsiTopik('${tp.id}','${(tp.description||'').replace(/'/g,"\'")}')" style="background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:14px;padding:4px 6px;flex-shrink:0;margin-top:2px"><i class="fa fa-pen"></i></button>`:''}
+        </div>
         <div class="grup-stats"><div class="grup-stat"><span>${members.length}</span> anggota</div></div>
       </div>
       <div class="grup-members-title">ANGGOTA (${members.length})</div>
-      ${profiles.map(p=>`<div class="member-item" onclick="openUserProfil('${p.id}')"><div class="member-avatar">${p.avatar_url?`<img src="${p.avatar_url}">`:'<i class="fa fa-user"></i>'}</div><div class="member-name">${p.username}</div></div>`).join('')}
-      ${user?`<div style="padding:16px"><button class="${isJoined?'btn-outline':'btn-primary'}" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;${isJoined?'color:#ff4444;border-color:#ff4444':''}" onclick="toggleJoinGrup('${tp.id}',this)">${isJoined?'Keluar Grup':'Gabung Grup'}</button></div>`:''}`;
+      ${memberHtml}
+      ${user?`<div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+        ${canManage?`<button onclick="hapusGrup('${tp.id}')" style="width:100%;padding:14px;border-radius:12px;border:1.5px solid #ff4444;color:#ff4444;background:transparent;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px"><i class="fa fa-trash"></i> Hapus Grup</button>`:''}
+        <button class="${isJoined?'btn-outline':'btn-primary'}" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;${isJoined&&!canManage?'color:#ff4444;border-color:#ff4444':''}" onclick="toggleJoinGrup('${tp.id}',this)">${isJoined?(canManage?'Keluar Grup':'Keluar Grup'):'Gabung Grup'}</button>
+      </div>`:''}`;
   }catch(e){gc.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
+}
+
+function kickMember(topicId, uid, uname, btn){
+  const old=document.getElementById('kickMenu');if(old)old.remove();
+  const overlay=document.createElement('div');overlay.id='kickMenu';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML=`
+    <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:0 0 24px" onclick="event.stopPropagation()">
+      <div style="width:38px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 16px"></div>
+      <div style="padding:0 20px 14px;font-size:15px;font-weight:700;color:var(--text2)">@${uname}</div>
+      <div onclick="doKick('${topicId}','${uid}');document.getElementById('kickMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px;font-weight:500;color:#ff4444">
+        <i class="fa fa-user-times" style="width:22px;text-align:center;font-size:17px"></i>
+        <span>Kick dari grup</span>
+      </div>
+      <div onclick="openUserProfil('${uid}');document.getElementById('kickMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px;font-weight:500">
+        <i class="fa fa-user" style="width:22px;text-align:center;font-size:17px;color:var(--text2)"></i>
+        <span>Lihat profil</span>
+      </div>
+    </div>`;
+  overlay.onclick=()=>overlay.remove();
+  document.body.appendChild(overlay);
+}
+
+async function doKick(topicId, uid){
+  try{
+    await sb(`/rest/v1/topic_members?topic_id=eq.${topicId}&user_id=eq.${uid}`,{method:'DELETE'});
+    toast('Anggota berhasil dikick');
+    openGrupDetail();
+  }catch(e){toast('Gagal kick: '+e.message);}
+}
+
+function editDeskripsiTopik(topicId, currentDesc){
+  const old=document.getElementById('editDescMenu');if(old)old.remove();
+  const overlay=document.createElement('div');overlay.id='editDescMenu';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML=`
+    <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px 16px 36px" onclick="event.stopPropagation()">
+      <div style="width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px"></div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:14px">Edit Deskripsi</div>
+      <textarea id="editDescInput" class="finput" rows="4" style="margin-bottom:12px" placeholder="Tulis deskripsi topik...">${currentDesc}</textarea>
+      <button onclick="saveDescTopik('${topicId}')" class="fbtn">Simpan</button>
+    </div>`;
+  overlay.onclick=()=>overlay.remove();
+  document.body.appendChild(overlay);
+  setTimeout(()=>document.getElementById('editDescInput')?.focus(),100);
+}
+
+async function saveDescTopik(topicId){
+  const val=document.getElementById('editDescInput')?.value.trim();
+  try{
+    await sb(`/rest/v1/topics?id=eq.${topicId}`,{method:'PATCH',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({description:val})});
+    document.getElementById('editDescMenu')?.remove();
+    toast('Deskripsi diperbarui!');
+    openGrupDetail();
+  }catch(e){toast('Gagal: '+e.message);}
+}
+
+async function hapusGrup(topicId){
+  const old=document.getElementById('hapusMenu');if(old)old.remove();
+  const overlay=document.createElement('div');overlay.id='hapusMenu';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML=`
+    <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px 16px 36px" onclick="event.stopPropagation()">
+      <div style="width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px"></div>
+      <div style="font-size:17px;font-weight:700;margin-bottom:8px">Hapus Grup?</div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:20px">Semua pesan dan anggota akan hilang. Tindakan ini tidak bisa dibatalkan.</div>
+      <button onclick="doHapusGrup('${topicId}')" style="width:100%;padding:14px;border-radius:12px;background:#ff4444;color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">Ya, Hapus Grup</button>
+      <button onclick="document.getElementById('hapusMenu')?.remove()" style="width:100%;padding:14px;border-radius:12px;background:transparent;color:var(--text);border:1px solid var(--border);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Batal</button>
+    </div>`;
+  overlay.onclick=()=>overlay.remove();
+  document.body.appendChild(overlay);
+}
+
+async function doHapusGrup(topicId){
+  try{
+    // Hapus semua chat, members, baru topics
+    await sb(`/rest/v1/topic_chats?topic_id=eq.${topicId}`,{method:'DELETE'});
+    await sb(`/rest/v1/topic_members?topic_id=eq.${topicId}`,{method:'DELETE'});
+    await sb(`/rest/v1/topics?id=eq.${topicId}`,{method:'DELETE'});
+    document.getElementById('hapusMenu')?.remove();
+    toast('Grup berhasil dihapus');
+    currentTopic=null;
+    goPage('topik');
+  }catch(e){toast('Gagal hapus: '+e.message);}
 }
 async function toggleJoinGrup(id,btn){
   if(!user){openSheet('authSheet');return;}
