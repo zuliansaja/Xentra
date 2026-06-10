@@ -297,8 +297,8 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .grup-stat { font-size:13px; color:var(--text2); }
 .grup-stat span { font-weight:700; color:var(--text); }
 .grup-members-title { padding:14px 16px 8px; font-size:13px; font-weight:700; color:var(--text2); }
-.member-item { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
-.member-item:hover { background:var(--bg3); }
+.member-item { display:flex; align-items:center; gap:12px; padding:10px 16px; cursor:pointer; -webkit-tap-highlight-color:transparent; border:none; }
+.member-item:active { background:transparent; }
 .member-avatar { width:40px; height:40px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--text2); flex-shrink:0; overflow:hidden; }
 .member-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 .member-name { font-weight:600; font-size:14px; }
@@ -985,8 +985,8 @@ async function openGrupDetail(){
       <div class="grup-members-title">ANGGOTA (${members.length})</div>
       ${memberHtml}
       ${user?`<div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+        <button class="${isJoined?'btn-outline':'btn-primary'}" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;${isJoined?'color:#ff4444;border-color:#ff4444':''}" onclick="toggleJoinGrup('${tp.id}',this)">${isJoined?'Keluar Grup':'Gabung Grup'}</button>
         ${canManage?`<button onclick="hapusGrup('${tp.id}')" style="width:100%;padding:14px;border-radius:12px;border:1.5px solid #ff4444;color:#ff4444;background:transparent;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px"><i class="fa fa-trash"></i> Hapus Grup</button>`:''}
-        <button class="${isJoined?'btn-outline':'btn-primary'}" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;${isJoined&&!canManage?'color:#ff4444;border-color:#ff4444':''}" onclick="toggleJoinGrup('${tp.id}',this)">${isJoined?(canManage?'Keluar Grup':'Keluar Grup'):'Gabung Grup'}</button>
       </div>`:''}`;
   }catch(e){gc.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
 }
