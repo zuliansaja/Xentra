@@ -544,13 +544,13 @@ function goPage(page){
     document.getElementById(pg).classList.add('on');
     document.getElementById(pg).innerHTML='<div class="login-wall"><i class="fa fa-lock"></i><h3>Kamu harus login untuk mengakses halaman ini</h3><button class="btn-primary" onclick="openSheet(\'authSheet\')">Login sekarang</button></div>';
     document.getElementById('nb-'+page).classList.add('on');
-    const showSearch=['home','notif'];
+    const showSearch=['home'];
     document.getElementById('topbarSearch').style.display=showSearch.includes(page)?'flex':'none';
     return;
   }
   document.getElementById('pg-'+page).classList.add('on');
   document.getElementById('nb-'+page)&&document.getElementById('nb-'+page).classList.add('on');
-  const showSearch=['home','notif'];
+  const showSearch=['home'];
   document.getElementById('topbarSearch').style.display=showSearch.includes(page)?'flex':'none';
   if(page==='topik')renderTopik();
   if(page==='profil'&&user)renderProfil();
@@ -1341,12 +1341,6 @@ async function fetchAllNotifItems(){
 async function loadNotif(){
   const pg = document.getElementById('pg-notif');
   pg.innerHTML = `
-    <div class="nfilters" id="notifFilters">
-      <button class="nfbtn on" data-filter="semua" onclick="setNotifFilter(this,'semua')">Semua</button>
-      <button class="nfbtn" data-filter="post" onclick="setNotifFilter(this,'post')">Post</button>
-      <button class="nfbtn" data-filter="komentar" onclick="setNotifFilter(this,'komentar')">Komentar</button>
-      <button class="nfbtn" data-filter="topik" onclick="setNotifFilter(this,'topik')">Topik</button>
-    </div>
     <div id="notifList">
       <div class="center-msg"><i class="fa fa-spinner spin"></i></div>
     </div>`;
@@ -1388,20 +1382,10 @@ function renderNotifList(actorMap){
   const list = document.getElementById('notifList');
   if(!list) return;
 
-  let filtered = allNotifItems;
-  if(notifFilter === 'post') filtered = allNotifItems.filter(n => n.type === 'like_post');
-  else if(notifFilter === 'komentar') filtered = allNotifItems.filter(n => ['comment_post','reply_comment','like_comment'].includes(n.type));
-  else if(notifFilter === 'topik') filtered = allNotifItems.filter(n => n.type === 'topic_chat');
+  const filtered = allNotifItems;
 
   if(!filtered.length){
-    const emptyMap = {
-      semua: {icon:'fa-bell', title:'Belum ada notifikasi', sub:'Aktivitas di postmu akan muncul di sini'},
-      post: {icon:'fa-heart', title:'Belum ada like', sub:'Kalau ada yang like postmu, bakal muncul di sini'},
-      komentar: {icon:'fa-comment', title:'Belum ada komentar', sub:'Komentar & balasan di postmu muncul di sini'},
-      topik: {icon:'fa-users', title:'Belum ada pesan topik', sub:'Pesan baru di topik yang kamu ikuti muncul di sini'},
-    };
-    const e = emptyMap[notifFilter] || emptyMap.semua;
-    list.innerHTML = `<div class="center-msg"><i class="fa ${e.icon}"></i><h3>${e.title}</h3><p>${e.sub}</p></div>`;
+    list.innerHTML = `<div class="center-msg"><i class="fa fa-bell"></i><h3>Belum ada notifikasi</h3><p>Aktivitas di postmu akan muncul di sini</p></div>`;
     return;
   }
 
