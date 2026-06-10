@@ -1510,4 +1510,324 @@ async function loadNotif(){
     const actorIds = [...new Set(allNotifItems.map(n=>n.actor_id).filter(Boolean))];
     let actorMap = {};
     if(actorIds.length){
-      const profiles = await sb(`/rest/v1/profiles?id=in.(${actorIds.join(',')})&select=id,username,avata
+      const profiles = await sb(`/rest/v1/profiles?id=in.(${actorIds.join(',')})&select=id,username,avatar_url`);
+      profiles.forEach(p => actorMap[p.id] = p);
+    }
+
+    renderNotifList(actorMap);
+  } catch(e){
+    document.getElementById('notifList').innerHTML = `<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;
+  }
+}
+
+let _actorMapCache = {};
+function setNotifFilter(btn, filter){
+  document.querySelectorAll('.nfbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  notifFilter = filter;
+  renderNotifList(_actorMapCache);
+}
+
+function renderNotifList(actorMap){
+  _actorMapCache = actorMap;
+  const list = document.getElementById('notifList');
+  if(!list) return;
+
+  const filtered = allNotifItems;
+
+  if(!filtered.length){
+    list.innerHTML = `<div class="center-msg"><i class="fa fa-bell"></i><h3>Belum ada notifikasi</h3><p>Aktivitas di postmu akan muncul di sini</p></div>`;
+    return;
+  }
+
+  // Grouping by date
+  const groups = {};
+  filtered.forEach(n => {
+    const d = new Date(n.created_at.endsWith('Z')||n.created_at.includes('+')?n.created_at:n.created_at+'Z');
+    const now = new Date();
+    let label;
+    const dayDiff = Math.floor((now - d) / 86400000);
+    if(dayDiff === 0) label = 'Hari ini';
+    else if(dayDiff === 1) label = 'Kemarin';
+    else if(dayDiff < 7) label = `${dayDiff} hari lalu`;
+    else label = 'Lebih lama';
+    if(!groups[label]) groups[label] = [];
+    groups[label].push(n);
+  });
+
+  const groupOrder = ['Hari ini','Kemarin'];
+  const allLabels = Object.keys(groups);
+  const sorted = [...groupOrder.filter(l=>groups[l]), ...allLabels.filter(l=>!groupOrder.includes(l))];
+
+  let html = '';
+  sorted.forEach(label => {
+    html += `<div class="notif-date-sep">${label}</div>`;
+    groups[label].forEach(n => {
+      html += renderNotifItem(n, actorMap);
+    });
+  });
+  list.innerHTML = html;
+}
+
+function renderNotifItem(n, actorMap){
+  const actor = actorMap[n.actor_id] || {};
+  const uname = actor.username || 'Seseorang';
+  const avatarHtml = actor.avatar_url
+    ? `<img src="${actor.avatar_url}">`
+    : `<i class="fa fa-user" style="font-size:16px;color:var(--text2)"></i>`;
+
+  const isUnread = new Date(n.created_at.endsWith('Z')||n.created_at.includes('+')?n.created_at:n.created_at+'Z').getTime() > notifLastSeen;
+
+  let iconClass = '', iconEl = '', textHtml = '', thumbHtml = '';
+  const timeStr = ago(n.created_at);
+
+  // Thumb (miniatur post)
+  if(n.thumb){
+    thumbHtml = `<div class="notif-thumb"><img src="${n.thumb}" loading="lazy"></div>`;
+  }
+
+  switch(n.type){
+    case 'like_post':
+      iconClass = 'like';
+      iconEl = `<div class="notif-icon like"><i class="fa fa-heart"></i></div>`;
+      textHtml = `<div class="notif-text"><strong>${uname}</strong> <span>menyukai postmu</span></div>`;
+      if(n.preview) textHtml += `<div class="notif-preview">${n.preview}</div>`;
+      break;
+    case 'comment_post':
+      iconClass = 'comment';
+      iconEl = `<div class="notif-icon comment"><i class="fa fa-comment"></i></div>`;
+      textHtml = `<div class="notif-text"><strong>${uname}</strong> <span>mengomentari postmu</span></div>`;
+      textHtml += `<div class="notif-preview">${n.preview}</div>`;
+      break;
+    case 'reply_comment':
+      iconClass = 'reply';
+      iconEl = `<div class="notif-icon reply"><i class="fa fa-reply"></i></div>`;
+      textHtml = `<div class="notif-text"><strong>${uname}</strong> <span>membalas komentarmu</span></div>`;
+      textHtml += `<div class="notif-preview">${n.preview}</div>`;
+      break;
+    case 'like_comment':
+      iconClass = 'like';
+      iconEl = `<div class="notif-icon like"><i class="fa fa-heart"></i></div>`;
+      textHtml = `<div class="notif-text"><strong>${uname}</strong> <span>menyukai komentarmu</span></div>`;
+      break;
+    case 'topic_chat':
+      iconEl = `<div class="notif-icon topic"><i class="fa fa-users"></i></div>`;
+      textHtml = `<div class="notif-text"><strong>${uname}</strong> <span>mengirim pesan di </span><strong>${n.topic_name}</strong></div>`;
+      textHtml += `<div class="notif-preview">${n.preview}</div>`;
+      // Untuk topik, ganti thumb dengan foto topik jika ada
+      if(n.topic_photo){
+        thumbHtml = `<div class="notif-thumb"><img src="${n.topic_photo}" loading="lazy"></div>`;
+      } else {
+        thumbHtml = `<div class="notif-thumb" style="font-size:20px;background:var(--bg3)">👥</div>`;
+      }
+      break;
+  }
+
+  const clickAction = n.type === 'topic_chat'
+    ? `onclick="openChat('${n.topic_id}','${(n.topic_name||'').replace(/'/g,"\\'")}',0,'${n.topic_photo||''}','')"`
+    : n.post_id
+      ? `onclick="closeSheet('komentarSheet');openKomentar('${n.post_id}')"`
+      : '';
+
+  // Sisipkan iconEl ke dalam thumbHtml
+  let finalThumb = thumbHtml;
+  if(thumbHtml && iconEl){
+    finalThumb = thumbHtml.replace(/(<div class="notif-thumb[^>]*>)/, '$1' + iconEl);
+  }
+
+  return `<div class="notif-item ${isUnread?'unread':''}" ${clickAction}>
+    <div class="notif-avatar">
+      ${avatarHtml}
+    </div>
+    <div class="notif-body">
+      ${textHtml}
+      <div class="notif-sub"><span>${timeStr}</span></div>
+    </div>
+    ${finalThumb}
+  </div>`;
+}
+
+async function doSearch(q){
+  const res=document.getElementById('searchResults');
+  if(!q.trim()){res.innerHTML='<div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div>';return;}
+  res.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  try{
+    const [posts,users]=await Promise.all([
+      sb(`/rest/v1/posts?caption=ilike.*${encodeURIComponent(q)}*&select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=10`),
+      sb(`/rest/v1/profiles?username=ilike.*${encodeURIComponent(q)}*&select=id,username,avatar_url&limit=5`)
+    ]);
+    const userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))];
+    let profileMap={};
+    if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>profileMap[p.id]=p);}
+    posts.forEach(p=>p.profiles=profileMap[p.user_id]||null);
+    let html='';
+    if(users.length){
+      html+=`<div style="padding:12px 16px 6px;font-size:12px;font-weight:700;color:var(--text2)">USER</div>`;
+      html+=users.map(u=>`
+        <div onclick="openUserProfil('${u.id}')" style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer">
+          <div class="pavatar">${u.avatar_url?`<img src="${u.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
+          <div><div style="font-weight:700;font-size:14px">${u.username}</div><div style="font-size:12px;color:var(--text2)">@${u.username}</div></div>
+        </div>`).join('');
+    }
+    if(posts.length){
+      html+=`<div style="padding:12px 16px 6px;font-size:12px;font-weight:700;color:var(--text2)">POST</div>`;
+      html+=posts.map(p=>renderPost(p)).join('');
+    }
+    if(!users.length&&!posts.length)html='<div class="center-msg"><i class="fa fa-search"></i><h3>Tidak ditemukan</h3><p>Coba kata kunci lain</p></div>';
+    res.innerHTML=html;
+  }catch(e){res.innerHTML='<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal</h3></div>';}
+}
+
+async function downloadPost(pid,imgUrl){
+  if(!imgUrl||imgUrl==='undefined'||imgUrl===''){toast('Tidak ada gambar');return;}
+  try{
+    toast('Mengunduh...');
+    const r=await fetch(imgUrl);const blob=await r.blob();
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`xentra_${pid}.jpg`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
+    toast('Tersimpan!');
+  }catch(e){toast('Gagal download');}
+}
+function toggleDark(){const el=document.getElementById('darkToggle');el.classList.toggle('on');document.documentElement.setAttribute('data-theme',el.classList.contains('on')?'dark':'light');}
+function setLang(l){document.getElementById('langId').style.display=l==='id'?'block':'none';document.getElementById('langEn').style.display=l==='en'?'block':'none';}
+async function deletePost(pid){
+  if(!confirm('Hapus post ini?'))return;
+  try{await sb(`/rest/v1/posts?id=eq.${pid}`,{method:'DELETE'});toast('Post dihapus');loadFeed(true);}catch(e){toast('Gagal hapus: '+e.message);}
+}
+function sharePost(){if(navigator.share)navigator.share({title:'Xentra',url:location.href});else toast('Link disalin!');}
+function toggleChatSearch(){
+  const bar=document.getElementById('chatSearchBar'),msgs=document.getElementById('chatMsgs'),results=document.getElementById('chatSearchResults');
+  const isOpen=bar.style.display!=='none';
+  if(isOpen){bar.style.display='none';results.style.display='none';msgs.style.display='flex';document.getElementById('chatSearchInput').value='';}
+  else{bar.style.display='block';setTimeout(()=>document.getElementById('chatSearchInput').focus(),100);}
+}
+function doChatSearch(q){
+  const msgs=document.getElementById('chatMsgs'),results=document.getElementById('chatSearchResults');
+  if(!q.trim()){results.style.display='none';msgs.style.display='flex';return;}
+  msgs.style.display='none';results.style.display='block';
+  const allBubbles=Array.from(document.getElementById('chatMsgs').querySelectorAll('.chat-bubble:not(.img-only)'));
+  const matched=allBubbles.filter(b=>b.textContent.toLowerCase().includes(q.toLowerCase()));
+  if(!matched.length){results.innerHTML='<div class="center-msg"><i class="fa fa-search"></i><h3>Tidak ditemukan</h3></div>';return;}
+  results.innerHTML=matched.map(b=>{
+    const group=b.closest('.chat-group');
+    const uname=group?.querySelector('.chat-uname')?.textContent||'Kamu';
+    const hi=b.textContent.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),m=>`<mark style="background:var(--accent);color:#fff;border-radius:3px;padding:0 2px">${m}</mark>`);
+    return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)"><div style="font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:600">${uname}</div><div style="font-size:14px;line-height:1.5">${hi}</div></div>`;
+  }).join('');
+}
+
+// === PTR (Pull to Refresh) ===
+(function(){
+  var ptrStart=0,ptrActive=false,ptrTriggered=false,ptrLoading=false;
+  var PTR_THRESHOLD=75;
+  var contentEl=document.getElementById('content');
+  var ptrWrap=document.getElementById('ptr-wrap');
+  var ptrSpinner=document.getElementById('ptr-spinner');
+  function resetPtr(){
+    ptrWrap.classList.remove('pulling','releasing','loading');
+    ptrWrap.classList.add('hiding');
+    ptrSpinner.classList.remove('spin');
+    ptrSpinner.querySelector('i').style.transform='';
+    setTimeout(function(){ptrWrap.classList.remove('hiding');},320);
+    ptrActive=false;ptrTriggered=false;ptrLoading=false;
+  }
+  contentEl.addEventListener('touchstart',function(e){
+    if(ptrLoading)return;
+    var ap=document.querySelector('.page.on');
+    if(ap&&(ap.id==='pg-chat'||ap.id==='pg-grup'))return;
+    if(contentEl.scrollTop===0){ptrStart=e.touches[0].clientY;ptrActive=true;ptrTriggered=false;}
+  },{passive:true});
+  contentEl.addEventListener('touchmove',function(e){
+    if(!ptrActive||ptrLoading)return;
+    var diff=e.touches[0].clientY-ptrStart;
+    if(diff<=0)return;
+    var pull=Math.min(diff*0.45,PTR_THRESHOLD*1.2);
+    var deg=Math.floor((pull/PTR_THRESHOLD)*270);
+    ptrWrap.classList.add('pulling');ptrWrap.classList.remove('hiding');
+    if(!ptrTriggered){ptrSpinner.querySelector('i').style.transform='rotate('+deg+'deg)';ptrSpinner.querySelector('i').style.transition='none';}
+    if(pull>=PTR_THRESHOLD&&!ptrTriggered)ptrTriggered=true;
+  },{passive:true});
+  contentEl.addEventListener('touchend',function(e){
+    if(!ptrActive||ptrLoading)return;
+    ptrActive=false;
+    if(ptrTriggered){
+      ptrLoading=true;
+      ptrWrap.classList.remove('pulling');ptrWrap.classList.add('releasing','loading');
+      ptrSpinner.querySelector('i').style.transform='';ptrSpinner.querySelector('i').style.transition='';
+      ptrSpinner.classList.add('spin');
+      var ap=document.querySelector('.page.on');
+      var done=function(){setTimeout(resetPtr,400);};
+      if(ap&&ap.id==='pg-home')loadFeed(true).then(done).catch(done);
+      else if(ap&&ap.id==='pg-topik')renderTopik().then(done).catch(done);
+      else if(ap&&ap.id==='pg-profil'&&user)renderProfil().then(done).catch(done);
+      else if(ap&&ap.id==='pg-notif'&&user)loadNotif().then(done).catch(done);
+      else done();
+    } else {
+      ptrWrap.classList.remove('pulling');ptrWrap.classList.add('hiding');
+      ptrSpinner.querySelector('i').style.transform='';
+      setTimeout(function(){ptrWrap.classList.remove('hiding');ptrTriggered=false;},320);
+    }
+  },{passive:true});
+})();
+
+// Infinite scroll
+document.getElementById('content').addEventListener('scroll',function(){
+  if(document.querySelector('.page.on')?.id!=='pg-home')return;
+  var s=this;
+  if(s.scrollHeight-s.scrollTop-s.clientHeight<200)loadFeed(false);
+},{passive:true});
+
+// Init
+(async function(){
+  await restoreSession();
+  loadFeed(true);
+  renderTopik();
+  // Cek badge notif setiap 60 detik jika user login
+  if(user) {
+    checkNotifBadge();
+    setInterval(()=>{ if(user) checkNotifBadge(); }, 60000);
+  }
+})();
+
+// Feed image click -> lightbox
+document.getElementById('feed').addEventListener('click',function(e){
+  var img=e.target.closest('.pimg-click');
+  if(!img)return;
+  openLightbox(img.dataset.urls.split('||'),parseInt(img.dataset.idx)||0);
+});
+
+var lbImgs=[],lbIdx=0,lbTouchX=0;
+function openLightbox(imgs,idx){
+  lbImgs=imgs;lbIdx=idx;
+  document.getElementById('lightbox-img').src=lbImgs[lbIdx];
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+  updateLightboxCounter();
+  document.getElementById('lightbox-prev').style.display=lbImgs.length>1?'flex':'none';
+  document.getElementById('lightbox-next').style.display=lbImgs.length>1?'flex':'none';
+}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow='';}
+function lightboxNav(dir){
+  lbIdx=(lbIdx+dir+lbImgs.length)%lbImgs.length;
+  var img=document.getElementById('lightbox-img');
+  img.style.opacity='0';img.style.transition='opacity .15s';
+  setTimeout(function(){img.src=lbImgs[lbIdx];img.style.opacity='1';},150);
+  updateLightboxCounter();
+}
+function updateLightboxCounter(){
+  document.getElementById('lightbox-counter').textContent=lbImgs.length>1?(lbIdx+1)+' / '+lbImgs.length:'';
+}
+var lb=document.getElementById('lightbox');
+lb.addEventListener('touchstart',function(e){lbTouchX=e.touches[0].clientX;},{passive:true});
+lb.addEventListener('touchend',function(e){
+  var diff=e.changedTouches[0].clientX-lbTouchX;
+  if(Math.abs(diff)>50&&lbImgs.length>1)lightboxNav(diff<0?1:-1);
+},{passive:true});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')closeLightbox();
+  if(e.key==='ArrowLeft')lightboxNav(-1);
+  if(e.key==='ArrowRight')lightboxNav(1);
+});
+</script>
+</body>
+</html>
