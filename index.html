@@ -50,6 +50,35 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 }
 .notif-badge.show { display:flex; }
 
+/* ===== VERIFIED BADGE ===== */
+.verified-badge {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:15px;
+  height:15px;
+  background:var(--accent);
+  border-radius:50%;
+  margin-left:4px;
+  flex-shrink:0;
+  vertical-align:middle;
+  position:relative;
+  top:-1px;
+}
+.verified-badge i {
+  font-size:8px;
+  color:#fff;
+  font-weight:900;
+}
+/* Larger variant for profile pages */
+.verified-badge.lg {
+  width:20px;
+  height:20px;
+}
+.verified-badge.lg i {
+  font-size:11px;
+}
+
 .page { display:none; } .page.on { display:block; animation:fadein .18s ease; }
 @keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 .pcard { border-bottom:1px solid var(--border); padding:14px 16px; }
@@ -57,7 +86,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .puser { display:flex; align-items:center; gap:10px; }
 .pavatar { width:38px; height:38px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; color:var(--text2); font-size:15px; overflow:hidden; flex-shrink:0; }
 .pavatar img { width:100%; height:100%; object-fit:cover; }
-.puname { font-weight:700; font-size:14px; }
+.puname { font-weight:700; font-size:14px; display:flex; align-items:center; flex-wrap:wrap; }
 .ptime { font-size:12px; color:var(--text2); }
 .ptitle { font-size:15px; font-weight:600; margin-bottom:6px; }
 .ptags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
@@ -147,7 +176,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .profil-top { text-align:center; padding:24px 16px 16px; background:var(--bg); }
 .pavatar-lg { width:80px; height:80px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:32px; color:var(--text2); margin:0 auto 12px; overflow:hidden; }
 .pavatar-lg img { width:100%; height:100%; object-fit:cover; }
-.pname { font-size:20px; font-weight:800; } .pusername { font-size:14px; color:var(--text2); margin-top:2px; }
+.pname { font-size:20px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:4px; } .pusername { font-size:14px; color:var(--text2); margin-top:2px; }
 .pstats { display:flex; justify-content:center; gap:0; margin:16px 0; width:100%; }
 .pstats > div { flex:1; text-align:center; }
 .pstat-num { font-size:20px; font-weight:800; } .pstat-label { font-size:12px; color:var(--text2); }
@@ -296,7 +325,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .chat-group:not(.mine) { align-items:flex-start; }
 .chat-group-header { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
 .chat-avatar { width:28px; height:28px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--text2); flex-shrink:0; overflow:hidden; }
-.chat-uname { font-size:12px; font-weight:600; color:var(--text2); }
+.chat-uname { font-size:12px; font-weight:600; color:var(--text2); display:flex; align-items:center; }
 .chat-bubbles { display:flex; flex-direction:column; gap:3px; max-width:78%; }
 .chat-group.mine .chat-bubbles { align-items:flex-end; }
 .chat-group:not(.mine) .chat-bubbles { align-items:flex-start; padding-left:36px; }
@@ -504,13 +533,20 @@ const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6
 let user=null,token=null,currentPost=null,currentTopic=null,topikTab='all',chatInterval=null;
 
 // =============================================
+// VERIFIED BADGE HELPER
+// =============================================
+// Menampilkan centang biru jika profile.is_verified === true
+function verifiedBadge(profile, size=''){
+  if(!profile || !profile.is_verified) return '';
+  return `<span class="verified-badge ${size}" title="Akun Terverifikasi"><i class="fa fa-check"></i></span>`;
+}
+
+// =============================================
 // NOTIFIKASI STATE
 // =============================================
-// Key untuk localStorage: kapan terakhir user buka notif
-// Semua notif yang lebih baru dari itu = unread
 let notifLastSeen = parseInt(localStorage.getItem('xn_notif_seen')||'0');
-let notifFilter = 'semua'; // semua | post | komentar | topik
-let allNotifItems = []; // cache semua notif
+let notifFilter = 'semua';
+let allNotifItems = [];
 
 function saveSession(rt){if(user&&token){localStorage.setItem('xn_token',token);localStorage.setItem('xn_user',JSON.stringify(user));if(rt)localStorage.setItem('xn_refresh',rt);}}
 function clearSession(){localStorage.removeItem('xn_token');localStorage.removeItem('xn_user');localStorage.removeItem('xn_refresh');}
@@ -634,12 +670,11 @@ async function loadFeed(reset=false){
     if(posts.length<limit)feedDone=true;
     const userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))];
     let profileMap={};
-    if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>profileMap[p.id]=p);}
+    if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url,is_verified`);profiles.forEach(p=>profileMap[p.id]=p);}
     posts.forEach(p=>p.profiles=profileMap[p.user_id]||null);
     if(reset)feed.innerHTML=posts.map(p=>renderPost(p)).join('');
     else feed.insertAdjacentHTML('beforeend',posts.map(p=>renderPost(p)).join(''));
     feedPage++;
-    // After feed loads, silently check notif badge
     if(user) checkNotifBadge();
   }catch(e){document.getElementById('feed-loader')?.remove();if(reset)feed.innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
   feedLoading=false;
@@ -662,7 +697,7 @@ function renderPost(p){
   else if(imgs.length>=3)imgHtml=`<div class="pimgs s3"><img class="pm pimg-click" src="${imgs[0].image_url}" loading="lazy" data-urls="${urlsAttr}" data-idx="0"><img src="${imgs[1].image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="1"><img src="${imgs[2].image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="2"></div>`;
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
-      <div class="puser"><div class="pavatar">${uavatar?`<img src="${uavatar}" loading="lazy">`:'<i class="fa fa-user"></i>'}</div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
+      <div class="puser"><div class="pavatar">${uavatar?`<img src="${uavatar}" loading="lazy">`:'<i class="fa fa-user"></i>'}</div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}${verifiedBadge(p.profiles)}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
       <i class="fa fa-ellipsis-h" style="color:var(--text2);cursor:pointer;padding:4px 8px;font-size:18px" onclick="showPostMenu('${p.id}','${p.user_id}','${firstImg}','${capEsc}')"></i>
     </div>
     ${cap?`<div class="ptitle">${cap}</div>`:''}
@@ -755,7 +790,7 @@ async function openKomentar(pid){
     if(!cs.length){list.innerHTML='<div style="text-align:center;padding:32px;color:var(--text2)">Belum ada komentar.<br>Jadilah yang pertama!</div>';return;}
     const uids=[...new Set(cs.map(c=>c.user_id).filter(Boolean))];
     let pmap={};
-    if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>pmap[p.id]=p);}
+    if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username,avatar_url,is_verified`);profiles.forEach(p=>pmap[p.id]=p);}
     const cids=cs.map(c=>c.id);
     let likeCounts={},myLikes={};
     if(cids.length){
@@ -778,7 +813,7 @@ async function openKomentar(pid){
         <div class="kavatar" style="flex-shrink:0">${avatarHtml}</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-            <span style="font-weight:700;font-size:13px">${uname}</span>
+            <span style="font-weight:700;font-size:13px;display:flex;align-items:center">${uname}${verifiedBadge(prof)}</span>
             <span style="font-size:11px;color:var(--text2)">${ago(c.created_at)}</span>
           </div>
           <div style="font-size:14px;line-height:1.5;word-break:break-word;margin-bottom:6px">${c.content}</div>
@@ -823,16 +858,13 @@ function showKomenMenu(cid,content,canDel=false){
 
 async function deleteKomentar(cid){
   try{
-    // Hapus likes balasan dulu
     const replies=await sb(`/rest/v1/comments?parent_id=eq.${cid}&select=id`).catch(()=>[]);
     if(replies.length){
       const rids=replies.map(r=>r.id);
       await sb(`/rest/v1/comment_likes?comment_id=in.(${rids.join(',')})`,{method:'DELETE'}).catch(()=>{});
       await sb(`/rest/v1/comments?parent_id=eq.${cid}`,{method:'DELETE'}).catch(()=>{});
     }
-    // Hapus likes komentar ini
     await sb(`/rest/v1/comment_likes?comment_id=eq.${cid}`,{method:'DELETE'}).catch(()=>{});
-    // Hapus komentar
     await sb(`/rest/v1/comments?id=eq.${cid}`,{method:'DELETE'});
     toast('Komentar dihapus');
     openKomentar(currentPost);
@@ -984,7 +1016,6 @@ async function submitTopik(){
   try{
     const tp=await sb('/rest/v1/topics',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({name,description:desc,member_count:0,emoji:'👥',created_by:user?.id||null})});
     const tpId=Array.isArray(tp)?tp[0].id:tp.id;
-    // Auto join sebagai creator
     if(user&&tpId){await sb('/rest/v1/topic_members',{method:'POST',body:JSON.stringify({topic_id:tpId,user_id:user.id})});}
     toast('Topik dibuat!');closeSheet('buatTopikSheet');document.getElementById('topikName').value='';document.getElementById('topikDesc').value='';renderTopik();
   }catch(e){toast(e.message);}
@@ -1022,22 +1053,22 @@ async function openGrupDetail(){
     const tp=topicData[0]||{};
     const uids=members.map(m=>m.user_id).filter(Boolean);
     let profiles=[];
-    if(uids.length){profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username,avatar_url`);}
+    if(uids.length){profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username,avatar_url,is_verified`);}
     const isJoined=user&&uids.includes(user.id);
     const isCreator=user&&tp.created_by===user.id;
     const isDev=user&&user.profile?.is_admin;
-    const canManage=isCreator||isDev; // bisa hapus grup, kick, edit deskripsi
+    const canManage=isCreator||isDev;
 
-    // Render member list dengan admin badge + titik tiga jika canManage
     const memberHtml=profiles.map(p=>{
       const isThisCreator=tp.created_by===p.id;
       const isMe=user&&p.id===user.id;
-      const canKick=canManage&&!isMe&&!isThisCreator; // ga bisa kick diri sendiri atau creator
+      const canKick=canManage&&!isMe&&!isThisCreator;
       return `<div class="member-item">
         <div class="member-avatar" onclick="openUserProfil('${p.id}')">${p.avatar_url?`<img src="${p.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
         <div style="flex:1;min-width:0;cursor:pointer" onclick="openUserProfil('${p.id}')">
           <div style="display:flex;align-items:center;gap:6px">
             <span class="member-name">${p.username}</span>
+            ${verifiedBadge(p)}
             ${isThisCreator?'<span style="font-size:11px;font-weight:700;color:#27ae60;background:rgba(39,174,96,0.12);padding:2px 7px;border-radius:10px">Admin</span>':''}
           </div>
         </div>
@@ -1141,10 +1172,7 @@ async function hapusGrup(topicId){
 
 async function doHapusGrup(topicId){
   try{
-    // 1. Ambil semua pesan chat untuk cari foto
     const chats = await sb(`/rest/v1/topic_chats?topic_id=eq.${topicId}&select=content`);
-
-    // 2. Kumpulkan path foto dari [img]...[/img]
     const storageBase = `${SB}/storage/v1/object/public/meme-images/`;
     const chatImgPaths = [];
     chats.forEach(c => {
@@ -1154,8 +1182,6 @@ async function doHapusGrup(topicId){
         chatImgPaths.push(path);
       }
     });
-
-    // 3. Hapus foto chat dari storage (batch)
     if(chatImgPaths.length){
       await fetch(`${SB}/storage/v1/object/meme-images`,{
         method:'DELETE',
@@ -1163,19 +1189,14 @@ async function doHapusGrup(topicId){
         body:JSON.stringify({prefixes:chatImgPaths})
       }).catch(()=>{});
     }
-
-    // 4. Hapus foto cover grup dari storage
     await fetch(`${SB}/storage/v1/object/meme-images`,{
       method:'DELETE',
       headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
       body:JSON.stringify({prefixes:[`groups/${topicId}/cover.jpg`]})
     }).catch(()=>{});
-
-    // 5. Hapus data DB
     await sb(`/rest/v1/topic_chats?topic_id=eq.${topicId}`,{method:'DELETE'});
     await sb(`/rest/v1/topic_members?topic_id=eq.${topicId}`,{method:'DELETE'});
     await sb(`/rest/v1/topics?id=eq.${topicId}`,{method:'DELETE'});
-
     document.getElementById('hapusMenu')?.remove();
     toast('Grup berhasil dihapus');
     currentTopic=null;
@@ -1204,7 +1225,7 @@ async function loadChatMsgs(){
     const msgs=await sb(`/rest/v1/topic_chats?topic_id=eq.${currentTopic.id}&select=*&order=created_at.asc&limit=100`);
     const uids=[...new Set(msgs.map(m=>m.user_id).filter(Boolean))];
     let pmap={};
-    if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>pmap[p.id]=p);}
+    if(uids.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,username,avatar_url,is_verified`);profiles.forEach(p=>pmap[p.id]=p);}
     const container=document.getElementById('chatMsgs');
     const isBottom=container.scrollHeight-container.scrollTop-container.clientHeight<60;
     if(!msgs.length){container.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">Belum ada pesan. Mulai chat!</div>';return;}
@@ -1212,11 +1233,11 @@ async function loadChatMsgs(){
     msgs.forEach((m,i)=>{
       const prev=msgs[i-1],sameUser=prev&&prev.user_id===m.user_id,closeTime=prev&&(new Date(m.created_at)-new Date(prev.created_at))<120000;
       if(sameUser&&closeTime)groups[groups.length-1].msgs.push(m);
-      else{const prof=pmap[m.user_id];groups.push({uname:prof?.username||'user',avatar:prof?.avatar_url||'',mine:user&&m.user_id===user.id,msgs:[m]});}
+      else{const prof=pmap[m.user_id];groups.push({uname:prof?.username||'user',avatar:prof?.avatar_url||'',mine:user&&m.user_id===user.id,msgs:[m],profile:prof||null});}
     });
     container.innerHTML=groups.map(g=>`
       <div class="chat-group ${g.mine?'mine':''}">
-        ${!g.mine?`<div class="chat-group-header"><div class="chat-avatar">${g.avatar?`<img src="${g.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'<i class="fa fa-user" style="font-size:10px"></i>'}</div><div class="chat-uname">${g.uname}</div></div>`:''}
+        ${!g.mine?`<div class="chat-group-header"><div class="chat-avatar">${g.avatar?`<img src="${g.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'<i class="fa fa-user" style="font-size:10px"></i>'}</div><div class="chat-uname">${g.uname}${verifiedBadge(g.profile)}</div></div>`:''}
         <div class="chat-bubbles">
           ${g.msgs.map(m=>{const im=m.content.match(/\[img\](.*?)\[\/img\]/);return im?`<div class="chat-bubble img-only"><img src="${im[1]}" loading="lazy" onclick="window.open('${im[1]}','_blank')"></div>`:`<div class="chat-bubble">${m.content}</div>`;}).join('')}
           <div class="chat-time-row">${ago(g.msgs[g.msgs.length-1].created_at)}</div>
@@ -1255,7 +1276,7 @@ async function renderProfil(){
     </div>
     <div class="profil-top" style="padding-top:4px">
       <div class="pavatar-lg">${p.avatar_url?`<img src="${p.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
-      <div class="pname">${p.username||'User'}</div>
+      <div class="pname">${p.username||'User'}${verifiedBadge(p,'lg')}</div>
       <div class="pusername">@${p.username||'user'}</div>
       <div class="pstats">
         <div><div class="pstat-num" id="statFollowers">0</div><div class="pstat-label">Followers</div></div>
@@ -1331,7 +1352,7 @@ function goProfilMenu(){
       '<div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">'+
         '<div style="padding:15px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px">'+
           '<i class="fa fa-user" style="color:var(--accent);font-size:16px;width:20px;text-align:center"></i>'+
-          '<div><div style="font-size:12px;color:var(--text2)">Username</div><div style="font-size:15px;font-weight:600;margin-top:2px">'+(p.username||'user')+'</div></div>'+
+          '<div><div style="font-size:12px;color:var(--text2)">Username</div><div style="font-size:15px;font-weight:600;margin-top:2px;display:flex;align-items:center">'+(p.username||'user')+verifiedBadge(p)+'</div></div>'+
         '</div>'+
         '<div style="padding:15px 16px;display:flex;align-items:center;gap:14px">'+
           '<i class="fa fa-envelope" style="color:var(--accent);font-size:16px;width:20px;text-align:center"></i>'+
@@ -1365,11 +1386,11 @@ async function openUserProfil(uid){
     document.getElementById('userWall').innerHTML=`
       <div style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)">
         <div class="chat-back" onclick="goPage('home')"><i class="fa fa-arrow-left"></i></div>
-        <div style="font-weight:700;font-size:16px">${p.username||'User'}</div>
+        <div style="font-weight:700;font-size:16px;display:flex;align-items:center">${p.username||'User'}${verifiedBadge(p)}</div>
       </div>
       <div class="profil-top">
         <div class="pavatar-lg">${p.avatar_url?`<img src="${p.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
-        <div class="pname">${p.username||'User'}</div>
+        <div class="pname">${p.username||'User'}${verifiedBadge(p,'lg')}</div>
         <div class="pusername">@${p.username||'user'}</div>
         <div class="pstats">
           <div><div class="pstat-num">${followers.length}</div><div class="pstat-label">Followers</div></div>
@@ -1424,7 +1445,6 @@ async function uploadGrupPhoto(topicId,inp){
 // NOTIFIKASI SYSTEM
 // =============================================
 
-// Badge: hitung notif baru sejak terakhir seen
 async function checkNotifBadge(){
   if(!user)return;
   try{
@@ -1440,16 +1460,14 @@ async function checkNotifBadge(){
   } catch(e){}
 }
 
-// Ambil semua notif dari DB (query manual ke tabel yang ada)
 async function fetchAllNotifItems(){
   if(!user) return [];
   const items = [];
 
-  // 1. Ambil semua post milik user
   const myPosts = await sb(`/rest/v1/posts?user_id=eq.${user.id}&select=id,caption,post_images(image_url,order_index)&order=created_at.desc&limit=50`);
   const myPostIds = myPosts.map(p => p.id);
-  const postThumbMap = {}; // postId -> first image url
-  const postCaptionMap = {}; // postId -> caption
+  const postThumbMap = {};
+  const postCaptionMap = {};
   myPosts.forEach(p => {
     const imgs = (p.post_images||[]).sort((a,b)=>a.order_index-b.order_index);
     postThumbMap[p.id] = imgs[0]?.image_url || '';
@@ -1457,7 +1475,6 @@ async function fetchAllNotifItems(){
   });
 
   if(myPostIds.length){
-    // --- LIKE POST (votes orang lain di post kita) ---
     const votes = await sb(`/rest/v1/votes?post_id=in.(${myPostIds.join(',')})&select=post_id,user_id,type&limit=100`);
     const myVotesOnMyPosts = votes.filter(v => v.type === 'up' && v.user_id !== user.id);
     myVotesOnMyPosts.forEach(v => {
@@ -1465,15 +1482,13 @@ async function fetchAllNotifItems(){
         type: 'like_post',
         actor_id: v.user_id,
         post_id: v.post_id,
-        created_at: new Date().toISOString(), // votes tabel tidak punya created_at
+        created_at: new Date().toISOString(),
         thumb: postThumbMap[v.post_id] || '',
         preview: postCaptionMap[v.post_id] || '',
       });
     });
 
-    // --- KOMENTAR DI POST KITA ---
     const comments = await sb(`/rest/v1/comments?post_id=in.(${myPostIds.join(',')})&select=*&order=created_at.desc&limit=100`);
-    // Komen orang lain di post kita (bukan reply, bukan komen sendiri)
     const rootComments = comments.filter(c => !c.parent_id && c.user_id !== user.id);
     rootComments.forEach(c => {
       items.push({
@@ -1487,14 +1502,11 @@ async function fetchAllNotifItems(){
       });
     });
 
-    // --- BALASAN KOMEN KITA ---
-    // Ambil semua komen milik kita di semua post
     const myComments = await sb(`/rest/v1/comments?user_id=eq.${user.id}&select=id&limit=200`);
     const myCommentIds = myComments.map(c => c.id);
     if(myCommentIds.length){
       const replies = await sb(`/rest/v1/comments?parent_id=in.(${myCommentIds.join(',')})&select=*&order=created_at.desc&limit=100`);
       const otherReplies = replies.filter(r => r.user_id !== user.id);
-      // Resolve post_id via comment
       const allComments = await sb(`/rest/v1/comments?id=in.(${myCommentIds.join(',')})&select=id,post_id`);
       const commentPostMap = {};
       allComments.forEach(c => commentPostMap[c.id] = c.post_id);
@@ -1512,11 +1524,9 @@ async function fetchAllNotifItems(){
       });
     }
 
-    // --- LIKE KOMENTAR KITA ---
     if(myCommentIds.length){
       const commentLikes = await sb(`/rest/v1/comment_likes?comment_id=in.(${myCommentIds.join(',')})&select=comment_id,user_id&limit=100`);
       const otherLikes = commentLikes.filter(cl => cl.user_id !== user.id);
-      // Resolve post_id dari comment
       const allCMap = await sb(`/rest/v1/comments?id=in.(${myCommentIds.join(',')})&select=id,post_id`);
       const cPostMap = {};
       allCMap.forEach(c => cPostMap[c.id] = c.post_id);
@@ -1527,7 +1537,7 @@ async function fetchAllNotifItems(){
           actor_id: cl.user_id,
           post_id: postId || null,
           comment_id: cl.comment_id,
-          created_at: new Date().toISOString(), // comment_likes mungkin tidak punya created_at
+          created_at: new Date().toISOString(),
           thumb: postId ? (postThumbMap[postId]||'') : '',
           preview: '',
         });
@@ -1535,7 +1545,6 @@ async function fetchAllNotifItems(){
     }
   }
 
-  // --- TOPIK: pesan baru di topik yang diikuti (bukan dari kita, bukan foto) ---
   const joinedTopics = await sb(`/rest/v1/topic_members?user_id=eq.${user.id}&select=topic_id`);
   const joinedTopicIds = joinedTopics.map(t => t.topic_id);
   if(joinedTopicIds.length){
@@ -1545,7 +1554,6 @@ async function fetchAllNotifItems(){
     topicsData.forEach(t => { topicNameMap[t.id]=t.name; topicPhotoMap[t.id]=t.photo_url||''; });
 
     const chatMsgs = await sb(`/rest/v1/topic_chats?topic_id=in.(${joinedTopicIds.join(',')})&user_id=neq.${user.id}&select=id,topic_id,user_id,content,created_at&order=created_at.desc&limit=100`);
-    // Filter: bukan [img] (gambar tidak ditampilkan di notif)
     const textMsgs = chatMsgs.filter(m => !m.content.includes('[img]'));
     textMsgs.forEach(m => {
       items.push({
@@ -1560,32 +1568,26 @@ async function fetchAllNotifItems(){
     });
   }
 
-  // Sort by newest
   items.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
   return items;
 }
 
-// Render halaman notif
 async function loadNotif(){
   const pg = document.getElementById('pg-notif');
-  pg.innerHTML = `
-    <div id="notifList">${skNotif(4)}</div>`;
+  pg.innerHTML = `<div id="notifList">${skNotif(4)}</div>`;
 
-  // Mark as seen: timestamp sekarang
   notifLastSeen = Date.now();
   localStorage.setItem('xn_notif_seen', notifLastSeen);
-  // Clear badge
   const badge = document.getElementById('notifBadge');
   badge.classList.remove('show');
 
   try {
     allNotifItems = await fetchAllNotifItems();
 
-    // Fetch profile info untuk semua aktor
     const actorIds = [...new Set(allNotifItems.map(n=>n.actor_id).filter(Boolean))];
     let actorMap = {};
     if(actorIds.length){
-      const profiles = await sb(`/rest/v1/profiles?id=in.(${actorIds.join(',')})&select=id,username,avatar_url`);
+      const profiles = await sb(`/rest/v1/profiles?id=in.(${actorIds.join(',')})&select=id,username,avatar_url,is_verified`);
       profiles.forEach(p => actorMap[p.id] = p);
     }
 
@@ -1615,7 +1617,6 @@ function renderNotifList(actorMap){
     return;
   }
 
-  // Grouping by date
   const groups = {};
   filtered.forEach(n => {
     const d = new Date(n.created_at.endsWith('Z')||n.created_at.includes('+')?n.created_at:n.created_at+'Z');
@@ -1653,43 +1654,40 @@ function renderNotifItem(n, actorMap){
 
   const isUnread = new Date(n.created_at.endsWith('Z')||n.created_at.includes('+')?n.created_at:n.created_at+'Z').getTime() > notifLastSeen;
 
-  let iconClass = '', iconEl = '', textHtml = '', thumbHtml = '';
+  let iconEl = '', textHtml = '', thumbHtml = '';
   const timeStr = ago(n.created_at);
 
-  // Thumb (miniatur post)
   if(n.thumb){
     thumbHtml = `<div class="notif-thumb"><img src="${n.thumb}" loading="lazy"></div>`;
   }
 
+  // Name with verified badge inline
+  const actorName = `<strong>${uname}</strong>${verifiedBadge(actor)}`;
+
   switch(n.type){
     case 'like_post':
-      iconClass = 'like';
       iconEl = `<div class="notif-icon like"><i class="fa fa-heart"></i></div>`;
-      textHtml = `<div class="notif-text"><strong>${uname}</strong> <span>menyukai postmu</span></div>`;
+      textHtml = `<div class="notif-text">${actorName} <span>menyukai postmu</span></div>`;
       if(n.preview) textHtml += `<div class="notif-preview">${n.preview}</div>`;
       break;
     case 'comment_post':
-      iconClass = 'comment';
       iconEl = `<div class="notif-icon comment"><i class="fa fa-comment"></i></div>`;
-      textHtml = `<div class="notif-text"><strong>${uname}</strong> <span>mengomentari postmu</span></div>`;
+      textHtml = `<div class="notif-text">${actorName} <span>mengomentari postmu</span></div>`;
       textHtml += `<div class="notif-preview">${n.preview}</div>`;
       break;
     case 'reply_comment':
-      iconClass = 'reply';
       iconEl = `<div class="notif-icon reply"><i class="fa fa-reply"></i></div>`;
-      textHtml = `<div class="notif-text"><strong>${uname}</strong> <span>membalas komentarmu</span></div>`;
+      textHtml = `<div class="notif-text">${actorName} <span>membalas komentarmu</span></div>`;
       textHtml += `<div class="notif-preview">${n.preview}</div>`;
       break;
     case 'like_comment':
-      iconClass = 'like';
       iconEl = `<div class="notif-icon like"><i class="fa fa-heart"></i></div>`;
-      textHtml = `<div class="notif-text"><strong>${uname}</strong> <span>menyukai komentarmu</span></div>`;
+      textHtml = `<div class="notif-text">${actorName} <span>menyukai komentarmu</span></div>`;
       break;
     case 'topic_chat':
       iconEl = `<div class="notif-icon topic"><i class="fa fa-users"></i></div>`;
-      textHtml = `<div class="notif-text"><strong>${uname}</strong> <span>mengirim pesan di </span><strong>${n.topic_name}</strong></div>`;
+      textHtml = `<div class="notif-text">${actorName} <span>mengirim pesan di </span><strong>${n.topic_name}</strong></div>`;
       textHtml += `<div class="notif-preview">${n.preview}</div>`;
-      // Untuk topik, ganti thumb dengan foto topik jika ada
       if(n.topic_photo){
         thumbHtml = `<div class="notif-thumb"><img src="${n.topic_photo}" loading="lazy"></div>`;
       } else {
@@ -1704,16 +1702,13 @@ function renderNotifItem(n, actorMap){
       ? `onclick="closeSheet('komentarSheet');openKomentar('${n.post_id}')"`
       : '';
 
-  // Sisipkan iconEl ke dalam thumbHtml
   let finalThumb = thumbHtml;
   if(thumbHtml && iconEl){
     finalThumb = thumbHtml.replace(/(<div class="notif-thumb[^>]*>)/, '$1' + iconEl);
   }
 
   return `<div class="notif-item ${isUnread?'unread':''}" ${clickAction}>
-    <div class="notif-avatar">
-      ${avatarHtml}
-    </div>
+    <div class="notif-avatar">${avatarHtml}</div>
     <div class="notif-body">
       ${textHtml}
       <div class="notif-sub"><span>${timeStr}</span></div>
@@ -1729,11 +1724,11 @@ async function doSearch(q){
   try{
     const [posts,users]=await Promise.all([
       sb(`/rest/v1/posts?caption=ilike.*${encodeURIComponent(q)}*&select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=10`),
-      sb(`/rest/v1/profiles?username=ilike.*${encodeURIComponent(q)}*&select=id,username,avatar_url&limit=5`)
+      sb(`/rest/v1/profiles?username=ilike.*${encodeURIComponent(q)}*&select=id,username,avatar_url,is_verified&limit=5`)
     ]);
     const userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))];
     let profileMap={};
-    if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url`);profiles.forEach(p=>profileMap[p.id]=p);}
+    if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url,is_verified`);profiles.forEach(p=>profileMap[p.id]=p);}
     posts.forEach(p=>p.profiles=profileMap[p.user_id]||null);
     let html='';
     if(users.length){
@@ -1741,7 +1736,7 @@ async function doSearch(q){
       html+=users.map(u=>`
         <div onclick="openUserProfil('${u.id}')" style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer">
           <div class="pavatar">${u.avatar_url?`<img src="${u.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
-          <div><div style="font-weight:700;font-size:14px">${u.username}</div><div style="font-size:12px;color:var(--text2)">@${u.username}</div></div>
+          <div><div style="font-weight:700;font-size:14px;display:flex;align-items:center">${u.username}${verifiedBadge(u)}</div><div style="font-size:12px;color:var(--text2)">@${u.username}</div></div>
         </div>`).join('');
     }
     if(posts.length){
@@ -1774,10 +1769,7 @@ function setLang(l){document.getElementById('langId').style.display=l==='id'?'bl
 async function deletePost(pid){
   if(!confirm('Hapus post ini?'))return;
   try{
-    // 1. Ambil semua foto post
     const imgs = await sb(`/rest/v1/post_images?post_id=eq.${pid}&select=image_url`);
-
-    // 2. Hapus foto dari storage
     if(imgs.length){
       const paths = imgs.map(i => {
         const url = i.image_url;
@@ -1786,7 +1778,6 @@ async function deletePost(pid){
         }
         return null;
       }).filter(Boolean);
-
       if(paths.length){
         await fetch(`${SB}/storage/v1/object/meme-images`,{
           method:'DELETE',
@@ -1795,24 +1786,15 @@ async function deletePost(pid){
         }).catch(()=>{});
       }
     }
-
-    // 3. Hapus komentar & likes terkait
     const comments = await sb(`/rest/v1/comments?post_id=eq.${pid}&select=id`);
     if(comments.length){
       const cids = comments.map(c=>c.id);
       await sb(`/rest/v1/comment_likes?comment_id=in.(${cids.join(',')})`,{method:'DELETE'}).catch(()=>{});
       await sb(`/rest/v1/comments?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});
     }
-
-    // 4. Hapus votes
     await sb(`/rest/v1/votes?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});
-
-    // 5. Hapus post_images row
     await sb(`/rest/v1/post_images?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});
-
-    // 6. Hapus post
     await sb(`/rest/v1/posts?id=eq.${pid}`,{method:'DELETE'});
-
     toast('Post dihapus');
     loadFeed(true);
   }catch(e){toast('Gagal hapus: '+e.message);}
@@ -1902,7 +1884,6 @@ document.getElementById('content').addEventListener('scroll',function(){
 
 // Init
 (async function(){
-  // Restore theme
   const savedTheme=localStorage.getItem('xn_theme')||'dark';
   document.documentElement.setAttribute('data-theme',savedTheme);
   const dt=document.getElementById('darkToggle');
@@ -1911,7 +1892,6 @@ document.getElementById('content').addEventListener('scroll',function(){
   await restoreSession();
   loadFeed(true);
   renderTopik();
-  // Cek badge notif setiap 60 detik jika user login
   if(user) {
     checkNotifBadge();
     setInterval(()=>{ if(user) checkNotifBadge(); }, 60000);
