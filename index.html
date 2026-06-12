@@ -393,9 +393,9 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   <div id="content">
     <div class="page on" id="pg-home"><div id="feed"></div></div>
     <div class="page" id="pg-topik">
-      <div style="padding:12px 16px"><div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="topikSearchInput" placeholder="Cari topik..." oninput="renderTopik()"></div></div>
+      <div style="padding:12px 16px"><div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="topikSearchInput" placeholder="Cari grup..." oninput="renderTopik()"></div></div>
       <div style="display:flex;border-bottom:1px solid var(--border);padding:0 16px">
-        <div style="padding:10px 16px 10px 0;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent);cursor:pointer" id="tabTopik" onclick="switchTopikTab('all')">Topik</div>
+        <div style="padding:10px 16px 10px 0;font-size:14px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent);cursor:pointer" id="tabTopik" onclick="switchTopikTab('all')">Grup</div>
         <div style="padding:10px 16px;font-size:14px;font-weight:600;color:var(--text2);border-bottom:2px solid transparent;cursor:pointer" id="tabSudahGabung" onclick="switchTopikTab('joined')">Sudah Gabung</div>
       </div>
       <div id="topikList"></div>
@@ -421,7 +421,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
     </div>
     <div class="page" id="pg-grup"><div id="grupContent"></div></div>
     <div class="page" id="pg-search">
-      <div class="search-bar"><div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="searchInput" placeholder="Cari post, user, topik..." oninput="doSearch(this.value)"></div></div>
+      <div class="search-bar"><div class="sinput-wrap"><i class="fa fa-search"></i><input type="text" class="sinput" id="searchInput" placeholder="Cari post, user, grup..." oninput="doSearch(this.value)"></div></div>
       <div id="searchResults"><div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div></div>
     </div>
     <div class="page" id="pg-notif">
@@ -466,7 +466,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div><div class="sheet-title">Buat</div>
     <div class="uopt" onclick="openUploadPost()"><i class="fa fa-image"></i><div><div class="uopt-title">Buat Post</div><div class="uopt-sub">Bagikan meme atau konten gaming</div></div></div>
-    <div class="uopt" onclick="openBuatTopik()"><i class="fa fa-users"></i><div><div class="uopt-title">Buat Topik</div><div class="uopt-sub">Buat komunitas baru</div></div></div>
+    <div class="uopt" onclick="openBuatTopik()"><i class="fa fa-users"></i><div><div class="uopt-title">Buat Grup</div><div class="uopt-sub">Buat komunitas baru</div></div></div>
   </div>
 </div>
 <div class="overlay" id="uploadPostSheet" onclick="closeSheet('uploadPostSheet')">
@@ -484,10 +484,10 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 </div>
 <div class="overlay" id="buatTopikSheet" onclick="closeSheet('buatTopikSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
-    <div class="handle"></div><div class="sheet-title">Buat Topik</div>
-    <label class="flabel">Nama Topik</label><input type="text" class="finput" id="topikName" placeholder="Nama topik...">
-    <label class="flabel">Deskripsi</label><textarea class="finput" id="topikDesc" rows="3" placeholder="Deskripsi topik..."></textarea>
-    <button class="fbtn" onclick="submitTopik()">Buat Topik</button>
+    <div class="handle"></div><div class="sheet-title">Buat Grup</div>
+    <label class="flabel">Nama Grup</label><input type="text" class="finput" id="topikName" placeholder="Nama grup...">
+    <label class="flabel">Deskripsi</label><textarea class="finput" id="topikDesc" rows="3" placeholder="Deskripsi grup..."></textarea>
+    <button class="fbtn" onclick="submitTopik()">Buat Grup</button>
   </div>
 </div>
 <div class="overlay" id="komentarSheet" onclick="closeSheet('komentarSheet')">
@@ -904,7 +904,7 @@ const StorageGuard = {
     if (count >= this.MAX_TOPICS_PER_USER) {
       return {
         ok: false,
-        msg: `Kamu sudah mencapai batas maksimal ${this.MAX_TOPICS_PER_USER} topik. Hapus topik lama untuk membuat yang baru.`
+        msg: `Kamu sudah mencapai batas maksimal ${this.MAX_TOPICS_PER_USER} grup. Hapus grup lama untuk membuat yang baru.`
       };
     }
     return { ok: true };
@@ -1494,7 +1494,7 @@ async function renderTopik(){
     let userJoined=[];
     if(user&&topics.length){const joined=await sb(`/rest/v1/topic_members?user_id=eq.${user.id}&select=topic_id`);userJoined=joined.map(j=>j.topic_id);}
     if(topikTab==='joined')topics=topics.filter(tp=>userJoined.includes(tp.id));
-    if(!topics.length){list.innerHTML=`<div class="center-msg"><i class="fa fa-users"></i><h3>${keyword?'Topik tidak ditemukan':topikTab==='joined'?'Belum ada topik diikuti':'Belum ada topik'}</h3><p>${keyword?'Coba kata kunci lain':topikTab==='joined'?'Ikuti topik dulu':'Jadilah yang pertama membuat topik!'}</p></div>`;return;}
+    if(!topics.length){list.innerHTML=`<div class="center-msg"><i class="fa fa-users"></i><h3>${keyword?'Grup tidak ditemukan':topikTab==='joined'?'Belum ada grup diikuti':'Belum ada grup'}</h3><p>${keyword?'Coba kata kunci lain':topikTab==='joined'?'Ikuti grup dulu':'Jadilah yang pertama membuat grup!'}</p></div>`;return;}
     list.innerHTML=topics.map(tp=>{
       const isJoined=userJoined.includes(tp.id),count=memberCounts[tp.id]||0;
       const safePhoto=XSS.sanitizeUrl(tp.photo_url||'');
@@ -1524,8 +1524,8 @@ async function toggleJoin(btn,id){
 // ✅ submitTopik — dengan Rate Limiting
 async function submitTopik(){
   const name=document.getElementById('topikName').value.trim(),desc=document.getElementById('topikDesc').value.trim();
-  if(!name)return toast('Isi nama topik');
-  if(name.length>50)return toast('Nama topik maksimal 50 karakter', 'error');
+  if(!name)return toast('Isi nama grup');
+  if(name.length>50)return toast('Nama grup maksimal 50 karakter', 'error');
   if(desc.length>300)return toast('Deskripsi maksimal 300 karakter', 'error');
 
   const rl = RateLimit.check('topik');
@@ -1543,7 +1543,7 @@ async function submitTopik(){
     if(user&&tpId){await sb('/rest/v1/topic_members',{method:'POST',body:JSON.stringify({topic_id:tpId,user_id:user.id})});}
     RateLimit.record('topik');
     if(user) StorageGuard.bumpTopicCount(user.id, 1); // ✅ update cache
-    toast('Topik dibuat!');closeSheet('buatTopikSheet');document.getElementById('topikName').value='';document.getElementById('topikDesc').value='';renderTopik();
+    toast('Grup dibuat!');closeSheet('buatTopikSheet');document.getElementById('topikName').value='';document.getElementById('topikDesc').value='';renderTopik();
   }catch(e){toast(e.message);}
 }
 
@@ -1707,7 +1707,7 @@ function editDeskripsiTopik(topicId, currentDesc){
     <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px 16px 36px" onclick="event.stopPropagation()">
       <div style="width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px"></div>
       <div style="font-size:16px;font-weight:700;margin-bottom:14px">Edit Deskripsi</div>
-      <textarea id="editDescInput" class="finput" rows="4" style="margin-bottom:12px" placeholder="Tulis deskripsi topik...">${currentDesc}</textarea>
+      <textarea id="editDescInput" class="finput" rows="4" style="margin-bottom:12px" placeholder="Tulis deskripsi grup...">${currentDesc}</textarea>
       <button onclick="saveDescTopik('${topicId}')" class="fbtn">Simpan</button>
     </div>`;
   overlay.onclick=()=>overlay.remove();
