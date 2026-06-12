@@ -534,7 +534,7 @@ let user=null,token=null,currentPost=null,currentTopic=null,topikTab='all',chatI
 // ✅ RATE LIMIT via DATABASE (RPC)
 // ============================================================
 async function checkRateLimit(action, max, windowSec, cooldownSec = 0) {
-  if (!user) return { ok: true }; // tidak perlu limit untuk user yg belum login
+  if (!user) return { ok: true };
   try {
     const res = await sb('/rpc/check_rate_limit', {
       method: 'POST',
@@ -548,7 +548,6 @@ async function checkRateLimit(action, max, windowSec, cooldownSec = 0) {
     return res;
   } catch(e) {
     console.error('Rate limit check error:', e);
-    // Fail open: izinkan aksi jika RPC error (misal function belum dibuat)
     return { ok: true };
   }
 }
@@ -618,7 +617,7 @@ const FileValidator = {
       return { ok: false, error: `File terlalu besar. Maksimal ${this.MAX_SIZE_MB}MB` };
     }
     if (!Object.keys(this.ALLOWED_TYPES).includes(file.type)) {
-      return { ok: false, error: 'Format file tidak didukung. Gunakan JPG, PNG, GIF, atau WebP' };
+      return { ok: false, error: 'Format file tidak didukung. Gunakan JPG, PNG, GIF, atau Webp' };
     }
     try {
       const bytes = await this._readMagicBytes(file);
@@ -943,6 +942,7 @@ function showPostMenu(pid, ownerUid, imgUrl, caption) {
   document.body.appendChild(overlay);
 }
 
+// Fungsi copyCaption (sebelumnya hilang)
 function copyCaption(txt) {
   if (!txt || txt === 'undefined' || txt.trim() === '') { toast('Caption kosong'); return; }
   if (navigator.clipboard) {
@@ -1052,23 +1052,49 @@ async function openKomentar(pid){
   }catch(e){list.innerHTML=`<div style="padding:16px;color:var(--text2)">Gagal memuat: ${e.message}</div>`;}
 }
 
-function showKomenMenu(cid,content,canDel=false){
-  const old=document.getElementById('komenMenu');if(old)old.remove();
-  const overlay=document.createElement('div');overlay.id='komenMenu';
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
-  const delRow=canDel?`<div onclick="deleteKomentar('${cid}');document.getElementById('komenMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px;color:#ff4444;border-top:1px solid var(--border)"><i class="fa fa-trash" style="width:22px"></i> Hapus komentar</div>`:'';
-  overlay.innerHTML=`
-    <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:8px 0 24px" onclick="event.stopPropagation()">
+// Fungsi likeKomentar (sebelumnya hilang)
+async function likeKomentar(cid, el){
+  if(!user) return openSheet('authSheet');
+  const limit = await checkRateLimit('vote', 30, 60, 5);
+  if (!limit.ok) return toast(limit.msg, 'error');
+  const icon = el.querySelector('i');
+  const cnt = document.getElementById('klc-'+cid);
+  const liked = icon.classList.contains('fa-heart') && !icon.classList.contains('fa-heart-o');
+  try{
+    if(liked){
+      await sb(`/rest/v1/comment_likes?comment_id=eq.${cid}&user_id=eq.${user.id}`,{method:'DELETE'});
+      icon.className = 'fa fa-heart-o';
+      el.style.color = 'var(--text2)';
+      const cur = parseInt(cnt.textContent)||1;
+      cnt.textContent = cur-1 > 0 ? cur-1 : '';
+    } else {
+      await sb('/rest/v1/comment_likes',{method:'POST',body:JSON.stringify({comment_id:cid,user_id:user.id})});
+      icon.className = 'fa fa-heart';
+      el.style.color = 'var(--accent)';
+      cnt.textContent = (parseInt(cnt.textContent)||0) + 1;
+    }
+  } catch(e) { toast('Gagal'); }
+}
+
+// Fungsi showKomenMenu (sebelumnya hilang)
+function showKomenMenu(cid, content, canDel){
+  const old = document.getElementById('komenMenu');
+  if(old) old.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'komenMenu';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:600;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:8px 0 24px" onclick="event.stopPropagation()">
       <div style="width:38px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 16px"></div>
-      <div onclick="navigator.clipboard?.writeText('${content.replace(/'/g,"\\'")}');toast('Disalin!');document.getElementById('komenMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px">
+      <div onclick="copyCaption('${content.replace(/'/g,"\\'")}');document.getElementById('komenMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px">
         <i class="fa fa-copy" style="width:22px;color:var(--text2)"></i> Salin komentar
       </div>
       <div onclick="toast('Laporan terkirim');document.getElementById('komenMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px;color:var(--text2)">
         <i class="fa fa-flag" style="width:22px"></i> Report
       </div>
-      ${delRow}
+      ${canDel ? `<div onclick="deleteKomentar('${cid}');document.getElementById('komenMenu')?.remove()" style="display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;font-size:15px;color:#ff4444;border-top:1px solid var(--border)"><i class="fa fa-trash" style="width:22px"></i> Hapus komentar</div>` : ''}
     </div>`;
-  overlay.onclick=()=>overlay.remove();
+  overlay.onclick = () => overlay.remove();
   document.body.appendChild(overlay);
 }
 
@@ -1098,26 +1124,6 @@ function setReply(cid,uname){
   inp.focus();
   document.querySelectorAll('.kitem').forEach(k=>k.style.background='');
   document.getElementById('kc-'+cid)?.style.setProperty('background','var(--bg3)');
-}
-
-async function likeKomentar(cid,el){
-  if(!user)return openSheet('authSheet');
-  const limit = await checkRateLimit('vote', 30, 60, 5);
-  if (!limit.ok) return toast(limit.msg, 'error');
-  const icon=el.querySelector('i');
-  const cnt=document.getElementById('klc-'+cid);
-  const liked=icon.classList.contains('fa-heart')&&!icon.classList.contains('fa-heart-o');
-  try{
-    if(liked){
-      await sb(`/rest/v1/comment_likes?comment_id=eq.${cid}&user_id=eq.${user.id}`,{method:'DELETE'});
-      icon.className='fa fa-heart-o';el.style.color='var(--text2)';
-      const cur=parseInt(cnt.textContent)||1;cnt.textContent=cur-1>0?cur-1:'';
-    }else{
-      await sb('/rest/v1/comment_likes',{method:'POST',body:JSON.stringify({comment_id:cid,user_id:user.id})});
-      icon.className='fa fa-heart';el.style.color='var(--accent)';
-      cnt.textContent=(parseInt(cnt.textContent)||0)+1;
-    }
-  }catch(e){toast('Gagal');}
 }
 
 async function submitKomentar(){
@@ -1722,12 +1728,18 @@ async function openUserProfil(uid){
       <div class="profil-grid">${posts.map(post=>{const img=(post.post_images||[])[0]?.image_url;return `<div class="profil-thumb">${img?`<img src="${img}" loading="lazy">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2)"><i class="fa fa-image"></i></div>'}</div>`;}).join('')}</div>`;
   }catch(e){document.getElementById('userWall').innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
 }
+// Fungsi toggleFollow (sebelumnya hilang)
 async function toggleFollow(uid,btn){
   if(!user){openSheet('authSheet');return;}
   const isFollowing=btn.textContent.trim()==='Mengikuti';
   try{
-    if(isFollowing){await sb(`/rest/v1/follows?follower_id=eq.${user.id}&following_id=eq.${uid}`,{method:'DELETE'});btn.textContent='Ikuti';btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.border='none';}
-    else{await sb('/rest/v1/follows',{method:'POST',body:JSON.stringify({follower_id:user.id,following_id:uid})});btn.textContent='Mengikuti';btn.style.background='var(--bg3)';btn.style.color='var(--text)';btn.style.border='1px solid var(--border)';}
+    if(isFollowing){
+      await sb(`/rest/v1/follows?follower_id=eq.${user.id}&following_id=eq.${uid}`,{method:'DELETE'});
+      btn.textContent='Ikuti';btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.border='none';
+    } else {
+      await sb('/rest/v1/follows',{method:'POST',body:JSON.stringify({follower_id:user.id,following_id:uid})});
+      btn.textContent='Mengikuti';btn.style.background='var(--bg3)';btn.style.color='var(--text)';btn.style.border='1px solid var(--border)';
+    }
     toast(isFollowing?'Berhenti mengikuti':'Mengikuti!');
   }catch(e){toast('Gagal: '+e.message);}
 }
@@ -2024,6 +2036,7 @@ async function downloadPost(pid,imgUrl){
     toast('Tersimpan!');
   }catch(e){toast('Gagal download');}
 }
+
 function toggleDark(){
   const el=document.getElementById('darkToggle');
   el.classList.toggle('on');
@@ -2032,9 +2045,12 @@ function toggleDark(){
   localStorage.setItem('xn_theme',theme);
 }
 function setLang(l){document.getElementById('langId').style.display=l==='id'?'block':'none';document.getElementById('langEn').style.display=l==='en'?'block':'none';}
+
+// Fungsi deletePost (sebelumnya hilang)
 async function deletePost(pid){
   if(!confirm('Hapus post ini?'))return;
   try{
+    // Hapus gambar dari storage
     const imgs = await sb(`/rest/v1/post_images?post_id=eq.${pid}&select=image_url`);
     if(imgs.length){
       const paths = imgs.map(i => {
@@ -2052,6 +2068,7 @@ async function deletePost(pid){
         }).catch(()=>{});
       }
     }
+    // Hapus komentar dan like komentar terkait
     const comments = await sb(`/rest/v1/comments?post_id=eq.${pid}&select=id`);
     if(comments.length){
       const cids = comments.map(c=>c.id);
@@ -2066,6 +2083,7 @@ async function deletePost(pid){
     loadFeed(true);
   }catch(e){toast('Gagal hapus: '+e.message);}
 }
+
 function sharePost(){if(navigator.share)navigator.share({title:'Xentra',url:location.href});else toast('Link disalin!');}
 function toggleChatSearch(){
   const bar=document.getElementById('chatSearchBar'),msgs=document.getElementById('chatMsgs'),results=document.getElementById('chatSearchResults');
@@ -2205,4 +2223,4 @@ document.addEventListener('keydown',function(e){
 });
 </script>
 </body>
-      </html>
+</html>
