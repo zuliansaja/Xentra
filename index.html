@@ -1502,7 +1502,7 @@ async function renderTopik(){
       const tpName=XSS.escape(tp.name);
       const tpNameJs=tpName.replace(/'/g,"\\'");
       const tpDescJs=XSS.escape(tp.description||'').replace(/'/g,"\\'");
-      return `<div class="titem" onclick="openChat('${tp.id}','${tpNameJs}',${count},'${safePhoto}','${tpDescJs}')">
+      return `<div class="titem" onclick="openChat('${tp.id}','${tpNameJs}',${count},'${safePhoto}','${tpDescJs}',${isJoined})">
         <div class="tavatar">${avatar}</div>
         <div class="tinfo"><div class="tname">${tpName}</div><div class="tmember">${count} member</div></div>
         <button class="tjoin ${isJoined?'joined':''}" onclick="event.stopPropagation();toggleJoin(this,'${tp.id}')">${isJoined?'Gabung ✓':'Gabung'}</button>
@@ -1547,8 +1547,15 @@ async function submitTopik(){
   }catch(e){toast(e.message);}
 }
 
-async function openChat(topicId,topicName,memberCount,photoUrl,description){
+async function openChat(topicId,topicName,memberCount,photoUrl,description,isJoined){
   if(!user){openSheet('authSheet');return;}
+
+  // ✅ Kalau belum gabung, tampilkan prompt join dulu — tidak boleh intip chat
+  if(!isJoined){
+    showJoinGate(topicId,topicName,memberCount,photoUrl,description);
+    return;
+  }
+
   currentTopic={id:topicId,name:topicName,memberCount,photoUrl,description};
   document.getElementById('chatName').textContent=topicName;
   document.getElementById('chatMemberCount').textContent=memberCount+' member · Tap untuk info';
@@ -1561,6 +1568,36 @@ async function openChat(topicId,topicName,memberCount,photoUrl,description){
   document.getElementById('topbarSearch').style.display='none';
   await loadChatMsgs();
   chatInterval=setInterval(loadChatMsgs,3000);
+}
+
+// ✅ Sheet "Gabung dulu" — tampil saat user klik topik yang belum diikuti
+function showJoinGate(topicId,topicName,memberCount,photoUrl,description){
+  const old=document.getElementById('joinGate');if(old)old.remove();
+  const overlay=document.createElement('div');overlay.id='joinGate';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+  const avatarHtml=photoUrl?`<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'<i class="fa fa-users"></i>';
+  overlay.innerHTML=`
+    <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:24px 20px 36px;text-align:center" onclick="event.stopPropagation()">
+      <div style="width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px"></div>
+      <div class="tavatar" style="width:64px;height:64px;font-size:28px;margin:0 auto 14px">${avatarHtml}</div>
+      <div style="font-size:17px;font-weight:700;margin-bottom:6px">${topicName}</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Gabung ke grup ini untuk melihat dan mengirim pesan</div>
+      <button class="fbtn" onclick="joinAndOpenChat('${topicId}','${topicName.replace(/'/g,"\\'")}',${memberCount},'${photoUrl||''}','${(description||'').replace(/'/g,"\\'")}')">Gabung Grup</button>
+      <button onclick="document.getElementById('joinGate')?.remove()" style="width:100%;padding:14px;border-radius:12px;background:transparent;color:var(--text2);border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px">Batal</button>
+    </div>`;
+  overlay.onclick=()=>overlay.remove();
+  document.body.appendChild(overlay);
+}
+
+// ✅ Join grup lalu langsung buka chat
+async function joinAndOpenChat(topicId,topicName,memberCount,photoUrl,description){
+  try{
+    await sb('/rest/v1/topic_members',{method:'POST',body:JSON.stringify({topic_id:topicId,user_id:user.id})});
+    document.getElementById('joinGate')?.remove();
+    toast('Berhasil bergabung!');
+    await openChat(topicId,topicName,memberCount+1,photoUrl,description,true);
+    renderTopik();
+  }catch(e){toast('Gagal gabung: '+e.message);}
 }
 async function openGrupDetail(){
   if(!currentTopic)return;
@@ -2215,7 +2252,7 @@ function renderNotifItem(n, actorMap){
       break;
   }
   const clickAction = n.type === 'topic_chat'
-    ? `onclick="openChat('${n.topic_id}','${safeTopicName.replace(/'/g,"\\'")}',0,'${safeTopicPhoto}','')"`
+    ? `onclick="openChat('${n.topic_id}','${safeTopicName.replace(/'/g,"\\'")}',0,'${safeTopicPhoto}','',true)"`
     : n.post_id
       ? `onclick="closeSheet('komentarSheet');openKomentar('${n.post_id}')"`
       : '';
