@@ -70,7 +70,6 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   color:#fff;
   font-weight:900;
 }
-/* Larger variant for profile pages */
 .verified-badge.lg {
   width:20px;
   height:20px;
@@ -210,7 +209,6 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .nfbtn { padding:6px 14px; border-radius:20px; border:1px solid var(--border); color:var(--text2); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; background:transparent; font-family:inherit; flex-shrink:0; }
 .nfbtn.on { background:var(--accent); color:#fff; border-color:var(--accent); }
 
-/* Notif item */
 .notif-item {
   display:flex;
   align-items:flex-start;
@@ -255,7 +253,6 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   position:relative;
 }
 .notif-thumb img { width:46px; height:46px; object-fit:cover; border-radius:10px; display:block; }
-
 .notif-date-sep {
   padding:10px 16px 6px;
   font-size:11px;
@@ -266,8 +263,6 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
   background:var(--bg);
 }
 
-/* ===== END NOTIF STYLES ===== */
-
 .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:300; display:none; align-items:flex-end; justify-content:center; }
 .overlay.open { display:flex; }
 .sheet { background:var(--bg2); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px 16px 36px; max-height:92vh; overflow-y:auto; }
@@ -277,6 +272,7 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .finput:focus { border-color:var(--accent); }
 .flabel { font-size:13px; font-weight:600; color:var(--text2); margin-bottom:6px; display:block; }
 .fbtn { width:100%; padding:14px; border-radius:12px; background:var(--accent); color:#fff; border:none; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:4px; }
+.fbtn:disabled { opacity:0.5; cursor:not-allowed; }
 .atabs { display:flex; background:var(--bg3); border-radius:12px; padding:4px; margin-bottom:20px; }
 .atab { flex:1; text-align:center; padding:10px; border-radius:9px; cursor:pointer; font-weight:600; font-size:14px; color:var(--text2); }
 .atab.on { background:var(--accent); color:#fff; }
@@ -309,6 +305,16 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
 .toggle.on .tdot { transform:translateX(20px); }
 .toast { position:fixed; bottom:72px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--bg3); color:var(--text); padding:10px 20px; border-radius:20px; font-size:14px; font-weight:600; z-index:400; opacity:0; transition:all .25s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 16px rgba(0,0,0,0.4); }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.error { background:#ff4444; color:#fff; }
+
+/* ===== RATE LIMIT COOLDOWN UI ===== */
+.rl-cooldown {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; color:#ff9500; font-weight:600;
+  background:rgba(255,149,0,0.1); padding:4px 10px;
+  border-radius:10px; margin-top:6px;
+}
+
 /* CHAT */
 #pg-chat { display:none; flex-direction:column; height:100%; }
 #pg-chat.on { display:flex; }
@@ -419,7 +425,6 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
       <div id="searchResults"><div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div></div>
     </div>
     <div class="page" id="pg-notif">
-      <!-- Notif content rendered by loadNotif() -->
     </div>
     <div class="page" id="pg-profil"><div id="profilWall"></div></div>
     <div class="page" id="pg-user"><div id="userWall"></div></div>
@@ -446,7 +451,8 @@ body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:v
     <div id="authLogin">
       <input type="email" class="finput" id="lEmail" placeholder="Email">
       <input type="password" class="finput" id="lPass" placeholder="Password">
-      <button class="fbtn" onclick="doLogin()">Masuk</button>
+      <div id="loginCooldownInfo" style="display:none;margin-bottom:10px"></div>
+      <button class="fbtn" id="loginBtn" onclick="doLogin()">Masuk</button>
     </div>
     <div id="authReg" style="display:none">
       <input type="text" class="finput" id="rUser" placeholder="Username">
@@ -532,18 +538,400 @@ const SB='https://qlyybibfopmlqgoznuqp.supabase.co';
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFseXliaWJmb3BtbHFnb3pudXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTAwMTcsImV4cCI6MjA5NjMyNjAxN30.AWB9IXOBgqnh5UiBmfGj6kvmTpv9G3eVzSHmLPrbNS4';
 let user=null,token=null,currentPost=null,currentTopic=null,topikTab='all',chatInterval=null;
 
-// =============================================
-// VERIFIED BADGE HELPER
-// =============================================
-// Menampilkan centang biru jika profile.is_verified === true
+// ============================================================
+// ✅ PAKET A — RATE LIMITER + BRUTE FORCE PROTECTION
+// ============================================================
+
+const RateLimit = {
+  // Config: [maxAksi, windowMs, cooldownMs]
+  rules: {
+    post:     { max: 3,  window: 5 * 60 * 1000, cooldown: 2 * 60 * 1000 },   // 3 post per 5 menit
+    comment:  { max: 10, window: 60 * 1000,      cooldown: 30 * 1000     },   // 10 komentar per menit
+    vote:     { max: 30, window: 60 * 1000,      cooldown: 5 * 1000      },   // 30 vote per menit
+    chat:     { max: 15, window: 30 * 1000,      cooldown: 5 * 1000      },   // 15 pesan per 30 detik
+    upload:   { max: 5,  window: 5 * 60 * 1000,  cooldown: 60 * 1000     },   // 5 upload per 5 menit
+    topik:    { max: 3,  window: 10 * 60 * 1000, cooldown: 5 * 60 * 1000 },   // 3 topik per 10 menit
+  },
+
+  // State: { timestamps: [], blockedUntil: 0 }
+  _state: {},
+
+  _get(action) {
+    if (!this._state[action]) this._state[action] = { timestamps: [], blockedUntil: 0 };
+    return this._state[action];
+  },
+
+  // Cek apakah aksi diizinkan. Return: { ok: boolean, waitSec: number, msg: string }
+  check(action) {
+    const rule = this.rules[action];
+    if (!rule) return { ok: true };
+    const state = this._get(action);
+    const now = Date.now();
+
+    // Cek cooldown aktif
+    if (state.blockedUntil > now) {
+      const waitSec = Math.ceil((state.blockedUntil - now) / 1000);
+      return { ok: false, waitSec, msg: `Tunggu ${waitSec} detik lagi` };
+    }
+
+    // Bersihkan timestamp di luar window
+    state.timestamps = state.timestamps.filter(t => now - t < rule.window);
+
+    // Cek limit
+    if (state.timestamps.length >= rule.max) {
+      state.blockedUntil = now + rule.cooldown;
+      state.timestamps = [];
+      const waitSec = Math.ceil(rule.cooldown / 1000);
+      return { ok: false, waitSec, msg: `Terlalu cepat! Tunggu ${waitSec} detik` };
+    }
+
+    return { ok: true };
+  },
+
+  // Catat aksi berhasil
+  record(action) {
+    const state = this._get(action);
+    state.timestamps.push(Date.now());
+  },
+
+  // Reset paksa (untuk logout)
+  reset() {
+    this._state = {};
+  }
+};
+
+// ============================================================
+// ✅ BRUTE FORCE PROTECTION — Login
+// ============================================================
+
+const BruteForce = {
+  // Simpan di localStorage agar persist antar refresh
+  MAX_ATTEMPTS: 5,
+  BASE_DELAY_MS: 1000,   // delay dasar 1 detik
+  COOLDOWN_MS: 15 * 60 * 1000, // lockout 15 menit setelah 5x gagal
+
+  _key: 'xn_bf',
+
+  _load() {
+    try { return JSON.parse(localStorage.getItem(this._key) || '{}'); } catch { return {}; }
+  },
+  _save(data) {
+    localStorage.setItem(this._key, JSON.stringify(data));
+  },
+
+  // Ambil state untuk email tertentu
+  _getState(email) {
+    const all = this._load();
+    return all[email] || { attempts: 0, lastFail: 0, lockedUntil: 0 };
+  },
+  _setState(email, state) {
+    const all = this._load();
+    all[email] = state;
+    this._save(all);
+  },
+
+  // Cek apakah boleh login. Return { ok, waitSec, attempts, msg }
+  check(email) {
+    const s = this._getState(email);
+    const now = Date.now();
+
+    // Cek lockout penuh
+    if (s.lockedUntil > now) {
+      const waitSec = Math.ceil((s.lockedUntil - now) / 1000);
+      const waitMin = Math.ceil(waitSec / 60);
+      return { ok: false, waitSec, msg: `Akun sementara dikunci. Coba lagi dalam ${waitMin} menit` };
+    }
+
+    // Cek exponential backoff
+    if (s.attempts > 0) {
+      const delay = this.BASE_DELAY_MS * Math.pow(2, s.attempts - 1);
+      const nextAllowed = s.lastFail + delay;
+      if (now < nextAllowed) {
+        const waitSec = Math.ceil((nextAllowed - now) / 1000);
+        return { ok: false, waitSec, msg: `Tunggu ${waitSec} detik sebelum coba lagi` };
+      }
+    }
+
+    return { ok: true, attempts: s.attempts };
+  },
+
+  // Panggil saat login GAGAL
+  onFail(email) {
+    const s = this._getState(email);
+    s.attempts += 1;
+    s.lastFail = Date.now();
+    if (s.attempts >= this.MAX_ATTEMPTS) {
+      s.lockedUntil = Date.now() + this.COOLDOWN_MS;
+      s.attempts = 0; // reset counter setelah lockout
+    }
+    this._setState(email, s);
+    return s;
+  },
+
+  // Panggil saat login BERHASIL
+  onSuccess(email) {
+    const all = this._load();
+    delete all[email];
+    this._save(all);
+  },
+
+  // Tampilkan info attempts di UI
+  getRemainingAttempts(email) {
+    const s = this._getState(email);
+    if (s.lockedUntil > Date.now()) return 0;
+    return Math.max(0, this.MAX_ATTEMPTS - s.attempts);
+  }
+};
+
+// Helper: update UI login button saat cooldown
+function updateLoginBtnState(email) {
+  const btn = document.getElementById('loginBtn');
+  const info = document.getElementById('loginCooldownInfo');
+  if (!btn || !info) return;
+
+  const result = BruteForce.check(email || '');
+  if (!result.ok) {
+    btn.disabled = true;
+    btn.textContent = `Tunggu ${result.waitSec}d...`;
+    info.style.display = 'block';
+    info.innerHTML = `<div class="rl-cooldown"><i class="fa fa-shield-alt"></i> ${result.msg}</div>`;
+    // Auto update tiap detik
+    setTimeout(() => updateLoginBtnState(email), 1000);
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Masuk';
+    const remaining = BruteForce.getRemainingAttempts(email || '');
+    if (remaining < BruteForce.MAX_ATTEMPTS && remaining > 0) {
+      info.style.display = 'block';
+      info.innerHTML = `<div class="rl-cooldown"><i class="fa fa-exclamation-triangle"></i> Sisa ${remaining} percobaan sebelum dikunci</div>`;
+    } else {
+      info.style.display = 'none';
+    }
+  }
+}
+
+// ============================================================
+// ✅ PAKET B — XSS SANITASI + VALIDASI UPLOAD FILE
+// ============================================================
+
+const XSS = {
+  // Escape karakter berbahaya untuk HTML rendering
+  escape(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;');
+  },
+
+  // Sanitasi teks untuk ditampilkan sebagai konten (allow newline jadi <br>)
+  sanitize(str) {
+    if (!str) return '';
+    return this.escape(str).replace(/\n/g, '<br>');
+  },
+
+  // Sanitasi username — hanya huruf, angka, underscore, titik
+  sanitizeUsername(str) {
+    if (!str) return '';
+    return String(str).replace(/[^a-zA-Z0-9_.]/g, '').slice(0, 30);
+  },
+
+  // Sanitasi caption/komentar — strip HTML tags, batasi panjang
+  sanitizeText(str, maxLen = 500) {
+    if (!str) return '';
+    // Strip semua HTML tags
+    const stripped = String(str).replace(/<[^>]*>/g, '');
+    // Escape karakter berbahaya
+    return this.escape(stripped).slice(0, maxLen);
+  },
+
+  // Sanitasi URL — hanya izinkan https dari domain yang dikenal
+  sanitizeUrl(url) {
+    if (!url) return '';
+    try {
+      const u = new URL(url);
+      // Hanya izinkan https dan dari domain Supabase kita
+      if (u.protocol !== 'https:') return '';
+      if (!u.hostname.includes('supabase.co') && !u.hostname.includes('supabase.in')) return '';
+      return url;
+    } catch {
+      return '';
+    }
+  }
+};
+
+// ============================================================
+// VALIDASI UPLOAD FILE
+// ============================================================
+
+const FileValidator = {
+  // Magic bytes untuk tiap tipe file yang diizinkan
+  ALLOWED_TYPES: {
+    'image/jpeg': [[0xFF, 0xD8, 0xFF]],
+    'image/png':  [[0x89, 0x50, 0x4E, 0x47]],
+    'image/gif':  [[0x47, 0x49, 0x46, 0x38]],
+    'image/webp': [[0x52, 0x49, 0x46, 0x46]],
+  },
+
+  MAX_SIZE_MB: 15,  // Max 15MB sebelum compress
+  MAX_SIZE_BYTES: 15 * 1024 * 1024,
+
+  // Baca magic bytes dari file
+  _readMagicBytes(file, numBytes = 12) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(new Uint8Array(e.target.result));
+      reader.onerror = () => reject(new Error('Gagal baca file'));
+      reader.readAsArrayBuffer(file.slice(0, numBytes));
+    });
+  },
+
+  // Cek apakah magic bytes cocok
+  _matchesMagic(bytes, magic) {
+    return magic.every((b, i) => bytes[i] === b);
+  },
+
+  // Validasi file — return { ok, error }
+  async validate(file) {
+    // 1. Cek ukuran
+    if (file.size > this.MAX_SIZE_BYTES) {
+      return { ok: false, error: `File terlalu besar. Maksimal ${this.MAX_SIZE_MB}MB` };
+    }
+
+    // 2. Cek MIME type dari browser
+    if (!Object.keys(this.ALLOWED_TYPES).includes(file.type)) {
+      return { ok: false, error: 'Format file tidak didukung. Gunakan JPG, PNG, GIF, atau WebP' };
+    }
+
+    // 3. Cek magic bytes (validasi real, tidak bisa dipalsukan dengan ganti ekstensi)
+    try {
+      const bytes = await this._readMagicBytes(file);
+      const magicPatterns = this.ALLOWED_TYPES[file.type];
+      const isValid = magicPatterns.some(magic => this._matchesMagic(bytes, magic));
+
+      if (!isValid) {
+        return { ok: false, error: 'File tidak valid. Konten file tidak sesuai tipe gambar' };
+      }
+    } catch (e) {
+      return { ok: false, error: 'Gagal memvalidasi file' };
+    }
+
+    return { ok: true };
+  },
+
+  // Validasi multiple files
+  async validateAll(files) {
+    for (const file of files) {
+      const result = await this.validate(file);
+      if (!result.ok) return result;
+    }
+    return { ok: true };
+  }
+};
+
+// ============================================================
+// ✅ PAKET C — STORAGE ABUSE PREVENTION
+// ============================================================
+
+const StorageGuard = {
+  // Batas total konten per user
+  MAX_POSTS_PER_USER: 200,        // max total post per akun
+  MAX_TOPICS_PER_USER: 10,        // max topik yang dibuat per akun
+  MAX_IMAGES_PER_POST: 3,         // sudah dibatasi di UI, ini double-check
+
+  // Cache hasil cek (biar tidak query berulang dalam waktu singkat)
+  _cache: {},
+  _CACHE_TTL: 60 * 1000, // 1 menit
+
+  _getCached(key) {
+    const c = this._cache[key];
+    if (c && Date.now() - c.time < this._CACHE_TTL) return c.value;
+    return null;
+  },
+  _setCache(key, value) {
+    this._cache[key] = { value, time: Date.now() };
+  },
+  invalidate(key) {
+    delete this._cache[key];
+  },
+
+  // Cek apakah user masih boleh membuat post baru
+  async checkPostLimit(userId) {
+    const cacheKey = `posts_${userId}`;
+    let count = this._getCached(cacheKey);
+    if (count === null) {
+      try {
+        const res = await fetch(`${SB}/rest/v1/posts?user_id=eq.${userId}&select=id`, {
+          headers: { ...h(), 'Prefer': 'count=exact', 'Range': '0-0' }
+        });
+        const range = res.headers.get('content-range'); // format: "0-0/123"
+        count = range ? parseInt(range.split('/')[1]) || 0 : 0;
+        this._setCache(cacheKey, count);
+      } catch (e) {
+        return { ok: true }; // fail open — jangan blokir kalau cek gagal
+      }
+    }
+
+    if (count >= this.MAX_POSTS_PER_USER) {
+      return {
+        ok: false,
+        msg: `Kamu sudah mencapai batas maksimal ${this.MAX_POSTS_PER_USER} post. Hapus post lama untuk membuat yang baru.`
+      };
+    }
+    return { ok: true };
+  },
+
+  // Cek apakah user masih boleh membuat topik baru
+  async checkTopicLimit(userId) {
+    const cacheKey = `topics_${userId}`;
+    let count = this._getCached(cacheKey);
+    if (count === null) {
+      try {
+        const res = await fetch(`${SB}/rest/v1/topics?created_by=eq.${userId}&select=id`, {
+          headers: { ...h(), 'Prefer': 'count=exact', 'Range': '0-0' }
+        });
+        const range = res.headers.get('content-range');
+        count = range ? parseInt(range.split('/')[1]) || 0 : 0;
+        this._setCache(cacheKey, count);
+      } catch (e) {
+        return { ok: true };
+      }
+    }
+
+    if (count >= this.MAX_TOPICS_PER_USER) {
+      return {
+        ok: false,
+        msg: `Kamu sudah mencapai batas maksimal ${this.MAX_TOPICS_PER_USER} topik. Hapus topik lama untuk membuat yang baru.`
+      };
+    }
+    return { ok: true };
+  },
+
+  // Panggil setelah post/topik berhasil dibuat atau dihapus, biar cache fresh
+  bumpPostCount(userId, delta) {
+    const cacheKey = `posts_${userId}`;
+    const c = this._cache[cacheKey];
+    if (c) c.value = Math.max(0, c.value + delta);
+  },
+  bumpTopicCount(userId, delta) {
+    const cacheKey = `topics_${userId}`;
+    const c = this._cache[cacheKey];
+    if (c) c.value = Math.max(0, c.value + delta);
+  }
+};
+
+// ============================================================
+// CORE
+// ============================================================
+
 function verifiedBadge(profile, size=''){
   if(!profile || !profile.is_verified) return '';
   return `<span class="verified-badge ${size}" title="Akun Terverifikasi"><i class="fa fa-check"></i></span>`;
 }
 
-// =============================================
-// NOTIFIKASI STATE
-// =============================================
 let notifLastSeen = parseInt(localStorage.getItem('xn_notif_seen')||'0');
 let notifFilter = 'semua';
 let allNotifItems = [];
@@ -569,7 +957,12 @@ async function sbAuth(path,body){
 }
 function openSheet(id){document.getElementById(id).classList.add('open');}
 function closeSheet(id){document.getElementById(id).classList.remove('open');}
-function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+function toast(msg, type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className='toast show' + (type ? ' '+type : '');
+  setTimeout(()=>el.className='toast',2500);
+}
 function ago(d){
   const ds=d.endsWith('Z')||d.includes('+')?d:d+'Z';
   const s=(Date.now()-new Date(ds))/1000;
@@ -582,20 +975,77 @@ function switchAuth(tab){
   document.getElementById('authLogin').style.display=tab==='login'?'block':'none';
   document.getElementById('authReg').style.display=tab==='register'?'block':'none';
 }
+
+// ✅ doLogin — dengan Brute Force Protection
 async function doLogin(){
-  const email=document.getElementById('lEmail').value.trim(),pass=document.getElementById('lPass').value;
+  const email=document.getElementById('lEmail').value.trim();
+  const pass=document.getElementById('lPass').value;
   if(!email||!pass)return toast('Isi email dan password');
-  try{const d=await sbAuth('token?grant_type=password',{email,password:pass});token=d.access_token;user=d.user;await loadProfile();saveSession(d.refresh_token);closeSheet('authSheet');toast('Selamat datang!');goPage('home');loadFeed(true);}catch(e){toast(e.message);}
+
+  // Cek brute force sebelum kirim request
+  const bfCheck = BruteForce.check(email);
+  if (!bfCheck.ok) {
+    updateLoginBtnState(email);
+    return toast(bfCheck.msg, 'error');
+  }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.textContent = 'Masuk...';
+
+  try {
+    const d=await sbAuth('token?grant_type=password',{email,password:pass});
+    // ✅ Login berhasil — reset brute force counter
+    BruteForce.onSuccess(email);
+    token=d.access_token;
+    user=d.user;
+    await loadProfile();
+    saveSession(d.refresh_token);
+    closeSheet('authSheet');
+    toast('Selamat datang!');
+    goPage('home');
+    loadFeed(true);
+    btn.disabled = false;
+    btn.textContent = 'Masuk';
+  } catch(e) {
+    // ✅ Login gagal — catat attempt
+    const state = BruteForce.onFail(email);
+    const remaining = BruteForce.getRemainingAttempts(email);
+
+    if (state.lockedUntil > Date.now()) {
+      toast('Terlalu banyak percobaan gagal. Akun dikunci 15 menit.', 'error');
+    } else {
+      toast(remaining > 0
+        ? `${e.message} (Sisa ${remaining} percobaan)`
+        : e.message,
+      'error');
+    }
+    updateLoginBtnState(email);
+  }
 }
+
 async function doRegister(){
-  const username=document.getElementById('rUser').value.trim(),email=document.getElementById('rEmail').value.trim(),pass=document.getElementById('rPass').value;
+  let username=document.getElementById('rUser').value.trim(),email=document.getElementById('rEmail').value.trim(),pass=document.getElementById('rPass').value;
   if(!username||!email||!pass)return toast('Isi semua field');if(pass.length<6)return toast('Password min 6 karakter');
+
+  // ✅ Sanitasi username — hanya huruf, angka, underscore, titik
+  username = XSS.sanitizeUsername(username);
+  if(!username) return toast('Username hanya boleh huruf, angka, underscore, dan titik');
+
+  // ✅ Rate limit registrasi — max 3 per session
+  const rlCheck = RateLimit.check('post'); // pakai slot 'post' untuk register juga
+  if (!rlCheck.ok) return toast(rlCheck.msg, 'error');
+
   try{const d=await sbAuth('signup',{email,password:pass});token=d.access_token;user=d.user;
     await sb('/rest/v1/profiles',{method:'POST',body:JSON.stringify({id:user.id,username})});
     await loadProfile();saveSession(d.refresh_token);closeSheet('authSheet');toast('Selamat datang di Xentra!');goPage('home');loadFeed(true);}catch(e){toast(e.message);}
 }
 async function loadProfile(){try{const d=await sb(`/rest/v1/profiles?id=eq.${user.id}&select=*`);if(d[0])user.profile=d[0];}catch(e){}}
-function doLogout(){user=null;token=null;clearSession();goPage('home');loadFeed(true);toast('Berhasil keluar');}
+function doLogout(){
+  RateLimit.reset(); // ✅ Reset rate limit saat logout
+  StorageGuard._cache = {}; // ✅ Reset cache storage guard
+  user=null;token=null;clearSession();goPage('home');loadFeed(true);toast('Berhasil keluar');
+}
 
 const needLogin=['notif','profil'];
 function goPage(page){
@@ -685,16 +1135,16 @@ function renderPost(p){
   const upvotes=(p.votes||[]).filter(v=>v.type==='up').length;
   const myVote=user&&(p.votes||[]).find(v=>v.user_id===user.id&&v.type==='up');
   const tags=(p.caption||'').match(/#\w+/g)||[];
-  const cap=(p.caption||'').replace(/#\w+/g,'').trim();
-  const uname=p.profiles?.username||'user';
-  const uavatar=p.profiles?.avatar_url;
-  const capEsc=(p.caption||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,' ');
-  const firstImg=imgs[0]?.image_url||'';
+  const cap=XSS.sanitize((p.caption||'').replace(/#\w+/g,'').trim());
+  const uname=XSS.escape(p.profiles?.username||'user');
+  const uavatar=XSS.sanitizeUrl(p.profiles?.avatar_url||'');
+  const capEsc=XSS.escape((p.caption||'').replace(/\n/g,' '));
+  const firstImg=XSS.sanitizeUrl(imgs[0]?.image_url||'');
   let imgHtml='';
-  const urlsAttr=imgs.map(i=>i.image_url).join('||');
-  if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${imgs[0].image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="0"></div>`;
-  else if(imgs.length===2)imgHtml=`<div class="pimgs s2">${imgs.map((i,idx)=>`<img src="${i.image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="${idx}">`).join('')}</div>`;
-  else if(imgs.length>=3)imgHtml=`<div class="pimgs s3"><img class="pm pimg-click" src="${imgs[0].image_url}" loading="lazy" data-urls="${urlsAttr}" data-idx="0"><img src="${imgs[1].image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="1"><img src="${imgs[2].image_url}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="2"></div>`;
+  const urlsAttr=imgs.map(i=>XSS.sanitizeUrl(i.image_url)).join('||');
+  if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${XSS.sanitizeUrl(imgs[0].image_url)}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="0"></div>`;
+  else if(imgs.length===2)imgHtml=`<div class="pimgs s2">${imgs.map((i,idx)=>`<img src="${XSS.sanitizeUrl(i.image_url)}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="${idx}">`).join('')}</div>`;
+  else if(imgs.length>=3)imgHtml=`<div class="pimgs s3"><img class="pm pimg-click" src="${XSS.sanitizeUrl(imgs[0].image_url)}" loading="lazy" data-urls="${urlsAttr}" data-idx="0"><img src="${XSS.sanitizeUrl(imgs[1].image_url)}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="1"><img src="${XSS.sanitizeUrl(imgs[2].image_url)}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="2"></div>`;
   return `<div class="pcard" id="pc-${p.id}">
     <div class="phead">
       <div class="puser"><div class="pavatar">${uavatar?`<img src="${uavatar}" loading="lazy">`:'<i class="fa fa-user"></i>'}</div><div><div class="puname" onclick="event.stopPropagation();openUserProfil('${p.user_id}')" style="cursor:pointer">${uname}${verifiedBadge(p.profiles)}</div><div class="ptime">${ago(p.created_at)}</div></div></div>
@@ -754,11 +1204,24 @@ function fallbackCopy(txt) {
   toast('Caption disalin!');
 }
 
+// ✅ vote — dengan Rate Limiting
 async function vote(pid,el){
   if(!user)return openSheet('authSheet');
+
+  const rl = RateLimit.check('vote');
+  if (!rl.ok) return toast(rl.msg, 'error');
+
   const isOn=el.classList.contains('upvoted');const cnt=document.getElementById('vc-'+pid);
-  try{if(isOn){await sb(`/rest/v1/votes?post_id=eq.${pid}&user_id=eq.${user.id}`,{method:'DELETE'});el.classList.remove('upvoted');cnt.textContent=parseInt(cnt.textContent)-1;}
-    else{await sb('/rest/v1/votes',{method:'POST',body:JSON.stringify({post_id:pid,user_id:user.id,type:'up'})});el.classList.add('upvoted');cnt.textContent=parseInt(cnt.textContent)+1;}}catch(e){toast('Gagal vote');}
+  try{
+    if(isOn){
+      await sb(`/rest/v1/votes?post_id=eq.${pid}&user_id=eq.${user.id}`,{method:'DELETE'});
+      el.classList.remove('upvoted');cnt.textContent=parseInt(cnt.textContent)-1;
+    } else {
+      await sb('/rest/v1/votes',{method:'POST',body:JSON.stringify({post_id:pid,user_id:user.id,type:'up'})});
+      el.classList.add('upvoted');cnt.textContent=parseInt(cnt.textContent)+1;
+    }
+    RateLimit.record('vote'); // ✅ catat setelah berhasil
+  }catch(e){toast('Gagal vote');}
 }
 
 let replyTo=null,komenTab='terbaru';
@@ -806,9 +1269,12 @@ async function openKomentar(pid){
       const prof=pmap[c.user_id]||{};
       const lc=likeCounts[c.id]||0;
       const liked=myLikes[c.id]||false;
-      const uname=prof.username||'user';
-      const avatarHtml=prof.avatar_url?`<img src="${prof.avatar_url}">`:'<i class="fa fa-user"></i>';
+      const uname=XSS.escape(prof.username||'user');
+      const avatarUrl=XSS.sanitizeUrl(prof.avatar_url||'');
+      const avatarHtml=avatarUrl?`<img src="${avatarUrl}">`:'<i class="fa fa-user"></i>';
       const canDel=user&&(user.id===c.user_id||user.profile?.is_admin);
+      const contentSafe=XSS.sanitize(c.content);
+      const contentForJs=XSS.escape(c.content);
       return `<div class="kitem" id="kc-${c.id}" style="${isReply?'padding-left:48px;':''}padding-top:12px;padding-bottom:8px">
         <div class="kavatar" style="flex-shrink:0">${avatarHtml}</div>
         <div style="flex:1;min-width:0">
@@ -816,14 +1282,14 @@ async function openKomentar(pid){
             <span style="font-weight:700;font-size:13px;display:flex;align-items:center">${uname}${verifiedBadge(prof)}</span>
             <span style="font-size:11px;color:var(--text2)">${ago(c.created_at)}</span>
           </div>
-          <div style="font-size:14px;line-height:1.5;word-break:break-word;margin-bottom:6px">${c.content}</div>
+          <div style="font-size:14px;line-height:1.5;word-break:break-word;margin-bottom:6px">${contentSafe}</div>
           <div style="display:flex;align-items:center;gap:16px">
             <span onclick="setReply('${c.id}','${uname.replace(/'/g,"\\'")}')" style="font-size:12px;color:var(--text2);cursor:pointer;font-weight:600">Balas</span>
             <span onclick="likeKomentar('${c.id}',this)" id="klike-${c.id}" style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;color:${liked?'var(--accent)':'var(--text2)'}">
               <i class="fa fa-heart${liked?'':'-o'}" style="font-size:14px"></i>
               <span id="klc-${c.id}" style="font-weight:600">${lc||''}</span>
             </span>
-            <span onclick="showKomenMenu('${c.id}','${c.content.replace(/'/g,"\\'")}',${canDel})" style="margin-left:auto;cursor:pointer;color:var(--text2);padding:2px 4px"><i class="fa fa-ellipsis-h"></i></span>
+            <span onclick="showKomenMenu('${c.id}','${contentForJs.replace(/'/g,"\\'")}',${canDel})" style="margin-left:auto;cursor:pointer;color:var(--text2);padding:2px 4px"><i class="fa fa-ellipsis-h"></i></span>
           </div>
         </div>
       </div>`;
@@ -884,8 +1350,13 @@ function setReply(cid,uname){
   document.getElementById('kc-'+cid)?.style.setProperty('background','var(--bg3)');
 }
 
+// ✅ likeKomentar — dengan Rate Limiting
 async function likeKomentar(cid,el){
   if(!user)return openSheet('authSheet');
+
+  const rl = RateLimit.check('vote');
+  if (!rl.ok) return toast(rl.msg, 'error');
+
   const icon=el.querySelector('i');
   const cnt=document.getElementById('klc-'+cid);
   const liked=icon.classList.contains('fa-heart')&&!icon.classList.contains('fa-heart-o');
@@ -899,24 +1370,41 @@ async function likeKomentar(cid,el){
       icon.className='fa fa-heart';el.style.color='var(--accent)';
       cnt.textContent=(parseInt(cnt.textContent)||0)+1;
     }
+    RateLimit.record('vote');
   }catch(e){toast('Gagal');}
 }
 
+// ✅ submitKomentar — dengan Rate Limiting
 async function submitKomentar(){
   const inp=document.getElementById('kinput');const txt=inp.value.trim();if(!txt)return;
   if(!user)return openSheet('authSheet');
+  if(txt.length>500)return toast('Komentar maksimal 500 karakter', 'error');
+
+  const rl = RateLimit.check('comment');
+  if (!rl.ok) return toast(rl.msg, 'error');
+
   try{
     const body={post_id:currentPost,user_id:user.id,content:txt};
     if(replyTo)body.parent_id=replyTo;
     await sb('/rest/v1/comments',{method:'POST',body:JSON.stringify(body)});
+    RateLimit.record('comment'); // ✅ catat setelah berhasil
     inp.value='';cancelReply();
     openKomentar(currentPost);
   }catch(e){toast('Gagal kirim');}
 }
 
 let selFiles2=[];
-function handleFiles(inp){
-  selFiles2=Array.from(inp.files).slice(0,3);
+async function handleFiles(inp){
+  const files=Array.from(inp.files).slice(0,3);
+  selFiles2=[];
+  for(const f of files){
+    const result = await FileValidator.validate(f);
+    if(!result.ok){
+      toast(`${f.name}: ${result.error}`, 'error');
+      continue;
+    }
+    selFiles2.push(f);
+  }
   const prev=document.getElementById('uppreviews');
   prev.style.display=selFiles2.length?'grid':'none';
   prev.innerHTML=selFiles2.map((f,i)=>`<div class="upthumb"><img src="${URL.createObjectURL(f)}"><div class="upthumb-del" onclick="removeFile(${i})"><i class="fa fa-times"></i></div></div>`).join('');
@@ -945,21 +1433,39 @@ function compressImage(file,maxSize=1080,quality=0.82){
 }
 
 async function uploadImg(file){
+  // ✅ Rate limit upload
+  const rl = RateLimit.check('upload');
+  if (!rl.ok) throw new Error(rl.msg);
+
   const compressed=await compressImage(file);
   const path=`posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
   const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'image/jpeg'},body:compressed});
   if(!r.ok)throw new Error('Gagal upload');
+  RateLimit.record('upload'); // ✅ catat setelah berhasil
   return `${SB}/storage/v1/object/public/meme-images/${path}`;
 }
+
+// ✅ submitPost — dengan Rate Limiting
 async function submitPost(){
   if(!user)return openSheet('authSheet');if(!selFiles2.length)return toast('Pilih foto dulu');
+
+  const rl = RateLimit.check('post');
+  if (!rl.ok) return toast(rl.msg, 'error');
+
+  // ✅ Cek limit total post per user
+  const storageCheck = await StorageGuard.checkPostLimit(user.id);
+  if (!storageCheck.ok) return toast(storageCheck.msg, 'error');
+
   const cap=document.getElementById('postCaption').value.trim(),tags=document.getElementById('postTags').value.trim(),full=cap+(tags?' '+tags:'');
+  if(full.length>1000)return toast('Caption + hashtag maksimal 1000 karakter', 'error');
   try{
     toast('Mengupload...');
     const urls=await Promise.all(selFiles2.map(f=>uploadImg(f)));
     const post=await sb('/rest/v1/posts',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({user_id:user.id,caption:full})});
     const pid=Array.isArray(post)?post[0].id:post.id;
     await Promise.all(urls.map((url,i)=>sb('/rest/v1/post_images',{method:'POST',body:JSON.stringify({post_id:pid,image_url:url,order_index:i})})));
+    RateLimit.record('post'); // ✅ catat setelah berhasil
+    StorageGuard.bumpPostCount(user.id, 1); // ✅ update cache
     closeSheet('uploadPostSheet');selFiles2=[];
     document.getElementById('uppreviews').innerHTML='';document.getElementById('uppreviews').style.display='none';
     document.getElementById('postCaption').value='';document.getElementById('postTags').value='';
@@ -991,10 +1497,14 @@ async function renderTopik(){
     if(!topics.length){list.innerHTML=`<div class="center-msg"><i class="fa fa-users"></i><h3>${keyword?'Topik tidak ditemukan':topikTab==='joined'?'Belum ada topik diikuti':'Belum ada topik'}</h3><p>${keyword?'Coba kata kunci lain':topikTab==='joined'?'Ikuti topik dulu':'Jadilah yang pertama membuat topik!'}</p></div>`;return;}
     list.innerHTML=topics.map(tp=>{
       const isJoined=userJoined.includes(tp.id),count=memberCounts[tp.id]||0;
-      const avatar=tp.photo_url?`<img src="${tp.photo_url}" loading="lazy">`:(tp.emoji||'👥');
-      return `<div class="titem" onclick="openChat('${tp.id}','${tp.name.replace(/'/g,"\\'")}',${count},'${tp.photo_url||''}','${(tp.description||'').replace(/'/g,"\\'")}')">
+      const safePhoto=XSS.sanitizeUrl(tp.photo_url||'');
+      const avatar=safePhoto?`<img src="${safePhoto}" loading="lazy">`:(tp.emoji||'👥');
+      const tpName=XSS.escape(tp.name);
+      const tpNameJs=tpName.replace(/'/g,"\\'");
+      const tpDescJs=XSS.escape(tp.description||'').replace(/'/g,"\\'");
+      return `<div class="titem" onclick="openChat('${tp.id}','${tpNameJs}',${count},'${safePhoto}','${tpDescJs}')">
         <div class="tavatar">${avatar}</div>
-        <div class="tinfo"><div class="tname">${tp.name}</div><div class="tmember">${count} member</div></div>
+        <div class="tinfo"><div class="tname">${tpName}</div><div class="tmember">${count} member</div></div>
         <button class="tjoin ${isJoined?'joined':''}" onclick="event.stopPropagation();toggleJoin(this,'${tp.id}')">${isJoined?'Gabung ✓':'Gabung'}</button>
       </div>`;
     }).join('');
@@ -1010,13 +1520,29 @@ async function toggleJoin(btn,id){
     if(memberEl){const cur=parseInt(memberEl.textContent)||0;memberEl.textContent=(isJoined?cur-1:cur+1)+' member';}
   }catch(e){toast('Gagal: '+e.message);}
 }
+
+// ✅ submitTopik — dengan Rate Limiting
 async function submitTopik(){
   const name=document.getElementById('topikName').value.trim(),desc=document.getElementById('topikDesc').value.trim();
   if(!name)return toast('Isi nama topik');
+  if(name.length>50)return toast('Nama topik maksimal 50 karakter', 'error');
+  if(desc.length>300)return toast('Deskripsi maksimal 300 karakter', 'error');
+
+  const rl = RateLimit.check('topik');
+  if (!rl.ok) return toast(rl.msg, 'error');
+
+  // ✅ Cek limit total topik per user (hanya jika login)
+  if(user){
+    const storageCheck = await StorageGuard.checkTopicLimit(user.id);
+    if (!storageCheck.ok) return toast(storageCheck.msg, 'error');
+  }
+
   try{
     const tp=await sb('/rest/v1/topics',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({name,description:desc,member_count:0,emoji:'👥',created_by:user?.id||null})});
     const tpId=Array.isArray(tp)?tp[0].id:tp.id;
     if(user&&tpId){await sb('/rest/v1/topic_members',{method:'POST',body:JSON.stringify({topic_id:tpId,user_id:user.id})});}
+    RateLimit.record('topik');
+    if(user) StorageGuard.bumpTopicCount(user.id, 1); // ✅ update cache
     toast('Topik dibuat!');closeSheet('buatTopikSheet');document.getElementById('topikName').value='';document.getElementById('topikDesc').value='';renderTopik();
   }catch(e){toast(e.message);}
 }
@@ -1063,30 +1589,37 @@ async function openGrupDetail(){
       const isThisCreator=tp.created_by===p.id;
       const isMe=user&&p.id===user.id;
       const canKick=canManage&&!isMe&&!isThisCreator;
+      const pAvatar=XSS.sanitizeUrl(p.avatar_url||'');
+      const pUname=XSS.escape(p.username||'user');
       return `<div class="member-item">
-        <div class="member-avatar" onclick="openUserProfil('${p.id}')">${p.avatar_url?`<img src="${p.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
+        <div class="member-avatar" onclick="openUserProfil('${p.id}')">${pAvatar?`<img src="${pAvatar}">`:'<i class="fa fa-user"></i>'}</div>
         <div style="flex:1;min-width:0;cursor:pointer" onclick="openUserProfil('${p.id}')">
           <div style="display:flex;align-items:center;gap:6px">
-            <span class="member-name">${p.username}</span>
+            <span class="member-name">${pUname}</span>
             ${verifiedBadge(p)}
             ${isThisCreator?'<span style="font-size:11px;font-weight:700;color:#27ae60;background:rgba(39,174,96,0.12);padding:2px 7px;border-radius:10px">Admin</span>':''}
           </div>
         </div>
-        ${canKick?`<button onclick="kickMember('${tp.id}','${p.id}','${p.username.replace(/'/g,"\'")}',this)" style="background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:18px;padding:6px 8px;border-radius:8px;flex-shrink:0"><i class="fa fa-ellipsis-v"></i></button>`:''}
+        ${canKick?`<button onclick="kickMember('${tp.id}','${p.id}','${pUname.replace(/'/g,"\\'")}',this)" style="background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:18px;padding:6px 8px;border-radius:8px;flex-shrink:0"><i class="fa fa-ellipsis-v"></i></button>`:''}
       </div>`;
     }).join('');
+
+    const tpNameSafe=XSS.escape(tp.name);
+    const tpDescSafe=XSS.sanitize(tp.description||'');
+    const tpDescJsEdit=XSS.escape(tp.description||'').replace(/'/g,"\\'");
+    const tpPhotoSafe=XSS.sanitizeUrl(tp.photo_url||'');
 
     gc.innerHTML=`
       <div class="grup-hero">
         <div class="grup-hero-back" onclick="backToChat()"><i class="fa fa-arrow-left"></i></div>
-        ${tp.photo_url?`<img src="${tp.photo_url}">`:(tp.emoji||'👥')}
+        ${tpPhotoSafe?`<img src="${tpPhotoSafe}">`:(tp.emoji||'👥')}
         ${user?`<div style="position:absolute;bottom:12px;right:12px;width:36px;height:36px;background:rgba(0,0,0,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:16px" onclick="document.getElementById('grupPhotoInput').click()"><i class="fa fa-camera"></i></div><input type="file" id="grupPhotoInput" accept="image/*" style="display:none" onchange="uploadGrupPhoto('${tp.id}',this)">`:''} 
       </div>
       <div class="grup-info">
-        <div class="grup-name">${tp.name}</div>
+        <div class="grup-name">${tpNameSafe}</div>
         <div style="display:flex;align-items:flex-start;gap:8px">
-          <div class="grup-desc" id="grupDescText" style="flex:1">${tp.description||'<span style="font-style:italic;color:var(--text2)">Belum ada deskripsi</span>'}</div>
-          ${canManage?`<button onclick="editDeskripsiTopik('${tp.id}','${(tp.description||'').replace(/'/g,"\'")}')" style="background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:14px;padding:4px 6px;flex-shrink:0;margin-top:2px"><i class="fa fa-pen"></i></button>`:''}
+          <div class="grup-desc" id="grupDescText" style="flex:1">${tpDescSafe||'<span style="font-style:italic;color:var(--text2)">Belum ada deskripsi</span>'}</div>
+          ${canManage?`<button onclick="editDeskripsiTopik('${tp.id}','${tpDescJsEdit}')" style="background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:14px;padding:4px 6px;flex-shrink:0;margin-top:2px"><i class="fa fa-pen"></i></button>`:''}
         </div>
         <div class="grup-stats"><div class="grup-stat"><span>${members.length}</span> anggota</div></div>
       </div>
@@ -1146,6 +1679,7 @@ function editDeskripsiTopik(topicId, currentDesc){
 
 async function saveDescTopik(topicId){
   const val=document.getElementById('editDescInput')?.value.trim();
+  if(val && val.length>300)return toast('Deskripsi maksimal 300 karakter', 'error');
   try{
     await sb(`/rest/v1/topics?id=eq.${topicId}`,{method:'PATCH',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({description:val})});
     document.getElementById('editDescMenu')?.remove();
@@ -1173,7 +1707,6 @@ async function hapusGrup(topicId){
 async function doHapusGrup(topicId){
   try{
     const chats = await sb(`/rest/v1/topic_chats?topic_id=eq.${topicId}&select=content`);
-    const storageBase = `${SB}/storage/v1/object/public/meme-images/`;
     const chatImgPaths = [];
     chats.forEach(c => {
       const m = c.content.match(/\[img\](.*?)\[\/img\]/);
@@ -1197,6 +1730,7 @@ async function doHapusGrup(topicId){
     await sb(`/rest/v1/topic_chats?topic_id=eq.${topicId}`,{method:'DELETE'});
     await sb(`/rest/v1/topic_members?topic_id=eq.${topicId}`,{method:'DELETE'});
     await sb(`/rest/v1/topics?id=eq.${topicId}`,{method:'DELETE'});
+    if(user) StorageGuard.bumpTopicCount(user.id, -1); // ✅ update cache
     document.getElementById('hapusMenu')?.remove();
     toast('Grup berhasil dihapus');
     currentTopic=null;
@@ -1233,33 +1767,62 @@ async function loadChatMsgs(){
     msgs.forEach((m,i)=>{
       const prev=msgs[i-1],sameUser=prev&&prev.user_id===m.user_id,closeTime=prev&&(new Date(m.created_at)-new Date(prev.created_at))<120000;
       if(sameUser&&closeTime)groups[groups.length-1].msgs.push(m);
-      else{const prof=pmap[m.user_id];groups.push({uname:prof?.username||'user',avatar:prof?.avatar_url||'',mine:user&&m.user_id===user.id,msgs:[m],profile:prof||null});}
+      else{const prof=pmap[m.user_id];groups.push({uname:XSS.escape(prof?.username||'user'),avatar:XSS.sanitizeUrl(prof?.avatar_url||''),mine:user&&m.user_id===user.id,msgs:[m],profile:prof||null});}
     });
     container.innerHTML=groups.map(g=>`
       <div class="chat-group ${g.mine?'mine':''}">
         ${!g.mine?`<div class="chat-group-header"><div class="chat-avatar">${g.avatar?`<img src="${g.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'<i class="fa fa-user" style="font-size:10px"></i>'}</div><div class="chat-uname">${g.uname}${verifiedBadge(g.profile)}</div></div>`:''}
         <div class="chat-bubbles">
-          ${g.msgs.map(m=>{const im=m.content.match(/\[img\](.*?)\[\/img\]/);return im?`<div class="chat-bubble img-only"><img src="${im[1]}" loading="lazy" onclick="window.open('${im[1]}','_blank')"></div>`:`<div class="chat-bubble">${m.content}</div>`;}).join('')}
+          ${g.msgs.map(m=>{
+            const im=m.content.match(/\[img\](.*?)\[\/img\]/);
+            if(im){
+              const safeUrl=XSS.sanitizeUrl(im[1]);
+              return `<div class="chat-bubble img-only"><img src="${safeUrl}" loading="lazy" onclick="window.open('${safeUrl}','_blank')"></div>`;
+            }
+            return `<div class="chat-bubble">${XSS.sanitize(m.content)}</div>`;
+          }).join('')}
           <div class="chat-time-row">${ago(g.msgs[g.msgs.length-1].created_at)}</div>
         </div>
       </div>`).join('');
     if(isBottom)container.scrollTop=container.scrollHeight;
   }catch(e){}
 }
+
+// ✅ sendChat — dengan Rate Limiting
 async function sendChat(){
   if(!user){openSheet('authSheet');return;}
   const inp=document.getElementById('chatInput'),txt=inp.value.trim();if(!txt)return;
-  try{await sb('/rest/v1/topic_chats',{method:'POST',body:JSON.stringify({topic_id:currentTopic.id,user_id:user.id,content:txt})});inp.value='';await loadChatMsgs();}catch(e){toast('Gagal kirim');}
+  if(txt.length>1000)return toast('Pesan maksimal 1000 karakter', 'error');
+
+  const rl = RateLimit.check('chat');
+  if (!rl.ok) return toast(rl.msg, 'error');
+
+  try{
+    await sb('/rest/v1/topic_chats',{method:'POST',body:JSON.stringify({topic_id:currentTopic.id,user_id:user.id,content:txt})});
+    RateLimit.record('chat'); // ✅ catat setelah berhasil
+    inp.value='';await loadChatMsgs();
+  }catch(e){toast('Gagal kirim');}
 }
+
+// ✅ sendChatImage — dengan Rate Limiting + Validasi File
 async function sendChatImage(inp){
   if(!user){openSheet('authSheet');return;}
   const file=inp.files[0];if(!file)return;
+
+  const rl = RateLimit.check('upload');
+  if (!rl.ok) return toast(rl.msg, 'error');
+
+  // ✅ Validasi file (magic bytes)
+  const validation = await FileValidator.validate(file);
+  if (!validation.ok) { inp.value=''; return toast(validation.error, 'error'); }
+
   try{
     toast('Mengupload foto...');
     const compressed=await compressImage(file,1080,0.82);
     const path=`chat/${user.id}/${Date.now()}.jpg`;
     const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'image/jpeg'},body:compressed});
     if(!r.ok)throw new Error('Gagal upload');
+    RateLimit.record('upload');
     const url=`${SB}/storage/v1/object/public/meme-images/${path}`;
     await sb('/rest/v1/topic_chats',{method:'POST',body:JSON.stringify({topic_id:currentTopic.id,user_id:user.id,content:`[img]${url}[/img]`})});
     inp.value='';await loadChatMsgs();
@@ -1270,14 +1833,16 @@ async function sendChatImage(inp){
 let profilActiveTab='posts';
 async function renderProfil(){
   const p=user?.profile||{};
+  const pAvatar=XSS.sanitizeUrl(p.avatar_url||'');
+  const pUname=XSS.escape(p.username||'User');
   document.getElementById('pg-profil').innerHTML=`
     <div style="display:flex;align-items:center;justify-content:flex-end;padding:12px 16px 0">
       <button onclick="goProfilMenu()" style="background:transparent;border:none;cursor:pointer;padding:6px;border-radius:50%"><i class="fa fa-ellipsis-h" style="font-size:22px;color:var(--text2)"></i></button>
     </div>
     <div class="profil-top" style="padding-top:4px">
-      <div class="pavatar-lg">${p.avatar_url?`<img src="${p.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
-      <div class="pname">${p.username||'User'}${verifiedBadge(p,'lg')}</div>
-      <div class="pusername">@${p.username||'user'}</div>
+      <div class="pavatar-lg">${pAvatar?`<img src="${pAvatar}">`:'<i class="fa fa-user"></i>'}</div>
+      <div class="pname">${pUname}${verifiedBadge(p,'lg')}</div>
+      <div class="pusername">@${pUname}</div>
       <div class="pstats">
         <div><div class="pstat-num" id="statFollowers">0</div><div class="pstat-label">Followers</div></div>
         <div><div class="pstat-num" id="statFollowing">0</div><div class="pstat-label">Following</div></div>
@@ -1337,7 +1902,10 @@ function goProfilMenu(){
   document.getElementById('nb-profil').classList.add('on');
   document.getElementById('topbarSearch').style.display='none';
   const p=user?.profile||{};
-  const avatarHtml=p.avatar_url?'<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':`<i class="fa fa-user"></i>`;
+  const pAvatarUrl=XSS.sanitizeUrl(p.avatar_url||'');
+  const avatarHtml=pAvatarUrl?'<img src="'+pAvatarUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':`<i class="fa fa-user"></i>`;
+  const pUnameSafe=XSS.escape(p.username||'user');
+  const userEmailSafe=XSS.escape(user?.email||'-');
   document.getElementById('profilMenuContent').innerHTML=
     '<div style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)">'+
       '<button onclick="goPage(\'profil\')" style="background:transparent;border:none;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:18px"><i class="fa fa-arrow-left"></i></button>'+
@@ -1352,11 +1920,11 @@ function goProfilMenu(){
       '<div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">'+
         '<div style="padding:15px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px">'+
           '<i class="fa fa-user" style="color:var(--accent);font-size:16px;width:20px;text-align:center"></i>'+
-          '<div><div style="font-size:12px;color:var(--text2)">Username</div><div style="font-size:15px;font-weight:600;margin-top:2px;display:flex;align-items:center">'+(p.username||'user')+verifiedBadge(p)+'</div></div>'+
+          '<div><div style="font-size:12px;color:var(--text2)">Username</div><div style="font-size:15px;font-weight:600;margin-top:2px;display:flex;align-items:center">'+pUnameSafe+verifiedBadge(p)+'</div></div>'+
         '</div>'+
         '<div style="padding:15px 16px;display:flex;align-items:center;gap:14px">'+
           '<i class="fa fa-envelope" style="color:var(--accent);font-size:16px;width:20px;text-align:center"></i>'+
-          '<div><div style="font-size:12px;color:var(--text2)">Email</div><div style="font-size:15px;font-weight:600;margin-top:2px">'+(user?.email||'-')+'</div></div>'+
+          '<div><div style="font-size:12px;color:var(--text2)">Email</div><div style="font-size:15px;font-weight:600;margin-top:2px">'+userEmailSafe+'</div></div>'+
         '</div>'+
       '</div>'+
     '</div>'+
@@ -1383,15 +1951,17 @@ async function openUserProfil(uid){
     const totalVotes=posts.reduce((s,post)=>(post.votes||[]).filter(v=>v.type==='up').length+s,0);
     let isFollowing=false;
     if(user){const mf=await sb(`/rest/v1/follows?follower_id=eq.${user.id}&following_id=eq.${uid}&select=id`);isFollowing=mf.length>0;}
+    const pUnameSafe=XSS.escape(p.username||'User');
+    const pAvatarSafe=XSS.sanitizeUrl(p.avatar_url||'');
     document.getElementById('userWall').innerHTML=`
       <div style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)">
         <div class="chat-back" onclick="goPage('home')"><i class="fa fa-arrow-left"></i></div>
-        <div style="font-weight:700;font-size:16px;display:flex;align-items:center">${p.username||'User'}${verifiedBadge(p)}</div>
+        <div style="font-weight:700;font-size:16px;display:flex;align-items:center">${pUnameSafe}${verifiedBadge(p)}</div>
       </div>
       <div class="profil-top">
-        <div class="pavatar-lg">${p.avatar_url?`<img src="${p.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
-        <div class="pname">${p.username||'User'}${verifiedBadge(p,'lg')}</div>
-        <div class="pusername">@${p.username||'user'}</div>
+        <div class="pavatar-lg">${pAvatarSafe?`<img src="${pAvatarSafe}">`:'<i class="fa fa-user"></i>'}</div>
+        <div class="pname">${pUnameSafe}${verifiedBadge(p,'lg')}</div>
+        <div class="pusername">@${pUnameSafe}</div>
         <div class="pstats">
           <div><div class="pstat-num">${followers.length}</div><div class="pstat-label">Followers</div></div>
           <div><div class="pstat-num">${following.length}</div><div class="pstat-label">Following</div></div>
@@ -1414,6 +1984,10 @@ async function toggleFollow(uid,btn){
 
 async function uploadAvatar(inp){
   const file=inp.files[0];if(!file||!user)return;
+  const rl = RateLimit.check('upload');
+  if (!rl.ok) return toast(rl.msg, 'error');
+  const validation = await FileValidator.validate(file);
+  if (!validation.ok) { inp.value=''; return toast(validation.error, 'error'); }
   try{
     toast('Mengupload foto profil...');
     const compressed=await compressImage(file,400,0.85);
@@ -1423,18 +1997,24 @@ async function uploadAvatar(inp){
     const url=`${SB}/storage/v1/object/public/meme-images/${path}?t=${Date.now()}`;
     const res=await fetch(`${SB}/rest/v1/profiles?id=eq.${user.id}`,{method:'PATCH',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({avatar_url:url})});
     if(!res.ok){const err=await res.text();throw new Error('Gagal update profil: '+err);}
+    RateLimit.record('upload');
     if(!user.profile)user.profile={};user.profile.avatar_url=url;
     saveSession(localStorage.getItem('xn_refresh'));toast('Foto profil diperbarui!');goProfilMenu();
   }catch(e){toast(e.message);}
 }
 async function uploadGrupPhoto(topicId,inp){
   const file=inp.files[0];if(!file||!user)return;
+  const rl = RateLimit.check('upload');
+  if (!rl.ok) return toast(rl.msg, 'error');
+  const validation = await FileValidator.validate(file);
+  if (!validation.ok) { inp.value=''; return toast(validation.error, 'error'); }
   try{
     toast('Mengupload foto grup...');
     const compressed=await compressImage(file,800,0.82);
     const path=`groups/${topicId}/cover.jpg`;
     const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'image/jpeg','x-upsert':'true'},body:compressed});
     if(!r.ok)throw new Error('Gagal upload');
+    RateLimit.record('upload');
     const url=`${SB}/storage/v1/object/public/meme-images/${path}?t=${Date.now()}`;
     await fetch(`${SB}/rest/v1/topics?id=eq.${topicId}`,{method:'PATCH',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({photo_url:url})});
     if(currentTopic)currentTopic.photoUrl=url;toast('Foto grup diperbarui!');openGrupDetail();
@@ -1463,7 +2043,6 @@ async function checkNotifBadge(){
 async function fetchAllNotifItems(){
   if(!user) return [];
   const items = [];
-
   const myPosts = await sb(`/rest/v1/posts?user_id=eq.${user.id}&select=id,caption,post_images(image_url,order_index)&order=created_at.desc&limit=50`);
   const myPostIds = myPosts.map(p => p.id);
   const postThumbMap = {};
@@ -1473,35 +2052,17 @@ async function fetchAllNotifItems(){
     postThumbMap[p.id] = imgs[0]?.image_url || '';
     postCaptionMap[p.id] = (p.caption||'').replace(/#\w+/g,'').trim() || 'Post kamu';
   });
-
   if(myPostIds.length){
     const votes = await sb(`/rest/v1/votes?post_id=in.(${myPostIds.join(',')})&select=post_id,user_id,type&limit=100`);
     const myVotesOnMyPosts = votes.filter(v => v.type === 'up' && v.user_id !== user.id);
     myVotesOnMyPosts.forEach(v => {
-      items.push({
-        type: 'like_post',
-        actor_id: v.user_id,
-        post_id: v.post_id,
-        created_at: new Date().toISOString(),
-        thumb: postThumbMap[v.post_id] || '',
-        preview: postCaptionMap[v.post_id] || '',
-      });
+      items.push({type:'like_post',actor_id:v.user_id,post_id:v.post_id,created_at:new Date().toISOString(),thumb:postThumbMap[v.post_id]||'',preview:postCaptionMap[v.post_id]||''});
     });
-
     const comments = await sb(`/rest/v1/comments?post_id=in.(${myPostIds.join(',')})&select=*&order=created_at.desc&limit=100`);
     const rootComments = comments.filter(c => !c.parent_id && c.user_id !== user.id);
     rootComments.forEach(c => {
-      items.push({
-        type: 'comment_post',
-        actor_id: c.user_id,
-        post_id: c.post_id,
-        comment_id: c.id,
-        created_at: c.created_at,
-        thumb: postThumbMap[c.post_id] || '',
-        preview: c.content,
-      });
+      items.push({type:'comment_post',actor_id:c.user_id,post_id:c.post_id,comment_id:c.id,created_at:c.created_at,thumb:postThumbMap[c.post_id]||'',preview:c.content});
     });
-
     const myComments = await sb(`/rest/v1/comments?user_id=eq.${user.id}&select=id&limit=200`);
     const myCommentIds = myComments.map(c => c.id);
     if(myCommentIds.length){
@@ -1512,19 +2073,8 @@ async function fetchAllNotifItems(){
       allComments.forEach(c => commentPostMap[c.id] = c.post_id);
       otherReplies.forEach(r => {
         const postId = commentPostMap[r.parent_id] || r.post_id;
-        items.push({
-          type: 'reply_comment',
-          actor_id: r.user_id,
-          post_id: postId,
-          comment_id: r.id,
-          created_at: r.created_at,
-          thumb: postThumbMap[postId] || '',
-          preview: r.content,
-        });
+        items.push({type:'reply_comment',actor_id:r.user_id,post_id:postId,comment_id:r.id,created_at:r.created_at,thumb:postThumbMap[postId]||'',preview:r.content});
       });
-    }
-
-    if(myCommentIds.length){
       const commentLikes = await sb(`/rest/v1/comment_likes?comment_id=in.(${myCommentIds.join(',')})&select=comment_id,user_id&limit=100`);
       const otherLikes = commentLikes.filter(cl => cl.user_id !== user.id);
       const allCMap = await sb(`/rest/v1/comments?id=in.(${myCommentIds.join(',')})&select=id,post_id`);
@@ -1532,19 +2082,10 @@ async function fetchAllNotifItems(){
       allCMap.forEach(c => cPostMap[c.id] = c.post_id);
       otherLikes.forEach(cl => {
         const postId = cPostMap[cl.comment_id];
-        items.push({
-          type: 'like_comment',
-          actor_id: cl.user_id,
-          post_id: postId || null,
-          comment_id: cl.comment_id,
-          created_at: new Date().toISOString(),
-          thumb: postId ? (postThumbMap[postId]||'') : '',
-          preview: '',
-        });
+        items.push({type:'like_comment',actor_id:cl.user_id,post_id:postId||null,comment_id:cl.comment_id,created_at:new Date().toISOString(),thumb:postId?(postThumbMap[postId]||''):'',preview:''});
       });
     }
   }
-
   const joinedTopics = await sb(`/rest/v1/topic_members?user_id=eq.${user.id}&select=topic_id`);
   const joinedTopicIds = joinedTopics.map(t => t.topic_id);
   if(joinedTopicIds.length){
@@ -1552,22 +2093,12 @@ async function fetchAllNotifItems(){
     const topicNameMap = {};
     const topicPhotoMap = {};
     topicsData.forEach(t => { topicNameMap[t.id]=t.name; topicPhotoMap[t.id]=t.photo_url||''; });
-
     const chatMsgs = await sb(`/rest/v1/topic_chats?topic_id=in.(${joinedTopicIds.join(',')})&user_id=neq.${user.id}&select=id,topic_id,user_id,content,created_at&order=created_at.desc&limit=100`);
     const textMsgs = chatMsgs.filter(m => !m.content.includes('[img]'));
     textMsgs.forEach(m => {
-      items.push({
-        type: 'topic_chat',
-        actor_id: m.user_id,
-        topic_id: m.topic_id,
-        topic_name: topicNameMap[m.topic_id] || 'Topik',
-        topic_photo: topicPhotoMap[m.topic_id] || '',
-        created_at: m.created_at,
-        preview: m.content,
-      });
+      items.push({type:'topic_chat',actor_id:m.user_id,topic_id:m.topic_id,topic_name:topicNameMap[m.topic_id]||'Topik',topic_photo:topicPhotoMap[m.topic_id]||'',created_at:m.created_at,preview:m.content});
     });
   }
-
   items.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
   return items;
 }
@@ -1575,22 +2106,18 @@ async function fetchAllNotifItems(){
 async function loadNotif(){
   const pg = document.getElementById('pg-notif');
   pg.innerHTML = `<div id="notifList">${skNotif(4)}</div>`;
-
   notifLastSeen = Date.now();
   localStorage.setItem('xn_notif_seen', notifLastSeen);
   const badge = document.getElementById('notifBadge');
   badge.classList.remove('show');
-
   try {
     allNotifItems = await fetchAllNotifItems();
-
     const actorIds = [...new Set(allNotifItems.map(n=>n.actor_id).filter(Boolean))];
     let actorMap = {};
     if(actorIds.length){
       const profiles = await sb(`/rest/v1/profiles?id=in.(${actorIds.join(',')})&select=id,username,avatar_url,is_verified`);
       profiles.forEach(p => actorMap[p.id] = p);
     }
-
     renderNotifList(actorMap);
   } catch(e){
     document.getElementById('notifList').innerHTML = `<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;
@@ -1609,14 +2136,11 @@ function renderNotifList(actorMap){
   _actorMapCache = actorMap;
   const list = document.getElementById('notifList');
   if(!list) return;
-
   const filtered = allNotifItems;
-
   if(!filtered.length){
     list.innerHTML = `<div class="center-msg"><i class="fa fa-bell"></i><h3>Belum ada notifikasi</h3><p>Aktivitas di postmu akan muncul di sini</p></div>`;
     return;
   }
-
   const groups = {};
   filtered.forEach(n => {
     const d = new Date(n.created_at.endsWith('Z')||n.created_at.includes('+')?n.created_at:n.created_at+'Z');
@@ -1630,55 +2154,50 @@ function renderNotifList(actorMap){
     if(!groups[label]) groups[label] = [];
     groups[label].push(n);
   });
-
   const groupOrder = ['Hari ini','Kemarin'];
   const allLabels = Object.keys(groups);
   const sorted = [...groupOrder.filter(l=>groups[l]), ...allLabels.filter(l=>!groupOrder.includes(l))];
-
   let html = '';
   sorted.forEach(label => {
     html += `<div class="notif-date-sep">${label}</div>`;
-    groups[label].forEach(n => {
-      html += renderNotifItem(n, actorMap);
-    });
+    groups[label].forEach(n => { html += renderNotifItem(n, actorMap); });
   });
   list.innerHTML = html;
 }
 
 function renderNotifItem(n, actorMap){
   const actor = actorMap[n.actor_id] || {};
-  const uname = actor.username || 'Seseorang';
-  const avatarHtml = actor.avatar_url
-    ? `<img src="${actor.avatar_url}">`
+  const uname = XSS.escape(actor.username || 'Seseorang');
+  const actorAvatar = XSS.sanitizeUrl(actor.avatar_url||'');
+  const avatarHtml = actorAvatar
+    ? `<img src="${actorAvatar}">`
     : `<i class="fa fa-user" style="font-size:16px;color:var(--text2)"></i>`;
-
   const isUnread = new Date(n.created_at.endsWith('Z')||n.created_at.includes('+')?n.created_at:n.created_at+'Z').getTime() > notifLastSeen;
-
   let iconEl = '', textHtml = '', thumbHtml = '';
   const timeStr = ago(n.created_at);
-
-  if(n.thumb){
-    thumbHtml = `<div class="notif-thumb"><img src="${n.thumb}" loading="lazy"></div>`;
+  const safeThumb = XSS.sanitizeUrl(n.thumb||'');
+  const safePreview = XSS.sanitize((n.preview||'').replace(/\[img\](.*?)\[\/img\]/,'[Foto]'));
+  const safeTopicName = XSS.escape(n.topic_name||'');
+  const safeTopicPhoto = XSS.sanitizeUrl(n.topic_photo||'');
+  if(safeThumb){
+    thumbHtml = `<div class="notif-thumb"><img src="${safeThumb}" loading="lazy"></div>`;
   }
-
-  // Name with verified badge inline
   const actorName = `<strong>${uname}</strong>${verifiedBadge(actor)}`;
-
   switch(n.type){
     case 'like_post':
       iconEl = `<div class="notif-icon like"><i class="fa fa-heart"></i></div>`;
       textHtml = `<div class="notif-text">${actorName} <span>menyukai postmu</span></div>`;
-      if(n.preview) textHtml += `<div class="notif-preview">${n.preview}</div>`;
+      if(safePreview) textHtml += `<div class="notif-preview">${safePreview}</div>`;
       break;
     case 'comment_post':
       iconEl = `<div class="notif-icon comment"><i class="fa fa-comment"></i></div>`;
       textHtml = `<div class="notif-text">${actorName} <span>mengomentari postmu</span></div>`;
-      textHtml += `<div class="notif-preview">${n.preview}</div>`;
+      textHtml += `<div class="notif-preview">${safePreview}</div>`;
       break;
     case 'reply_comment':
       iconEl = `<div class="notif-icon reply"><i class="fa fa-reply"></i></div>`;
       textHtml = `<div class="notif-text">${actorName} <span>membalas komentarmu</span></div>`;
-      textHtml += `<div class="notif-preview">${n.preview}</div>`;
+      textHtml += `<div class="notif-preview">${safePreview}</div>`;
       break;
     case 'like_comment':
       iconEl = `<div class="notif-icon like"><i class="fa fa-heart"></i></div>`;
@@ -1686,27 +2205,24 @@ function renderNotifItem(n, actorMap){
       break;
     case 'topic_chat':
       iconEl = `<div class="notif-icon topic"><i class="fa fa-users"></i></div>`;
-      textHtml = `<div class="notif-text">${actorName} <span>mengirim pesan di </span><strong>${n.topic_name}</strong></div>`;
-      textHtml += `<div class="notif-preview">${n.preview}</div>`;
-      if(n.topic_photo){
-        thumbHtml = `<div class="notif-thumb"><img src="${n.topic_photo}" loading="lazy"></div>`;
+      textHtml = `<div class="notif-text">${actorName} <span>mengirim pesan di </span><strong>${safeTopicName}</strong></div>`;
+      textHtml += `<div class="notif-preview">${safePreview}</div>`;
+      if(safeTopicPhoto){
+        thumbHtml = `<div class="notif-thumb"><img src="${safeTopicPhoto}" loading="lazy"></div>`;
       } else {
         thumbHtml = `<div class="notif-thumb" style="font-size:20px;background:var(--bg3)">👥</div>`;
       }
       break;
   }
-
   const clickAction = n.type === 'topic_chat'
-    ? `onclick="openChat('${n.topic_id}','${(n.topic_name||'').replace(/'/g,"\\'")}',0,'${n.topic_photo||''}','')"`
+    ? `onclick="openChat('${n.topic_id}','${safeTopicName.replace(/'/g,"\\'")}',0,'${safeTopicPhoto}','')"`
     : n.post_id
       ? `onclick="closeSheet('komentarSheet');openKomentar('${n.post_id}')"`
       : '';
-
   let finalThumb = thumbHtml;
   if(thumbHtml && iconEl){
     finalThumb = thumbHtml.replace(/(<div class="notif-thumb[^>]*>)/, '$1' + iconEl);
   }
-
   return `<div class="notif-item ${isUnread?'unread':''}" ${clickAction}>
     <div class="notif-avatar">${avatarHtml}</div>
     <div class="notif-body">
@@ -1733,11 +2249,14 @@ async function doSearch(q){
     let html='';
     if(users.length){
       html+=`<div style="padding:12px 16px 6px;font-size:12px;font-weight:700;color:var(--text2)">USER</div>`;
-      html+=users.map(u=>`
+      html+=users.map(u=>{
+        const uAvatar=XSS.sanitizeUrl(u.avatar_url||'');
+        const uUname=XSS.escape(u.username||'user');
+        return `
         <div onclick="openUserProfil('${u.id}')" style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer">
-          <div class="pavatar">${u.avatar_url?`<img src="${u.avatar_url}">`:'<i class="fa fa-user"></i>'}</div>
-          <div><div style="font-weight:700;font-size:14px;display:flex;align-items:center">${u.username}${verifiedBadge(u)}</div><div style="font-size:12px;color:var(--text2)">@${u.username}</div></div>
-        </div>`).join('');
+          <div class="pavatar">${uAvatar?`<img src="${uAvatar}">`:'<i class="fa fa-user"></i>'}</div>
+          <div><div style="font-weight:700;font-size:14px;display:flex;align-items:center">${uUname}${verifiedBadge(u)}</div><div style="font-size:12px;color:var(--text2)">@${uUname}</div></div>
+        </div>`;}).join('');
     }
     if(posts.length){
       html+=`<div style="padding:12px 16px 6px;font-size:12px;font-weight:700;color:var(--text2)">POST</div>`;
@@ -1795,6 +2314,7 @@ async function deletePost(pid){
     await sb(`/rest/v1/votes?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});
     await sb(`/rest/v1/post_images?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});
     await sb(`/rest/v1/posts?id=eq.${pid}`,{method:'DELETE'});
+    if(user) StorageGuard.bumpPostCount(user.id, -1); // ✅ update cache
     toast('Post dihapus');
     loadFeed(true);
   }catch(e){toast('Gagal hapus: '+e.message);}
@@ -1888,7 +2408,6 @@ document.getElementById('content').addEventListener('scroll',function(){
   document.documentElement.setAttribute('data-theme',savedTheme);
   const dt=document.getElementById('darkToggle');
   if(dt){if(savedTheme==='dark')dt.classList.add('on');else dt.classList.remove('on');}
-
   await restoreSession();
   loadFeed(true);
   renderTopik();
