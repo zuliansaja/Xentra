@@ -235,15 +235,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .stories-row::-webkit-scrollbar{display:none;}
 .story-item{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;cursor:pointer;width:60px;}
 .story-item-wrap{position:relative;flex-shrink:0;}
-.story-ring{width:58px;height:58px;border-radius:50%;padding:3px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(var(--accent) 0deg 50deg, transparent 50deg 60deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#fff calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#fff calc(100% - 3px));}
-.story-ring-outer{width:58px;height:58px;border-radius:50%;padding:0;position:relative;display:flex;align-items:center;justify-content:center;}
-.story-ring-outer .story-avatar{position:absolute;inset:3px;}
-.story-ring.seen{background:repeating-conic-gradient(var(--border) 0deg 50deg, transparent 50deg 60deg);}
+.story-ring{width:58px;height:58px;border-radius:50%;padding:3px;display:flex;align-items:center;justify-content:center;}
+.story-ring.has-story{background:linear-gradient(45deg,var(--accent),#9b59b6);}
+.story-ring.seen{background:var(--border);}
+.story-ring.no-story{padding:0;}
 .story-avatar{width:100%;height:100%;border-radius:50%;background:var(--bg3);border:2px solid var(--bg2);display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:20px;overflow:hidden;}
 .story-avatar img{width:100%;height:100%;object-fit:cover;}
 .story-name{font-size:11px;color:var(--text2);max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .story-add-badge{position:absolute;bottom:18px;right:0;width:18px;height:18px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;border:2px solid var(--bg2);}
-#storyViewer{position:fixed;top:0;left:0;right:0;bottom:58px;background:#000;z-index:900;display:none;flex-direction:column;max-width:480px;margin:0 auto;border-radius:0 0 18px 18px;overflow:hidden;}
+#storyViewer{position:fixed;top:0;left:0;right:0;bottom:58px;background:#000;z-index:900;display:none;flex-direction:column;max-width:480px;margin:0 auto;overflow:hidden;}
 #storyViewer.open{display:flex;}
 .story-progress-row{display:flex;gap:4px;padding:10px 10px 0;flex-shrink:0;}
 .story-progress-bar{flex:1;height:2.5px;background:rgba(255,255,255,0.3);border-radius:2px;overflow:hidden;}
@@ -990,13 +990,13 @@ async function loadStories(){
     if(user){
       const mine=storiesGrouped.find(g=>g.user_id===user.id);
       const pAvatar=XSS.sanitizeUrl(user.profile?.avatar_url||'');
-      html+=`<div class="story-item-wrap"><div class="story-item" onclick="${mine?`openStoryViewer(${storiesGrouped.indexOf(mine)})`:`openUploadStory()`}"><div class="story-ring ${mine?'':'seen'}"><div class="story-avatar">${pAvatar?`<img src="${pAvatar}">`:'<i class="fa fa-user"></i>'}</div></div><div class="story-name">Story Anda</div></div>${!mine?`<div class="story-add-badge" onclick="openUploadStory()"><i class="fa fa-plus"></i></div>`:''}</div>`;
+      html+=`<div class="story-item-wrap"><div class="story-item" onclick="${mine?`openStoryViewer(${storiesGrouped.indexOf(mine)})`:`openUploadStory()`}"><div class="story-ring ${mine?'has-story':'no-story'}"><div class="story-avatar">${pAvatar?`<img src="${pAvatar}">`:'<i class="fa fa-user"></i>'}</div></div><div class="story-name">Story Anda</div></div>${!mine?`<div class="story-add-badge" onclick="openUploadStory()"><i class="fa fa-plus"></i></div>`:''}</div>`;
     }
     storiesGrouped.forEach((g,idx)=>{
       if(user&&g.user_id===user.id)return;
       const seen=isGroupSeen(g.user_id,g.items.map(i=>i.id));
       const pAvatar=XSS.sanitizeUrl(g.profile.avatar_url||'');const uname=XSS.escape(g.profile.username||'user');
-      html+=`<div class="story-item" onclick="openStoryViewer(${idx})"><div class="story-ring ${seen?'seen':''}"><div class="story-avatar">${pAvatar?`<img src="${pAvatar}">`:'<i class="fa fa-user"></i>'}</div></div><div class="story-name">${uname}</div></div>`;
+      html+=`<div class="story-item" onclick="openStoryViewer(${idx})"><div class="story-ring ${seen?'seen':'has-story'}"><div class="story-avatar">${pAvatar?`<img src="${pAvatar}">`:'<i class="fa fa-user"></i>'}</div></div><div class="story-name">${uname}</div></div>`;
     });
     html+='</div>';
     if(!stories.length&&!user){bar.innerHTML='';return;}
