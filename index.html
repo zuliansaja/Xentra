@@ -269,6 +269,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .dm-preview.unread{color:var(--text);font-weight:600;}
 .dm-time{font-size:11px;color:var(--text2);flex-shrink:0;}
 .dm-unread-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.typing-indicator{display:flex;align-items:center;gap:4px;padding:8px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:18px;width:fit-content;margin:4px 0;}
+.typing-indicator span{width:6px;height:6px;border-radius:50%;background:var(--text2);animation:typingBounce 1.2s infinite ease-in-out;}
+.typing-indicator span:nth-child(2){animation-delay:0.15s;}
+.typing-indicator span:nth-child(3){animation-delay:0.3s;}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0);opacity:0.5;}30%{transform:translateY(-4px);opacity:1;}}
 #confirmModal{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:800;display:none;align-items:center;justify-content:center;padding:20px;}
 #confirmModal.open{display:flex;}
 .confirm-box{background:var(--bg2);border-radius:18px;padding:24px 20px;width:100%;max-width:320px;text-align:center;}
@@ -340,7 +345,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       </div>
       <div class="chat-msgs" id="dmChatMsgs"></div>
       <div class="chat-input-row">
-        <input type="text" class="chat-input" id="dmChatInput" placeholder="Tulis pesan..." onkeydown="if(event.key==='Enter')sendDm()">
+        <input type="text" class="chat-input" id="dmChatInput" placeholder="Tulis pesan..." oninput="notifyTyping()" onkeydown="if(event.key==='Enter')sendDm()">
         <button class="chat-send" onclick="sendDm()"><i class="fa fa-paper-plane"></i></button>
       </div>
     </div>
@@ -577,6 +582,8 @@ let feedPage=0,feedLoading=false,feedDone=false;
 function skFeed(n=3){return Array(n).fill(0).map(()=>`<div class="sk-card"><div class="sk-head"><div class="sk sk-avatar"></div><div style="flex:1"><div class="sk sk-line" style="width:100px"></div><div class="sk sk-line-sm" style="width:60px"></div></div></div><div class="sk sk-line" style="width:70%;margin-bottom:8px"></div><div class="sk sk-img" style="height:${220+Math.floor(Math.random()*120)}px"></div><div class="sk-actions"><div class="sk sk-act"></div><div class="sk sk-act"></div></div></div>`).join('');}
 function skTopik(n=4){return Array(n).fill(0).map(()=>`<div class="sk-titem"><div class="sk sk-tavatar"></div><div style="flex:1"><div class="sk sk-line" style="width:${80+Math.floor(Math.random()*80)}px;margin-bottom:6px"></div><div class="sk sk-line-sm" style="width:60px"></div></div><div class="sk sk-tjoin"></div></div>`).join('');}
 function skNotif(n=4){return Array(n).fill(0).map(()=>`<div class="sk-nitem"><div class="sk sk-navatar"></div><div style="flex:1"><div class="sk sk-line" style="width:${120+Math.floor(Math.random()*100)}px;margin-bottom:6px"></div><div class="sk sk-line-sm" style="width:60px"></div></div><div class="sk sk-nthumb"></div></div>`).join('');}
+function skStories(n=5){return '<div class="stories-row">'+Array(n).fill(0).map(()=>`<div class="story-item"><div class="sk" style="width:58px;height:58px;border-radius:50%"></div><div class="sk sk-line-sm" style="width:44px;margin-top:6px"></div></div>`).join('')+'</div>';}
+function skDm(n=5){return Array(n).fill(0).map(()=>`<div class="dm-item"><div class="sk" style="width:48px;height:48px;border-radius:50%;flex-shrink:0"></div><div style="flex:1"><div class="sk sk-line" style="width:${90+Math.floor(Math.random()*60)}px;margin-bottom:6px"></div><div class="sk sk-line-sm" style="width:140px"></div></div></div>`).join('');}
 
 async function loadFeed(reset=false){
   if(feedLoading||(feedDone&&!reset))return Promise.resolve();
@@ -914,9 +921,45 @@ function renderNotifItem(n,actorMap){
   return `<div class="notif-item ${isUnread?'unread':''}" ${clickAction}><div class="notif-avatar">${avatarHtml}</div><div class="notif-body">${textHtml}<div class="notif-sub"><span>${timeStr}</span></div></div>${finalThumb}</div>`;
 }
 
+let searchPage=0,searchLoading=false,searchDone=false,searchQuery='';
 async function doSearch(q){
-  const res=document.getElementById('searchResults');if(!q.trim()){res.innerHTML='<div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div>';return;}res.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
-  try{const [posts,users]=await Promise.all([sb(`/rest/v1/posts?caption=ilike.*${encodeURIComponent(q)}*&select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=10`),sb(`/rest/v1/profiles?username=ilike.*${encodeURIComponent(q)}*&select=id,username,avatar_url,is_verified&limit=5`)]);const userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))];let profileMap={};if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url,is_verified`);profiles.forEach(p=>profileMap[p.id]=p);}posts.forEach(p=>p.profiles=profileMap[p.user_id]||null);let html='';if(users.length){html+=`<div style="padding:12px 16px 6px;font-size:12px;font-weight:700;color:var(--text2)">USER</div>`;html+=users.map(u=>{const uAvatar=XSS.sanitizeUrl(u.avatar_url||'');const uUname=XSS.escape(u.username||'user');return `<div onclick="openUserProfil('${u.id}')" style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer"><div class="pavatar">${uAvatar?`<img src="${uAvatar}">`:'<i class="fa fa-user"></i>'}</div><div><div style="font-weight:700;font-size:14px;display:flex;align-items:center">${uUname}${verifiedBadge(u)}</div><div style="font-size:12px;color:var(--text2)">@${uUname}</div></div></div>`;}).join('');}if(posts.length){html+=`<div style="padding:12px 16px 6px;font-size:12px;font-weight:700;color:var(--text2)">POST</div>`;html+=posts.map(p=>renderPost(p)).join('');}if(!users.length&&!posts.length)html='<div class="center-msg"><i class="fa fa-search"></i><h3>Tidak ditemukan</h3><p>Coba kata kunci lain</p></div>';res.innerHTML=html;}catch(e){res.innerHTML='<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal</h3></div>';}
+  const res=document.getElementById('searchResults');
+  searchQuery=q.trim();searchPage=0;searchDone=false;
+  if(!searchQuery){res.innerHTML='<div class="center-msg"><i class="fa fa-search"></i><h3>Cari sesuatu</h3><p>Ketik untuk mencari</p></div>';return;}
+  res.innerHTML='<div class="center-msg"><i class="fa fa-spinner spin"></i></div>';
+  try{
+    const limit=10;
+    const [posts,users]=await Promise.all([sb(`/rest/v1/posts?caption=ilike.*${encodeURIComponent(searchQuery)}*&select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=${limit}&offset=0`),sb(`/rest/v1/profiles?username=ilike.*${encodeURIComponent(searchQuery)}*&select=id,username,avatar_url,is_verified&limit=5`)]);
+    const userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))];let profileMap={};if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url,is_verified`);profiles.forEach(p=>profileMap[p.id]=p);}
+    posts.forEach(p=>p.profiles=profileMap[p.user_id]||null);
+    let html='';
+    if(users.length){html+=`<div style="padding:12px 16px 6px;font-size:12px;font-weight:700;color:var(--text2)">USER</div>`;html+=users.map(u=>{const uAvatar=XSS.sanitizeUrl(u.avatar_url||'');const uUname=XSS.escape(u.username||'user');return `<div onclick="openUserProfil('${u.id}')" style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer"><div class="pavatar">${uAvatar?`<img src="${uAvatar}">`:'<i class="fa fa-user"></i>'}</div><div><div style="font-weight:700;font-size:14px;display:flex;align-items:center">${uUname}${verifiedBadge(u)}</div><div style="font-size:12px;color:var(--text2)">@${uUname}</div></div></div>`;}).join('');}
+    if(posts.length){html+=`<div style="padding:12px 16px 6px;font-size:12px;font-weight:700;color:var(--text2)">POST</div><div id="searchPostsList">`+posts.map(p=>renderPost(p)).join('')+'</div>';}
+    if(!users.length&&!posts.length)html='<div class="center-msg"><i class="fa fa-search"></i><h3>Tidak ditemukan</h3><p>Coba kata kunci lain</p></div>';
+    res.innerHTML=html;
+    bindFeedDelegation('searchResults');
+    if(posts.length<limit)searchDone=true;
+    searchPage=1;
+  }catch(e){res.innerHTML='<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal</h3></div>';}
+}
+async function loadMoreSearch(){
+  if(searchLoading||searchDone||!searchQuery)return;
+  searchLoading=true;
+  const list=document.getElementById('searchPostsList');if(!list){searchLoading=false;return;}
+  const loader=document.createElement('div');loader.id='search-loader';loader.className='center-msg';loader.style.padding='16px';loader.innerHTML='<i class="fa fa-spinner spin"></i>';list.parentElement.appendChild(loader);
+  try{
+    const limit=10,offset=searchPage*limit;
+    const posts=await sb(`/rest/v1/posts?caption=ilike.*${encodeURIComponent(searchQuery)}*&select=id,caption,created_at,user_id,post_images(image_url,order_index),votes(type,user_id)&order=created_at.desc&limit=${limit}&offset=${offset}`);
+    document.getElementById('search-loader')?.remove();
+    if(posts.length<limit)searchDone=true;
+    if(posts.length){
+      const userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))];let profileMap={};if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url,is_verified`);profiles.forEach(p=>profileMap[p.id]=p);}
+      posts.forEach(p=>p.profiles=profileMap[p.user_id]||null);
+      list.insertAdjacentHTML('beforeend',posts.map(p=>renderPost(p)).join(''));
+    }
+    searchPage++;
+  }catch(e){document.getElementById('search-loader')?.remove();}
+  searchLoading=false;
 }
 async function downloadPost(pid,imgUrl){if(!imgUrl||imgUrl==='undefined'||imgUrl===''){toast('Tidak ada gambar');return;}try{toast('Mengunduh...');const r=await fetch(imgUrl);const blob=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`xentra_${pid}.jpg`;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Tersimpan!');}catch(e){toast('Gagal download');}}
 async function deletePost(pid){const ok=await showConfirm('Hapus Post?','Post ini akan dihapus permanen dan tidak bisa dikembalikan.');if(!ok)return;try{const imgs=await sb(`/rest/v1/post_images?post_id=eq.${pid}&select=image_url`);if(imgs.length){const paths=imgs.map(i=>i.image_url.includes('meme-images/')?i.image_url.split('meme-images/')[1].split('?')[0]:null).filter(Boolean);if(paths.length)await fetch(`${SB}/storage/v1/object/meme-images`,{method:'DELETE',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({prefixes:paths})}).catch(()=>{});}const comments=await sb(`/rest/v1/comments?post_id=eq.${pid}&select=id`);if(comments.length){const cids=comments.map(c=>c.id);await sb(`/rest/v1/comment_likes?comment_id=in.(${cids.join(',')})`,{method:'DELETE'}).catch(()=>{});await sb(`/rest/v1/comments?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});}await sb(`/rest/v1/votes?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});await sb(`/rest/v1/post_images?post_id=eq.${pid}`,{method:'DELETE'}).catch(()=>{});await sb(`/rest/v1/posts?id=eq.${pid}`,{method:'DELETE'});if(user)StorageGuard.bumpPostCount(user.id,-1);toast('Post dihapus');loadFeed(true);}catch(e){toast('Gagal hapus: '+e.message);}}
@@ -981,6 +1024,7 @@ function markStorySeen(uid,storyId){_seenStories[uid]=_seenStories[uid]||[];if(!
 function isGroupSeen(uid,storyIds){const seen=_seenStories[uid]||[];return storyIds.length>0&&storyIds.every(id=>seen.includes(id));}
 async function loadStories(){
   const bar=document.getElementById('storiesBar');if(!bar)return;
+  bar.innerHTML=skStories(5);
   try{
     await cleanupExpiredStories();
     const now=new Date().toISOString();
@@ -1102,7 +1146,7 @@ document.getElementById('storyMediaWrap').addEventListener('touchend',()=>{
 function dmConvId(a,b){return [a,b].sort().join('_');}
 async function renderDmList(){
   const wrap=document.getElementById('dmListWrap');if(!wrap)return;
-  wrap.innerHTML='<div style="text-align:center;padding:30px"><i class="fa fa-spinner spin"></i></div>';
+  wrap.innerHTML='<div id="dmList">'+skDm(5)+'</div>';
   try{
     const msgs=await sb(`/rest/v1/dms?or=(sender_id.eq.${user.id},receiver_id.eq.${user.id})&select=*&order=created_at.desc&limit=200`);
     const convMap={};
@@ -1141,7 +1185,24 @@ async function openDmChat(otherId,otherUname,otherAvatar){
   document.getElementById('pg-dmchat').classList.add('on');document.getElementById('nb-chat').classList.add('on');document.getElementById('topbarSearch').style.display='none';
   await loadDmMsgs();await markDmRead();
   if(dmChatInterval)clearInterval(dmChatInterval);
-  dmChatInterval=setInterval(()=>{loadDmMsgs();markDmRead();},3000);
+  dmChatInterval=setInterval(()=>{loadDmMsgs();markDmRead();checkOtherTyping();},3000);
+  checkOtherTyping();
+}
+let _typingTimeout=null,_lastTypingSent=0;
+async function notifyTyping(){
+  if(!user||!currentDmConvId)return;
+  const now=Date.now();if(now-_lastTypingSent<2000)return;_lastTypingSent=now;
+  try{await sb('/rest/v1/typing_status',{method:'POST',headers:{...h(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({conversation_id:currentDmConvId,user_id:user.id,updated_at:new Date().toISOString()})});}catch(e){}
+}
+async function checkOtherTyping(){
+  if(!user||!currentDmConvId||!currentDmOtherUser)return;
+  try{
+    const rows=await sb(`/rest/v1/typing_status?conversation_id=eq.${currentDmConvId}&user_id=eq.${currentDmOtherUser.id}&select=updated_at`);
+    const statusEl=document.getElementById('dmChatStatus');if(!statusEl)return;
+    const isTyping=rows.length&&(Date.now()-new Date(rows[0].updated_at).getTime())<4000;
+    statusEl.textContent=isTyping?'sedang mengetik...':'';
+    statusEl.style.color=isTyping?'var(--accent)':'var(--text2)';
+  }catch(e){}
 }
 async function markDmRead(){
   if(!user||!currentDmConvId)return;
@@ -1155,7 +1216,12 @@ async function loadDmMsgs(){
     const isBottom=container.scrollHeight-container.scrollTop-container.clientHeight<60;
     if(!msgs.length){container.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">Belum ada pesan. Mulai chat!</div>';return;}
     const groups=[];msgs.forEach((m,i)=>{const prev=msgs[i-1],sameUser=prev&&prev.sender_id===m.sender_id,closeTime=prev&&(new Date(m.created_at)-new Date(prev.created_at))<120000;if(sameUser&&closeTime)groups[groups.length-1].msgs.push(m);else groups.push({mine:m.sender_id===user.id,msgs:[m]});});
-    container.innerHTML=groups.map(g=>`<div class="chat-group ${g.mine?'mine':''}"><div class="chat-bubbles">${g.msgs.map(m=>{const im=m.content.match(/\[img\](.*?)\[\/img\]/);if(im){const safeUrl=XSS.sanitizeUrl(im[1]);return `<div class="chat-bubble img-only"><img src="${safeUrl}" loading="lazy" onclick="window.open('${safeUrl}','_blank')"></div>`;}return `<div class="chat-bubble">${XSS.sanitize(m.content)}</div>`;}).join('')}<div class="chat-time-row">${ago(g.msgs[g.msgs.length-1].created_at)}</div></div></div>`).join('');
+    container.innerHTML=groups.map(g=>{
+      const lastMsg=g.msgs[g.msgs.length-1];
+      let receiptHtml='';
+      if(g.mine){const allRead=g.msgs.every(m=>m.read_at);receiptHtml=allRead?' <i class="fa fa-check-double" style="color:var(--accent)"></i>':' <i class="fa fa-check"></i>';}
+      return `<div class="chat-group ${g.mine?'mine':''}"><div class="chat-bubbles">${g.msgs.map(m=>{const im=m.content.match(/\[img\](.*?)\[\/img\]/);if(im){const safeUrl=XSS.sanitizeUrl(im[1]);return `<div class="chat-bubble img-only"><img src="${safeUrl}" loading="lazy" onclick="window.open('${safeUrl}','_blank')"></div>`;}return `<div class="chat-bubble">${XSS.sanitize(m.content)}</div>`;}).join('')}<div class="chat-time-row">${ago(lastMsg.created_at)}${receiptHtml}</div></div></div>`;
+    }).join('');
     if(isBottom)container.scrollTop=container.scrollHeight;
   }catch(e){}
 }
@@ -1182,7 +1248,7 @@ function openUserProfilFromDm(){if(currentDmOtherUser)openUserProfil(currentDmOt
   },{passive:true});
 })();
 
-document.getElementById('content').addEventListener('scroll',function(){const activePage=document.querySelector('.page.on');if(!activePage||activePage.id!=='pg-home')return;if(feedDone||feedLoading)return;var s=this;if(s.scrollHeight-s.scrollTop-s.clientHeight<200)loadFeed(false);},{passive:true});
+document.getElementById('content').addEventListener('scroll',function(){const activePage=document.querySelector('.page.on');if(!activePage)return;var s=this;if(activePage.id==='pg-home'){if(feedDone||feedLoading)return;if(s.scrollHeight-s.scrollTop-s.clientHeight<200)loadFeed(false);}else if(activePage.id==='pg-search'){if(searchDone||searchLoading)return;if(s.scrollHeight-s.scrollTop-s.clientHeight<200)loadMoreSearch();}},{passive:true});
 
 (async function(){
   const savedTheme=localStorage.getItem('xn_theme')||'dark';document.documentElement.setAttribute('data-theme',savedTheme);
