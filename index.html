@@ -1183,10 +1183,15 @@ async function openDmChat(otherId,otherUname,otherAvatar){
   document.getElementById('dmChatAvatar').innerHTML=otherAvatar?`<img src="${otherAvatar}">`:'<i class="fa fa-user"></i>';
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
   document.getElementById('pg-dmchat').classList.add('on');document.getElementById('nb-chat').classList.add('on');document.getElementById('topbarSearch').style.display='none';
-  await loadDmMsgs();await markDmRead();
+  await loadDmMsgs();await markDmRead();await pingPresence();
   if(dmChatInterval)clearInterval(dmChatInterval);
-  dmChatInterval=setInterval(()=>{loadDmMsgs();markDmRead();checkOtherTyping();},3000);
+  dmChatInterval=setInterval(()=>{loadDmMsgs();markDmRead();checkOtherTyping();pingPresence();},3000);
   checkOtherTyping();
+}
+// Ping kehadiran: menandai bahwa kita sedang membuka percakapan ini (dipakai untuk status centang ala WhatsApp)
+async function pingPresence(){
+  if(!user||!currentDmConvId)return;
+  try{await sb('/rest/v1/typing_status',{method:'POST',headers:{...h(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({conversation_id:currentDmConvId,user_id:user.id,updated_at:new Date().toISOString()})});}catch(e){}
 }
 let _typingTimeout=null,_lastTypingSent=0;
 async function notifyTyping(){
@@ -1204,6 +1209,14 @@ async function checkOtherTyping(){
     statusEl.style.color=isTyping?'var(--accent)':'var(--text2)';
   }catch(e){}
 }
+// Icon centang gaya WhatsApp (SVG asli, bukan font-awesome)
+function waCheckSingle(color){return `<svg viewBox="0 0 16 15" width="15" height="11" style="display:inline-block;vertical-align:middle"><path fill="${color}" d="M10.91 3.316l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.07a.365.365 0 0 0-.063-.51z"/></svg>`;}
+function waCheckDouble(color){return `<svg viewBox="0 0 16 15" width="18" height="11" style="display:inline-block;vertical-align:middle"><path fill="${color}" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063l-5.355 6.872a.32.32 0 0 1-.484.033l-.428-.42a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l1.285 1.255c.143.14.361.125.484-.033l6.481-8.34a.365.365 0 0 0-.063-.51z"/><path fill="${color}" d="M10.91 3.316l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.07a.365.365 0 0 0-.063-.51z"/></svg>`;}
+function dmReceiptIcon(msg,otherPresenceTs){
+  if(msg.read_at)return waCheckDouble('#34b7f1');// sudah dibaca: centang 2 biru
+  if(otherPresenceTs&&otherPresenceTs>new Date(msg.created_at).getTime())return waCheckDouble('#8696a0');// akun aktif (sudah buka chat ini) tapi belum tandai baca: centang 2 abu
+  return waCheckSingle('#8696a0');// akun belum aktif/belum pernah buka chat ini sejak pesan dikirim: centang 1 abu
+}
 async function markDmRead(){
   if(!user||!currentDmConvId)return;
   try{await sb(`/rest/v1/dms?conversation_id=eq.${currentDmConvId}&receiver_id=eq.${user.id}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()})});updateDmBadge();}catch(e){}
@@ -1215,11 +1228,16 @@ async function loadDmMsgs(){
     const container=document.getElementById('dmChatMsgs');
     const isBottom=container.scrollHeight-container.scrollTop-container.clientHeight<60;
     if(!msgs.length){container.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">Belum ada pesan. Mulai chat!</div>';return;}
+    // ambil presence lawan chat untuk menentukan status centang abu vs biru
+    let otherPresenceTs=null;
+    if(user&&currentDmOtherUser){
+      try{const rows=await sb(`/rest/v1/typing_status?conversation_id=eq.${currentDmConvId}&user_id=eq.${currentDmOtherUser.id}&select=updated_at`);if(rows.length)otherPresenceTs=new Date(rows[0].updated_at).getTime();}catch(e){}
+    }
     const groups=[];msgs.forEach((m,i)=>{const prev=msgs[i-1],sameUser=prev&&prev.sender_id===m.sender_id,closeTime=prev&&(new Date(m.created_at)-new Date(prev.created_at))<120000;if(sameUser&&closeTime)groups[groups.length-1].msgs.push(m);else groups.push({mine:m.sender_id===user.id,msgs:[m]});});
     container.innerHTML=groups.map(g=>{
       const lastMsg=g.msgs[g.msgs.length-1];
       let receiptHtml='';
-      if(g.mine){const allRead=g.msgs.every(m=>m.read_at);receiptHtml=allRead?' <i class="fa fa-check-double" style="color:var(--accent)"></i>':' <i class="fa fa-check"></i>';}
+      if(g.mine)receiptHtml=' '+dmReceiptIcon(lastMsg,otherPresenceTs);
       return `<div class="chat-group ${g.mine?'mine':''}"><div class="chat-bubbles">${g.msgs.map(m=>{const im=m.content.match(/\[img\](.*?)\[\/img\]/);if(im){const safeUrl=XSS.sanitizeUrl(im[1]);return `<div class="chat-bubble img-only"><img src="${safeUrl}" loading="lazy" onclick="window.open('${safeUrl}','_blank')"></div>`;}return `<div class="chat-bubble">${XSS.sanitize(m.content)}</div>`;}).join('')}<div class="chat-time-row">${ago(lastMsg.created_at)}${receiptHtml}</div></div></div>`;
     }).join('');
     if(isBottom)container.scrollTop=container.scrollHeight;
