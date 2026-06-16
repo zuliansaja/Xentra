@@ -84,7 +84,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .login-wall i{font-size:54px;color:var(--accent);margin-bottom:16px;display:block;}
 .login-wall h3{font-size:17px;font-weight:700;margin-bottom:20px;}
 .btn-primary{display:inline-block;padding:12px 28px;border-radius:24px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:inherit;}
-.titem{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;}
+.titem{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;}
 .titem:hover{background:var(--bg3);}
 .tavatar{width:48px;height:48px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;overflow:hidden;}
 .tavatar img{width:100%;height:100%;object-fit:cover;}
@@ -256,11 +256,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .story-header-name{color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;}
 .story-header-time{color:rgba(255,255,255,0.6);font-size:12px;}
 .story-close{margin-left:auto;color:#fff;font-size:20px;padding:6px;cursor:pointer;}
-.story-media-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
-.story-media-wrap img{width:100%;height:100%;object-fit:cover;}
+.story-media-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:#000;}
+.story-media-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .story-nav-zone{position:absolute;top:0;bottom:0;width:50%;z-index:5;}
 .story-del-btn{position:absolute;bottom:24px;right:16px;background:rgba(255,68,68,0.85);color:#fff;border:none;border-radius:20px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;z-index:6;display:flex;align-items:center;gap:6px;}
-.dm-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;}
+.dm-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;}
 .dm-avatar{width:48px;height:48px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text2);flex-shrink:0;overflow:hidden;}
 .dm-avatar img{width:100%;height:100%;object-fit:cover;}
 .dm-info{flex:1;min-width:0;}
@@ -965,11 +965,14 @@ async function submitStory(){
 }
 // Hapus story yang sudah expired (DB row + file di storage) agar storage tidak menumpuk
 async function cleanupExpiredStories(){
+  // Hapus story expired milik user sendiri (bisa delete karena RLS allow own delete)
+  if(!user)return;
   try{
-    const expired=await sb(`/rest/v1/stories?expires_at=lt.${new Date().toISOString()}&select=id,image_url`);
+    const now=new Date().toISOString();
+    const expired=await sb(`/rest/v1/stories?expires_at=lt.${now}&user_id=eq.${user.id}&select=id,image_url`);
     if(!expired.length)return;
     const paths=expired.map(s=>{try{return s.image_url.includes('meme-images/')?s.image_url.split('meme-images/')[1].split('?')[0]:null;}catch{return null;}}).filter(Boolean);
-    if(paths.length)await fetch(`${SB}/storage/v1/object/meme-images`,{method:'DELETE',headers:{'apikey':KEY,'Authorization':`Bearer ${token||KEY}`,'Content-Type':'application/json'},body:JSON.stringify({prefixes:paths})}).catch(()=>{});
+    if(paths.length)await fetch(`${SB}/storage/v1/object/meme-images`,{method:'DELETE',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({prefixes:paths})}).catch(()=>{});
     const ids=expired.map(s=>s.id);
     await sb(`/rest/v1/stories?id=in.(${ids.join(',')})`,{method:'DELETE'}).catch(()=>{});
   }catch(e){}
@@ -980,10 +983,28 @@ async function loadStories(){
   const bar=document.getElementById('storiesBar');if(!bar)return;
   try{
     await cleanupExpiredStories();
-    const stories=await sb(`/rest/v1/stories?select=*&order=created_at.asc&limit=200`);
+    const now=new Date().toISOString();
+    const stories=await sb(`/rest/v1/stories?expires_at=gt.${now}&select=*&order=created_at.asc&limit=200`);
     const userIds=[...new Set(stories.map(s=>s.user_id).filter(Boolean))];
     let pmap={};if(userIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${userIds.join(',')})&select=id,username,avatar_url,is_verified`);profiles.forEach(p=>pmap[p.id]=p);}
-    const groups={};stories.forEach(s=>{if(!groups[s.user_id])groups[s.user_id]=[];groups[s.user_id].push(s);});
+
+    // Filter berdasarkan follow: hanya tampilkan story dari user yang kita follow
+    // Story sendiri selalu tampil
+    let allowedUids=new Set();
+    if(user){
+      allowedUids.add(user.id);// story sendiri selalu tampil
+      // ambil siapa saja yang kita follow
+      const following=await sb(`/rest/v1/follows?follower_id=eq.${user.id}&select=following_id`);
+      following.forEach(f=>allowedUids.add(f.following_id));
+    }
+    // kalau belum login, tidak ada story yang ditampilkan (semua tersembunyi)
+
+    const groups={};stories.forEach(s=>{
+      if(user&&!allowedUids.has(s.user_id))return;// skip kalau tidak di-follow
+      if(!user)return;// belum login = tidak ada story tampil
+      if(!groups[s.user_id])groups[s.user_id]=[];
+      groups[s.user_id].push(s);
+    });
     storiesGrouped=Object.keys(groups).map(uid=>({user_id:uid,profile:pmap[uid]||{},items:groups[uid]}));
     storiesGrouped.sort((a,b)=>{if(user&&a.user_id===user.id)return -1;if(user&&b.user_id===user.id)return 1;return 0;});
     let html='<div class="stories-row">';
@@ -999,7 +1020,8 @@ async function loadStories(){
       html+=`<div class="story-item" onclick="openStoryViewer(${idx})"><div class="story-ring ${seen?'seen':'has-story'}"><div class="story-avatar">${pAvatar?`<img src="${pAvatar}">`:'<i class="fa fa-user"></i>'}</div></div><div class="story-name">${uname}</div></div>`;
     });
     html+='</div>';
-    if(!stories.length&&!user){bar.innerHTML='';return;}
+    // kalau hanya ada story sendiri atau tidak ada sama sekali, tetap tampilkan bar (ada tombol Story Anda)
+    if(!user){bar.innerHTML='';return;}
     bar.innerHTML=html;
   }catch(e){bar.innerHTML='';}
 }
