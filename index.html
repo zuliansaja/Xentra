@@ -1447,8 +1447,16 @@ async function startCall(){
   if(currentCallId)return toast('Sedang dalam panggilan');
   callRole='caller';
   try{
-    localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  }catch(e){toast('Tidak bisa mengakses mikrofon. Periksa izin browser.','error');return;}
+    const perm=await navigator.permissions.query({name:'microphone'});
+    if(perm.state==='denied'){toast('Mikrofon diblokir. Buka Settings > Chrome > Izin > Mikrofon','error');return;}
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true,noiseSuppression:true,echoCancellation:true});
+  }catch(e){
+    console.error('mic error:',e.name,e.message);
+    if(e.name==='NotAllowedError')toast('Izin mikrofon ditolak. Coba refresh halaman lalu izinkan.','error');
+    else if(e.name==='NotFoundError')toast('Mikrofon tidak ditemukan di perangkat ini.','error');
+    else toast('Tidak bisa mengakses mikrofon: '+e.message,'error');
+    return;
+  }
   pc=new RTCPeerConnection(ICE_SERVERS);
   localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
   const remoteAudio=document.getElementById('remoteAudio');
