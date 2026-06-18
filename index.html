@@ -1446,9 +1446,10 @@ async function startCall(){
   if(!user||!currentDmOtherUser)return openSheet('authSheet');
   if(currentCallId)return toast('Sedang dalam panggilan');
   callRole='caller';
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('Browser tidak mendukung akses mikrofon (getUserMedia tidak tersedia)','error');return;}
   try{
     localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  }catch(e){toast('Tidak bisa mengakses mikrofon. Periksa izin browser.','error');return;}
+  }catch(e){toast('Mic error: '+e.name+' - '+e.message,'error');return;}
   pc=new RTCPeerConnection(ICE_SERVERS);
   localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
   const remoteAudio=document.getElementById('remoteAudio');
@@ -1461,7 +1462,7 @@ async function startCall(){
   try{
     const rows=await sb('/rest/v1/calls',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({conversation_id:currentDmConvId,caller_id:user.id,callee_id:currentDmOtherUser.id,status:'ringing',offer:JSON.stringify(pc.localDescription),caller_ice:myIce})});
     currentCallId=Array.isArray(rows)?rows[0].id:rows.id;
-  }catch(e){toast('Gagal memulai panggilan');cleanupCall();return;}
+  }catch(e){toast('Gagal memulai panggilan: '+e.message,'error');cleanupCall();return;}
   showCallOverlay('caller');
   callPollInterval=setInterval(pollCallUpdates,1500);
 }
@@ -1497,9 +1498,10 @@ async function pollIncomingCall(){
 
 async function acceptCall(){
   if(!currentCallId)return;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('Browser tidak mendukung akses mikrofon','error');rejectCall();return;}
   try{
     localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  }catch(e){toast('Tidak bisa mengakses mikrofon. Periksa izin browser.','error');rejectCall();return;}
+  }catch(e){toast('Mic error: '+e.name+' - '+e.message,'error');rejectCall();return;}
   try{
     const rows=await sb(`/rest/v1/calls?id=eq.${currentCallId}&select=*`);
     const call=rows[0];if(!call){cleanupCall();return;}
