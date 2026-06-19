@@ -287,24 +287,20 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .chat-group.mine .chat-quoted-name{color:#fff;opacity:0.9;}
 .chat-quoted-text{color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
 .chat-group.mine .chat-quoted-text{color:rgba(255,255,255,0.8);}
-#callOverlay{position:fixed;inset:0;background:linear-gradient(160deg,#0a0a0a 0%,#161b22 100%);z-index:950;display:none;flex-direction:column;align-items:center;justify-content:space-between;max-width:480px;margin:0 auto;padding:60px 24px 50px;overflow:hidden;}
-#callOverlay.open{display:flex;}
-.call-bg-blob{position:absolute;top:-100px;left:-80px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(74,158,255,0.18),transparent 70%);filter:blur(40px);}
-.call-content{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:40px;}
-.call-avatar-wrap{position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center;}
-.call-avatar{width:120px;height:120px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:46px;color:var(--text2);overflow:hidden;z-index:2;}
-.call-avatar img{width:100%;height:100%;object-fit:cover;}
-.call-ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent);opacity:0;animation:callPulse 1.8s infinite;}
-@keyframes callPulse{0%{transform:scale(1);opacity:0.6;}100%{transform:scale(1.45);opacity:0;}}
-.call-name{font-size:22px;font-weight:700;color:#fff;}
-.call-status{font-size:14px;color:var(--text2);}
-.call-timer{font-size:15px;color:var(--text2);font-variant-numeric:tabular-nums;}
-.call-actions{display:flex;align-items:center;justify-content:center;gap:36px;padding-bottom:10px;}
-.call-btn{width:62px;height:62px;border-radius:50%;border:none;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}
-.call-btn.accept{background:#27ae60;transform:rotate(0deg);}
-.call-btn.reject{background:#ff4444;}
-.call-btn.mute{background:var(--bg3);color:var(--text);border:1.5px solid var(--border);}
-.call-btn.mute.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.vn-bubble{display:flex;align-items:center;gap:8px;padding:8px 12px;min-width:160px;max-width:100%;}
+.vn-play-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.chat-group:not(.mine) .vn-play-btn{background:var(--accent);color:#fff;}
+.vn-waveform{flex:1;height:28px;display:flex;align-items:center;gap:2px;overflow:hidden;}
+.vn-bar{width:3px;border-radius:2px;background:rgba(255,255,255,0.5);flex-shrink:0;}
+.chat-group:not(.mine) .vn-bar{background:var(--accent);opacity:0.6;}
+.vn-duration{font-size:11px;opacity:0.75;flex-shrink:0;font-variant-numeric:tabular-nums;}
+.vn-recorder{display:none;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--bg2);border-top:1px solid var(--border);padding:12px 16px;z-index:200;align-items:center;gap:12px;}
+.vn-recorder.show{display:flex;}
+.vn-rec-dot{width:10px;height:10px;border-radius:50%;background:#ff4444;animation:vnPulse 1s infinite;}
+@keyframes vnPulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.vn-rec-time{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);}
+.vn-cancel-btn{background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:15px;padding:6px;font-family:inherit;}
+.vn-send-btn{margin-left:auto;padding:9px 18px;border-radius:20px;background:var(--accent);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
 #confirmModal{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:800;display:none;align-items:center;justify-content:center;padding:20px;}
 #confirmModal.open{display:flex;}
 .confirm-box{background:var(--bg2);border-radius:18px;padding:24px 20px;width:100%;max-width:320px;text-align:center;}
@@ -377,7 +373,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         <div class="chat-back" onclick="event.stopPropagation();goPage('chathub')"><i class="fa fa-arrow-left"></i></div>
         <div class="chat-avatar-sm" id="dmChatAvatar">&#x1F464;</div>
         <div class="chat-info"><div class="chat-name" id="dmChatName">-</div><div class="chat-member-count" id="dmChatStatus">&nbsp;</div></div>
-        <button onclick="event.stopPropagation();startCall()" style="background:transparent;border:none;cursor:pointer;padding:4px 8px;color:var(--accent);font-size:19px;flex-shrink:0"><i class="fa fa-phone"></i></button>
+        <button onclick="event.stopPropagation();startVoiceNote()" style="background:transparent;border:none;cursor:pointer;padding:4px 8px;color:var(--accent);font-size:19px;flex-shrink:0"><i class="fa fa-microphone"></i></button>
       </div>
       <div class="chat-msgs" id="dmChatMsgs"></div>
       <div class="chat-reply-bar" id="dmReplyBar">
@@ -512,23 +508,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     <div class="story-nav-zone" style="right:0" onclick="storyNav(1)"></div>
   </div>
 </div>
-<div id="callOverlay">
-  <div class="call-bg-blob"></div>
-  <div class="call-content">
-    <div class="call-avatar-wrap"><div class="call-avatar" id="callAvatar"><i class="fa fa-user"></i></div><div class="call-ring"></div></div>
-    <div class="call-name" id="callName">-</div>
-    <div class="call-status" id="callStatus">Memanggil...</div>
-    <div class="call-timer" id="callTimer" style="display:none">00:00</div>
-  </div>
-  <div class="call-actions" id="callActionsIncoming" style="display:none">
-    <button class="call-btn reject" onclick="rejectCall()"><i class="fa fa-phone-slash"></i></button>
-    <button class="call-btn accept" onclick="acceptCall()"><i class="fa fa-phone"></i></button>
-  </div>
-  <div class="call-actions" id="callActionsOngoing" style="display:none">
-    <button class="call-btn mute" id="callMuteBtn" onclick="toggleMute()"><i class="fa fa-microphone"></i></button>
-    <button class="call-btn reject" onclick="endCall()"><i class="fa fa-phone-slash"></i></button>
-  </div>
-  <audio id="remoteAudio" autoplay playsinline></audio>
+<div class="vn-recorder" id="vnRecorder">
+  <div class="vn-rec-dot"></div>
+  <div class="vn-rec-time" id="vnRecTime">0:00</div>
+  <button class="vn-cancel-btn" onclick="cancelVoiceNote()"><i class="fa fa-times"></i> Batal</button>
+  <button class="vn-send-btn" onclick="sendVoiceNote()"><i class="fa fa-paper-plane"></i> Kirim</button>
 </div>
 <div id="confirmModal">
   <div class="confirm-box">
@@ -1314,8 +1298,8 @@ async function openDmChat(otherId,otherUname,otherAvatar){
   document.getElementById('pg-dmchat').classList.add('on');document.getElementById('nb-chat').classList.add('on');document.getElementById('topbarSearch').style.display='none';
   await loadDmMsgs();await markDmRead();await pingPresence();
   if(dmChatInterval)clearInterval(dmChatInterval);
-  dmChatInterval=setInterval(()=>{loadDmMsgs();markDmRead();checkOtherTyping();pingPresence();pollIncomingCall();},3000);
-  checkOtherTyping();pollIncomingCall();
+  dmChatInterval=setInterval(()=>{loadDmMsgs();markDmRead();checkOtherTyping();pingPresence();},3000);
+  checkOtherTyping();
 }
 // Ping kehadiran: menandai bahwa kita sedang membuka percakapan ini (dipakai untuk status centang ala WhatsApp)
 async function pingPresence(){
@@ -1375,7 +1359,9 @@ async function loadDmMsgs(){
         let quotedHtml='';
         if(m.reply_to&&msgMap[m.reply_to]){const rm=msgMap[m.reply_to];const rName=rm.sender_id===user.id?myName:otherName;const rTextRaw=rm.content.includes('[img]')?'\u{1F4F7} Foto':rm.content;const rText=XSS.sanitize(rTextRaw.length>60?rTextRaw.slice(0,60)+'...':rTextRaw);quotedHtml=`<div class="chat-quoted" onclick="scrollToDmMsg('${rm.id}')"><div class="chat-quoted-name">${XSS.escape(rName)}</div><span class="chat-quoted-text">${rText}</span></div>`;}
         const senderName=m.sender_id===user.id?myName:otherName;
+        const vn=m.content.match(/\[vn\](.*?)\|(\d+)\[\/vn\]/);
         if(im){const safeUrl=XSS.sanitizeUrl(im[1]);return `<div class="chat-bubble img-only" id="dmmsg-${m.id}" data-mid="${m.id}" data-uname="${XSS.escape(senderName).replace(/"/g,'&quot;')}" data-content="[img]" data-candel="${m.sender_id===user.id?'1':'0'}" oncontextmenu="event.preventDefault();showDmMsgMenu(event,this)">${quotedHtml}<img src="${safeUrl}" loading="lazy" onclick="window.open('${safeUrl}','_blank')"></div>`;}
+        if(vn){const safeUrl=XSS.sanitizeUrl(vn[1]);const dur=parseInt(vn[2])||0;return renderVoiceNoteBubble(safeUrl,dur,m.id);}
         return `<div class="chat-bubble" id="dmmsg-${m.id}" data-mid="${m.id}" data-uname="${XSS.escape(senderName).replace(/"/g,'&quot;')}" data-content="${XSS.escape(m.content).replace(/"/g,'&quot;')}" data-candel="${m.sender_id===user.id?'1':'0'}" oncontextmenu="event.preventDefault();showDmMsgMenu(event,this)">${quotedHtml}${XSS.sanitize(m.content)}${m.edited_at?' <span style="font-size:10px;opacity:0.6;font-style:italic">(diedit)</span>':''}</div>`;
       }).join('')}<div class="chat-time-row">${ago(lastMsg.created_at)}${receiptHtml}</div></div></div>`;
     }).join('');
@@ -1431,153 +1417,105 @@ async function sendDm(){
 }
 function openUserProfilFromDm(){if(currentDmOtherUser)openUserProfil(currentDmOtherUser.id);}
 
-/* ===================== VOICE CALL (WebRTC + Supabase polling signaling) ===================== */
-const ICE_SERVERS={iceServers:[
-  {urls:'stun:stun.l.google.com:19302'},
-  {urls:'stun:stun1.l.google.com:19302'},
-  {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
-  {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'}
-]};
-let pc=null,localStream=null,currentCallId=null,callPollInterval=null,callTimerInterval=null,callStartTs=null,isMuted=false,callRole=null;// callRole: 'caller' | 'callee'
-let _seenIncomingCallIds=JSON.parse(sessionStorage.getItem('xn_seen_calls')||'[]');
-function markCallSeen(id){_seenIncomingCallIds.push(id);if(_seenIncomingCallIds.length>50)_seenIncomingCallIds=_seenIncomingCallIds.slice(-50);sessionStorage.setItem('xn_seen_calls',JSON.stringify(_seenIncomingCallIds));}
 
-async function startCall(){
-  if(!user||!currentDmOtherUser)return openSheet('authSheet');
-  if(currentCallId)return toast('Sedang dalam panggilan');
-  callRole='caller';
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('Browser tidak mendukung akses mikrofon (getUserMedia tidak tersedia)','error');return;}
-  try{
-    localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  }catch(e){toast('Mic error: '+e.name+' - '+e.message,'error');return;}
-  pc=new RTCPeerConnection(ICE_SERVERS);
-  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-  const remoteAudio=document.getElementById('remoteAudio');
-  pc.ontrack=(e)=>{remoteAudio.srcObject=e.streams[0];};
-  let myIce=[];
-  pc.onicecandidate=(e)=>{if(e.candidate)myIce.push(e.candidate.toJSON());};
-  const offer=await pc.createOffer();await pc.setLocalDescription(offer);
-  // tunggu sebentar agar beberapa ICE candidate terkumpul sebelum insert (trickle ICE disederhanakan jadi batch polling)
-  await new Promise(r=>setTimeout(r,800));
-  try{
-    const rows=await sb('/rest/v1/calls',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({conversation_id:currentDmConvId,caller_id:user.id,callee_id:currentDmOtherUser.id,status:'ringing',offer:JSON.stringify(pc.localDescription),caller_ice:myIce})});
-    currentCallId=Array.isArray(rows)?rows[0].id:rows.id;
-  }catch(e){toast('Gagal memulai panggilan: '+e.message,'error');cleanupCall();return;}
-  showCallOverlay('caller');
-  callPollInterval=setInterval(pollCallUpdates,1500);
-}
 
-function showCallOverlay(role){
-  const otherName=currentDmOtherUser?.username||'user';const otherAvatar=currentDmOtherUser?.avatar||'';
-  document.getElementById('callName').textContent=otherName;
-  document.getElementById('callAvatar').innerHTML=otherAvatar?`<img src="${otherAvatar}">`:'<i class="fa fa-user"></i>';
-  document.getElementById('callStatus').textContent=role==='caller'?'Memanggil...':'Panggilan masuk';
-  document.getElementById('callTimer').style.display='none';
-  document.getElementById('callActionsIncoming').style.display=role==='callee'?'flex':'none';
-  document.getElementById('callActionsOngoing').style.display='none';
-  document.getElementById('callOverlay').classList.add('open');
-}
+/* ===================== VOICE NOTE (DM) ===================== */
+let _vnMediaRecorder=null,_vnChunks=[],_vnBlob=null,_vnTimerInterval=null,_vnSeconds=0,_vnAudios={};
 
-// Polling: cek apakah ada panggilan masuk untuk percakapan yang sedang dibuka
-async function pollIncomingCall(){
-  if(!user||!currentDmConvId||currentCallId)return;// kalau sedang call, skip
-  try{
-    const rows=await sb(`/rest/v1/calls?conversation_id=eq.${currentDmConvId}&callee_id=eq.${user.id}&status=eq.ringing&order=created_at.desc&limit=1`);
-    if(!rows.length)return;
-    const call=rows[0];
-    if(_seenIncomingCallIds.includes(call.id))return;
-    // panggilan baru dalam 25 detik terakhir saja (hindari notifikasi panggilan lama yang sudah expired)
-    if(Date.now()-new Date(call.created_at).getTime()>25000)return;
-    markCallSeen(call.id);
-    currentCallId=call.id;callRole='callee';
-    document.getElementById('callStatus').textContent='Panggilan masuk';
-    showCallOverlay('callee');
-    callPollInterval=setInterval(pollCallUpdates,1500);
-  }catch(e){}
-}
-
-async function acceptCall(){
-  if(!currentCallId)return;
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('Browser tidak mendukung akses mikrofon','error');rejectCall();return;}
-  try{
-    localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  }catch(e){toast('Mic error: '+e.name+' - '+e.message,'error');rejectCall();return;}
-  try{
-    const rows=await sb(`/rest/v1/calls?id=eq.${currentCallId}&select=*`);
-    const call=rows[0];if(!call){cleanupCall();return;}
-    pc=new RTCPeerConnection(ICE_SERVERS);
-    localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-    const remoteAudio=document.getElementById('remoteAudio');
-    pc.ontrack=(e)=>{remoteAudio.srcObject=e.streams[0];};
-    let myIce=[];
-    pc.onicecandidate=(e)=>{if(e.candidate)myIce.push(e.candidate.toJSON());};
-    await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(call.offer)));
-    (call.caller_ice||[]).forEach(c=>{try{pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){}});
-    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
-    await new Promise(r=>setTimeout(r,800));
-    await sb(`/rest/v1/calls?id=eq.${currentCallId}`,{method:'PATCH',body:JSON.stringify({status:'accepted',answer:JSON.stringify(pc.localDescription),callee_ice:myIce,updated_at:new Date().toISOString()})});
-    onCallConnected();
-  }catch(e){toast('Gagal menerima panggilan');cleanupCall();}
-}
-
-async function rejectCall(){
-  if(currentCallId){try{await sb(`/rest/v1/calls?id=eq.${currentCallId}`,{method:'PATCH',body:JSON.stringify({status:'rejected',updated_at:new Date().toISOString()})});}catch(e){}}
-  cleanupCall();
-}
-async function endCall(){
-  if(currentCallId){try{await sb(`/rest/v1/calls?id=eq.${currentCallId}`,{method:'PATCH',body:JSON.stringify({status:'ended',updated_at:new Date().toISOString()})});}catch(e){}}
-  cleanupCall();
-}
-
-// Polling untuk update status call yang sedang berjalan (dipanggil oleh caller & callee)
-async function pollCallUpdates(){
-  if(!currentCallId)return;
-  try{
-    const rows=await sb(`/rest/v1/calls?id=eq.${currentCallId}&select=*`);
-    const call=rows[0];if(!call){cleanupCall();return;}
-    if(call.status==='rejected'){toast('Panggilan ditolak');cleanupCall();return;}
-    if(call.status==='ended'){toast('Panggilan berakhir');cleanupCall();return;}
-    if(callRole==='caller'&&call.status==='accepted'&&pc&&pc.signalingState!=='stable'){
-      await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(call.answer)));
-      (call.callee_ice||[]).forEach(c=>{try{pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){}});
-      onCallConnected();
-    }
-  }catch(e){}
-}
-
-function onCallConnected(){
-  document.getElementById('callStatus').textContent='Tersambung';
-  document.getElementById('callActionsIncoming').style.display='none';
-  document.getElementById('callActionsOngoing').style.display='flex';
-  document.getElementById('callTimer').style.display='block';
-  callStartTs=Date.now();
-  if(callTimerInterval)clearInterval(callTimerInterval);
-  callTimerInterval=setInterval(()=>{
-    const sec=Math.floor((Date.now()-callStartTs)/1000);
-    const mm=String(Math.floor(sec/60)).padStart(2,'0'),ss=String(sec%60).padStart(2,'0');
-    document.getElementById('callTimer').textContent=`${mm}:${ss}`;
+async function startVoiceNote(){
+  if(!user)return openSheet('authSheet');
+  if(_vnMediaRecorder&&_vnMediaRecorder.state==='recording')return;
+  if(!navigator.mediaDevices?.getUserMedia)return toast('Browser tidak mendukung perekaman audio','error');
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true});}
+  catch(e){
+    if(e.name==='NotAllowedError')toast('Izinkan akses mikrofon di pengaturan browser','error');
+    else toast('Tidak bisa akses mikrofon: '+e.name,'error');
+    return;
+  }
+  _vnChunks=[];_vnBlob=null;_vnSeconds=0;
+  // Coba format yang paling compatible
+  const mimeType=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4',''].find(m=>!m||MediaRecorder.isTypeSupported(m))||'';
+  _vnMediaRecorder=new MediaRecorder(stream,mimeType?{mimeType}:{});
+  _vnMediaRecorder.ondataavailable=(e)=>{if(e.data&&e.data.size>0)_vnChunks.push(e.data);};
+  _vnMediaRecorder.onstop=()=>{
+    const ext=_vnMediaRecorder.mimeType.includes('ogg')?'ogg':_vnMediaRecorder.mimeType.includes('mp4')?'mp4':'webm';
+    _vnBlob=new Blob(_vnChunks,{type:_vnMediaRecorder.mimeType||'audio/webm'});
+    stream.getTracks().forEach(t=>t.stop());
+  };
+  _vnMediaRecorder.start(100);
+  // start timer
+  document.getElementById('vnRecTime').textContent='0:00';
+  document.getElementById('vnRecorder').classList.add('show');
+  _vnTimerInterval=setInterval(()=>{
+    _vnSeconds++;
+    const m=Math.floor(_vnSeconds/60),s=String(_vnSeconds%60).padStart(2,'0');
+    document.getElementById('vnRecTime').textContent=`${m}:${s}`;
+    if(_vnSeconds>=120){sendVoiceNote();}// max 2 menit
   },1000);
 }
 
-function toggleMute(){
-  if(!localStream)return;
-  isMuted=!isMuted;
-  localStream.getAudioTracks().forEach(t=>t.enabled=!isMuted);
-  const btn=document.getElementById('callMuteBtn');
-  btn.classList.toggle('active',isMuted);
-  btn.innerHTML=isMuted?'<i class="fa fa-microphone-slash"></i>':'<i class="fa fa-microphone"></i>';
+function cancelVoiceNote(){
+  if(_vnMediaRecorder&&_vnMediaRecorder.state!=='inactive'){_vnMediaRecorder.stream?.getTracks().forEach(t=>t.stop());_vnMediaRecorder.stop();}
+  if(_vnTimerInterval){clearInterval(_vnTimerInterval);_vnTimerInterval=null;}
+  _vnChunks=[];_vnBlob=null;_vnSeconds=0;
+  document.getElementById('vnRecorder').classList.remove('show');
 }
 
-function cleanupCall(){
-  if(callPollInterval){clearInterval(callPollInterval);callPollInterval=null;}
-  if(callTimerInterval){clearInterval(callTimerInterval);callTimerInterval=null;}
-  if(pc){try{pc.close();}catch(e){}pc=null;}
-  if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
-  const remoteAudio=document.getElementById('remoteAudio');if(remoteAudio)remoteAudio.srcObject=null;
-  document.getElementById('callOverlay').classList.remove('open');
-  document.getElementById('callMuteBtn').classList.remove('active');
-  document.getElementById('callMuteBtn').innerHTML='<i class="fa fa-microphone"></i>';
-  currentCallId=null;callRole=null;callStartTs=null;isMuted=false;
+async function sendVoiceNote(){
+  if(!_vnMediaRecorder||_vnMediaRecorder.state==='inactive'){cancelVoiceNote();return;}
+  if(_vnTimerInterval){clearInterval(_vnTimerInterval);_vnTimerInterval=null;}
+  _vnMediaRecorder.stop();
+  // tunggu onstop selesai
+  await new Promise(r=>setTimeout(r,300));
+  if(!_vnBlob||_vnBlob.size<100){toast('Rekaman terlalu pendek','error');cancelVoiceNote();return;}
+  document.getElementById('vnRecorder').classList.remove('show');
+  toast('Mengirim voice note...');
+  try{
+    const rl=await checkRateLimit('upload',5,300,60);if(!rl.ok)return toast(rl.msg,'error');
+    const ext=_vnBlob.type.includes('ogg')?'ogg':_vnBlob.type.includes('mp4')?'mp4':'webm';
+    const path=`voicenotes/${user.id}/${Date.now()}.${ext}`;
+    const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':_vnBlob.type||'audio/webm'},body:_vnBlob});
+    if(!r.ok)throw new Error('Gagal upload');
+    const url=`${SB}/storage/v1/object/public/meme-images/${path}`;
+    const duration=_vnSeconds;
+    const body={conversation_id:currentDmConvId,sender_id:user.id,receiver_id:currentDmOtherUser.id,content:`[vn]${url}|${duration}[/vn]`};
+    await sb('/rest/v1/dms',{method:'POST',body:JSON.stringify(body)});
+    _vnChunks=[];_vnBlob=null;_vnSeconds=0;
+    await loadDmMsgs();
+  }catch(e){toast('Gagal kirim: '+e.message,'error');}
+}
+
+// Render voice note bubble
+function renderVoiceNoteBubble(url,durationSec,msgId){
+  const bars=Array.from({length:24},(_,i)=>{const h=8+Math.floor(Math.sin(i*0.7+msgId.charCodeAt(0)%6)*7+Math.random()*5);return `<div class="vn-bar" style="height:${h}px" id="vnbar-${msgId}-${i}"></div>`;}).join('');
+  const mm=Math.floor(durationSec/60),ss=String(durationSec%60).padStart(2,'0');
+  return `<div class="chat-bubble vn-bubble" id="vnbubble-${msgId}"><button class="vn-play-btn" onclick="togglePlayVn('${msgId}','${url}',${durationSec},this)"><i class="fa fa-play"></i></button><div class="vn-waveform" id="vnwave-${msgId}">${bars}</div><span class="vn-duration" id="vndur-${msgId}">${mm}:${ss}</span></div>`;
+}
+
+function togglePlayVn(msgId,url,totalSec,btn){
+  let audio=_vnAudios[msgId];
+  if(!audio){
+    audio=new Audio(url);_vnAudios[msgId]=audio;
+    audio.ontimeupdate=()=>{
+      const pct=audio.currentTime/audio.duration;
+      const bars=document.querySelectorAll(`[id^="vnbar-${msgId}-"]`);
+      bars.forEach((b,i)=>{b.style.opacity=i/bars.length<pct?'1':'0.4';});
+      const rem=Math.max(0,Math.round(totalSec-audio.currentTime));
+      const mm=Math.floor(rem/60),ss=String(rem%60).padStart(2,'0');
+      const dur=document.getElementById('vndur-'+msgId);if(dur)dur.textContent=`${mm}:${ss}`;
+    };
+    audio.onended=()=>{
+      btn.innerHTML='<i class="fa fa-play"></i>';
+      const dur=document.getElementById('vndur-'+msgId);if(dur){const mm=Math.floor(totalSec/60),ss=String(totalSec%60).padStart(2,'0');dur.textContent=`${mm}:${ss}`;}
+      document.querySelectorAll(`[id^="vnbar-${msgId}-"]`).forEach(b=>b.style.opacity='0.4');
+    };
+  }
+  if(audio.paused){
+    // pause semua audio lain
+    Object.entries(_vnAudios).forEach(([id,a])=>{if(id!==msgId&&!a.paused){a.pause();const b=document.querySelector(`#vnbubble-${id} .vn-play-btn`);if(b)b.innerHTML='<i class="fa fa-play"></i>';}});
+    audio.play().catch(()=>{});btn.innerHTML='<i class="fa fa-pause"></i>';
+  }else{audio.pause();btn.innerHTML='<i class="fa fa-play"></i>';}
 }
 
 // PTR
