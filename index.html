@@ -408,7 +408,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <div class="overlay" id="authSheet" onclick="closeSheet('authSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
-    <div class="auth-hero"><div class="auth-logo-glow"></div><div class="auth-wordmark">Xentra</div><div class="auth-tagline">Platform meme &amp; gaming Indonesia</div></div>
+    <div class="auth-hero"><div class="auth-logo-glow"></div><div class="auth-wordmark">Xentra</div></div>
     <button onclick="doGoogleLogin()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px"><i class="fa-brands fa-google" style="color:#4a9eff"></i>Lanjutkan dengan Google</button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="flex:1;height:1px;background:var(--border)"></div><div style="font-size:12px;color:var(--text2)">atau</div><div style="flex:1;height:1px;background:var(--border)"></div></div>
     <div class="atabs"><div class="atab on" onclick="switchAuth('login')">Masuk</div><div class="atab" onclick="switchAuth('register')">Daftar</div></div>
@@ -423,7 +423,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <input type="password" class="finput" id="rPass" placeholder="Password (min 6 karakter)">
       <button class="fbtn" onclick="doRegister()">Daftar</button>
     </div>
-    <div class="auth-footer-note">Dengan melanjutkan, kamu menyetujui Syarat &amp; Ketentuan Xentra</div>
+    
   </div>
 </div>
 <div class="overlay" id="uploadOptSheet" onclick="closeSheet('uploadOptSheet')">
@@ -680,7 +680,7 @@ function goPage(page){
     }
     const pg='pg-notif';
     document.getElementById(pg).classList.add('on');
-    document.getElementById(pg).innerHTML='<div class="login-wall"><i class="fa fa-lock"></i><h3>Kamu harus login untuk mengakses halaman ini</h3><button class="btn-primary" onclick="openSheet(\'authSheet\')">Login sekarang</button></div>';
+    document.getElementById(pg).innerHTML='<div class="login-wall"><i class="fa fa-lock"></i><h3 style="white-space:nowrap">Login untuk mengakses halaman ini</h3><button class="btn-primary" onclick="openSheet(\'authSheet\')">Login sekarang</button></div>';
     return;
   }
   if(page==='notif'){document.getElementById('pg-notif').classList.add('on');document.getElementById('nb-notif').classList.add('on');loadNotif();return;}
