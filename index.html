@@ -1490,6 +1490,57 @@ var lb=document.getElementById('lightbox');
 lb.addEventListener('touchstart',function(e){lbTouchX=e.touches[0].clientX;},{passive:true});
 lb.addEventListener('touchend',function(e){var diff=e.changedTouches[0].clientX-lbTouchX;if(Math.abs(diff)>50&&lbImgs.length>1)lightboxNav(diff<0?1:-1);},{passive:true});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeLightbox();closeConfirm(false);}if(e.key==='ArrowLeft')lightboxNav(-1);if(e.key==='ArrowRight')lightboxNav(1);});
+
+/* ===================== BACK BUTTON (Android/browser) — tetap di dalam app ===================== */
+(function(){
+  var restoring = false;
+  function activePageId(){var p=document.querySelector('.page.on');return p?p.id:'pg-home';}
+  function findOpenOverlay(){
+    if(document.getElementById('lightbox')?.classList.contains('open'))return{type:'lightbox'};
+    if(document.getElementById('storyViewer')?.classList.contains('open'))return{type:'story'};
+    if(document.getElementById('confirmModal')?.classList.contains('open'))return{type:'confirm'};
+    var sheet=document.querySelector('.overlay.open');if(sheet)return{type:'sheet',id:sheet.id};
+    var menu=document.getElementById('postMenu')||document.getElementById('komenMenu')||document.getElementById('kickMenu')||document.getElementById('editDescMenu')||document.getElementById('hapusMenu')||document.getElementById('chatMsgMenu')||document.getElementById('dmMsgMenu')||document.getElementById('joinGate');
+    if(menu)return{type:'menu',el:menu};
+    return null;
+  }
+  function closeTopOverlay(ov){
+    if(ov.type==='lightbox')closeLightbox();
+    else if(ov.type==='story')closeStoryViewer();
+    else if(ov.type==='confirm')closeConfirm(false);
+    else if(ov.type==='sheet')closeSheet(ov.id);
+    else if(ov.type==='menu')ov.el.remove();
+  }
+  function pushIfNeeded(){
+    var id=activePageId();
+    if(history.state&&history.state.xnPage===id)return;
+    history.pushState({xnPage:id},'','#'+id.replace('pg-',''));
+  }
+  // Catat setiap kali halaman aktif berubah (kecuali sedang restore akibat tombol back)
+  var observer=new MutationObserver(function(){if(!restoring)pushIfNeeded();});
+  document.querySelectorAll('.page').forEach(function(p){observer.observe(p,{attributes:true,attributeFilter:['class']});});
+  history.replaceState({xnPage:'pg-home'},'','#home');
+
+  window.addEventListener('popstate',function(e){
+    var ov=findOpenOverlay();
+    if(ov){closeTopOverlay(ov);history.pushState({xnPage:activePageId()},'',location.hash);return;}
+    var target=(e.state&&e.state.xnPage)||'pg-home';
+    if(target===activePageId())return;
+    restoring=true;
+    try{
+      if(target==='pg-chat'&&currentTopic)openChat(currentTopic.id,currentTopic.name,currentTopic.memberCount,currentTopic.photoUrl,currentTopic.description,true);
+      else if(target==='pg-dmchat'&&currentDmOtherUser)openDmChat(currentDmOtherUser.id,currentDmOtherUser.username,currentDmOtherUser.avatar);
+      else if(target==='pg-grup'&&currentTopic)openGrupDetail();
+      else if(target==='pg-profil-menu'&&user)goProfilMenu();
+      else{
+        var pageName=target.replace('pg-','');
+        var known=['home','chathub','search','notif','profil'];
+        goPage(known.includes(pageName)?pageName:'home');
+      }
+    }catch(err){goPage('home');}
+    restoring=false;
+  });
+})();
 </script>
 </body>
 </html>
