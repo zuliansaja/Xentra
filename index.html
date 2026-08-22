@@ -310,7 +310,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   <div id="topbar">
     <div class="logo">Xentra</div>
     <div class="topbar-right">
-      <button class="icon-btn" id="topbarNotif" onclick="goPage('notif')" style="position:relative"><i class="fa fa-bell"></i><span class="notif-badge" id="notifBadge">0</span></button>
+      <button class="icon-btn" onclick="goPage('search')"><i class="fa fa-search"></i></button>
       <button class="icon-btn" onclick="openSheet('settingsSheet')"><i class="fa fa-bars"></i></button>
     </div>
   </div>
@@ -385,9 +385,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </div>
   <div id="navbar">
     <div class="nitem on" id="nb-home" onclick="goPage('home')"><i class="fa fa-home"></i></div>
-    <div class="nitem" id="nb-search" onclick="goPage('search')"><i class="fa fa-search"></i></div>
-    <div class="nitem" style="flex:1"><div class="nplus" onclick="openSheet('uploadOptSheet')"><i class="fa fa-plus"></i></div></div>
     <div class="nitem" id="nb-chat" onclick="goPage('chathub')"><i class="fa fa-comment"></i><span class="notif-badge" id="dmBadge">0</span></div>
+    <div class="nitem" style="flex:1"><div class="nplus" onclick="openSheet('uploadOptSheet')"><i class="fa fa-plus"></i></div></div>
+    <div class="nitem" id="nb-notif" onclick="goPage('notif')"><i class="fa fa-bell"></i><span class="notif-badge" id="notifBadge">0</span></div>
     <div class="nitem" id="nb-profil" onclick="goPage('profil')"><i class="fa fa-user"></i></div>
   </div>
 </div>
@@ -599,8 +599,8 @@ function goPage(page){
     if(page==='profil')document.getElementById('nb-profil').classList.add('on');
     return;
   }
-  if(page==='notif'){document.getElementById('pg-notif').classList.add('on');loadNotif();return;}
-  if(page==='search'){document.getElementById('pg-search').classList.add('on');document.getElementById('nb-search').classList.add('on');setTimeout(()=>document.getElementById('searchInput').focus(),100);return;}
+  if(page==='notif'){document.getElementById('pg-notif').classList.add('on');document.getElementById('nb-notif').classList.add('on');loadNotif();return;}
+  if(page==='search'){document.getElementById('pg-search').classList.add('on');setTimeout(()=>document.getElementById('searchInput').focus(),100);return;}
   document.getElementById('pg-'+page).classList.add('on');
   const nbMap={home:'nb-home',chathub:'nb-chat',profil:'nb-profil'};
   if(nbMap[page])document.getElementById(nbMap[page]).classList.add('on');
