@@ -408,9 +408,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <div class="overlay" id="authSheet" onclick="closeSheet('authSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
-    <div class="auth-hero"><div class="auth-logo-glow"></div><div class="auth-wordmark">Xentra</div></div>
-    <button onclick="doGoogleLogin()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px"><i class="fa-brands fa-google" style="color:#4a9eff"></i>Lanjutkan dengan Google</button>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="flex:1;height:1px;background:var(--border)"></div><div style="font-size:12px;color:var(--text2)">atau</div><div style="flex:1;height:1px;background:var(--border)"></div></div>
+    <div class="auth-hero"><div class="auth-logo-glow"></div><div class="auth-wordmark" style="color:var(--text)">Xentra</div></div>
     <div class="atabs"><div class="atab on" onclick="switchAuth('login')">Masuk</div><div class="atab" onclick="switchAuth('register')">Daftar</div></div>
     <div id="authLogin">
       <input type="email" class="finput" id="lEmail" placeholder="Email">
@@ -423,7 +421,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <input type="password" class="finput" id="rPass" placeholder="Password (min 6 karakter)">
       <button class="fbtn" onclick="doRegister()">Daftar</button>
     </div>
-    
+    <div style="display:flex;align-items:center;gap:10px;margin:16px 0"><div style="flex:1;height:1px;background:var(--border)"></div><div style="font-size:12px;color:var(--text2)">atau</div><div style="flex:1;height:1px;background:var(--border)"></div></div>
+    <button onclick="doGoogleLogin()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px"><i class="fa-brands fa-google" style="color:#4a9eff"></i>Lanjutkan dengan Google</button>
   </div>
 </div>
 <div class="overlay" id="uploadOptSheet" onclick="closeSheet('uploadOptSheet')">
