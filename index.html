@@ -137,6 +137,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;display:none;align-items:flex-end;justify-content:center;}
 .overlay.open{display:flex;}
 .sheet{background:var(--bg2);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px 16px 36px;max-height:92vh;overflow-y:auto;}
+.overlay.full-page{align-items:stretch;}
+.overlay.full-page .sheet{max-width:100%;height:100vh;max-height:100vh;border-radius:0;display:flex;flex-direction:column;justify-content:center;padding-left:28px;padding-right:28px;box-sizing:border-box;}
 .handle{width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
 .sheet-title{font-size:18px;font-weight:700;margin-bottom:18px;}
 .finput{width:100%;padding:13px 14px;border-radius:11px;border:1px solid var(--border);background:var(--input);color:var(--text);font-size:14px;margin-bottom:12px;font-family:inherit;outline:none;resize:none;}
@@ -580,7 +582,8 @@ const h=()=>({'Content-Type':'application/json','apikey':KEY,'Authorization':`Be
 async function sb(path,opts={}){const r=await fetch(SB+path,{headers:h(),...opts});const txt=await r.text();if(!r.ok){const e=JSON.parse(txt||'{}');throw new Error(e.message||e.error_description||'Error');}return txt?JSON.parse(txt):{};}
 async function sbAuth(path,body){const r=await fetch(`${SB}/auth/v1/${path}`,{method:'POST',headers:{'Content-Type':'application/json','apikey':KEY},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.error_description||d.message||'Error');return d;}
 function openSheet(id){document.getElementById(id).classList.add('open');}
-function closeSheet(id){document.getElementById(id).classList.remove('open');}
+function closeSheet(id){document.getElementById(id).classList.remove('open');document.getElementById(id).classList.remove('full-page');}
+function openAuthFullPage(){const overlay=document.getElementById('authSheet');overlay.classList.add('full-page');openSheet('authSheet');}
 function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');setTimeout(()=>el.className='toast',2500);}
 function ago(d){const ds=d.endsWith('Z')||d.includes('+')?d:d+'Z';const s=(Date.now()-new Date(ds))/1000;if(s<60)return'Baru saja';if(s<3600)return Math.floor(s/60)+' menit';if(s<86400)return Math.floor(s/3600)+' jam';return Math.floor(s/86400)+' hari';}
 function switchAuth(tab){document.querySelectorAll('.atab').forEach((el,i)=>el.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));document.getElementById('authLogin').style.display=tab==='login'?'block':'none';document.getElementById('authReg').style.display=tab==='register'?'block':'none';}
@@ -630,15 +633,19 @@ function goPage(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
   if(needLogin.includes(page)&&!user){
-    const pg=page==='notif'?'pg-notif':'pg-profil';
+    if(page==='profil'){
+      document.getElementById('pg-profil').classList.add('on');
+      document.getElementById('nb-profil').classList.add('on');
+      openAuthFullPage();
+      return;
+    }
+    const pg='pg-notif';
     document.getElementById(pg).classList.add('on');
-    const backBtn=page==='notif'?'':'';
     document.getElementById(pg).innerHTML='<div class="login-wall"><i class="fa fa-lock"></i><h3>Kamu harus login untuk mengakses halaman ini</h3><button class="btn-primary" onclick="openSheet(\'authSheet\')">Login sekarang</button></div>';
-    if(page==='profil')document.getElementById('nb-profil').classList.add('on');
     return;
   }
   if(page==='notif'){document.getElementById('pg-notif').classList.add('on');document.getElementById('nb-notif').classList.add('on');loadNotif();return;}
-  if(page==='search'){document.getElementById('pg-search').classList.add('on');setTimeout(()=>document.getElementById('searchInput').focus(),100);return;}
+  if(page==='search'){document.getElementById('pg-search').classList.add('on');setImmersiveChat(true);setTimeout(()=>document.getElementById('searchInput').focus(),100);return;}
   document.getElementById('pg-'+page).classList.add('on');
   const nbMap={home:'nb-home',chathub:'nb-chat',profil:'nb-profil'};
   if(nbMap[page])document.getElementById(nbMap[page]).classList.add('on');
