@@ -393,6 +393,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
     <div style="text-align:center;margin-bottom:20px"><div style="font-size:26px;font-weight:800;color:var(--accent)">Xentra</div><div style="font-size:13px;color:var(--text2);margin-top:4px">Platform meme &amp; gaming Indonesia</div></div>
+    <button onclick="doGoogleLogin()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px"><i class="fa-brands fa-google" style="color:#4a9eff"></i>Lanjutkan dengan Google</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="flex:1;height:1px;background:var(--border)"></div><div style="font-size:12px;color:var(--text2)">atau</div><div style="flex:1;height:1px;background:var(--border)"></div></div>
     <div class="atabs"><div class="atab on" onclick="switchAuth('login')">Masuk</div><div class="atab" onclick="switchAuth('register')">Daftar</div></div>
     <div id="authLogin">
       <input type="email" class="finput" id="lEmail" placeholder="Email">
@@ -578,6 +580,38 @@ function closeSheet(id){document.getElementById(id).classList.remove('open');}
 function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');setTimeout(()=>el.className='toast',2500);}
 function ago(d){const ds=d.endsWith('Z')||d.includes('+')?d:d+'Z';const s=(Date.now()-new Date(ds))/1000;if(s<60)return'Baru saja';if(s<3600)return Math.floor(s/60)+' menit';if(s<86400)return Math.floor(s/3600)+' jam';return Math.floor(s/86400)+' hari';}
 function switchAuth(tab){document.querySelectorAll('.atab').forEach((el,i)=>el.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));document.getElementById('authLogin').style.display=tab==='login'?'block':'none';document.getElementById('authReg').style.display=tab==='register'?'block':'none';}
+function doGoogleLogin(){
+  const redirectTo=location.origin+location.pathname;
+  location.href=`${SB}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
+}
+async function handleOAuthRedirect(){
+  if(!location.hash||!location.hash.includes('access_token'))return false;
+  const params=new URLSearchParams(location.hash.slice(1));
+  const at=params.get('access_token'),rt=params.get('refresh_token');
+  if(!at)return false;
+  try{
+    const r=await fetch(`${SB}/auth/v1/user`,{headers:{'apikey':KEY,'Authorization':`Bearer ${at}`}});
+    if(!r.ok)throw new Error('Gagal ambil data user');
+    const u=await r.json();
+    token=at;user=u;
+    // Cek profil sudah ada atau belum, buat kalau belum ada (login Google pertama kali)
+    const existing=await sb(`/rest/v1/profiles?id=eq.${u.id}&select=id`);
+    if(!existing.length){
+      let baseUsername=XSS.sanitizeUsername((u.user_metadata?.full_name||u.user_metadata?.name||u.email.split('@')[0]||'user').replace(/\s+/g,''))||'user'+Math.floor(Math.random()*10000);
+      let uname=baseUsername,tries=0;
+      while(tries<5){
+        try{await sb('/rest/v1/profiles',{method:'POST',body:JSON.stringify({id:u.id,username:uname,avatar_url:u.user_metadata?.avatar_url||u.user_metadata?.picture||null})});break;}
+        catch(e){uname=baseUsername+Math.floor(Math.random()*1000);tries++;}
+      }
+    }
+    await loadProfile();
+    saveSession(rt);
+    history.replaceState(null,'',location.pathname);
+    toast('Selamat datang di Xentra!');
+    goPage('home');loadFeed(true);
+    return true;
+  }catch(e){toast('Gagal login dengan Google: '+e.message,'error');history.replaceState(null,'',location.pathname);return false;}
+}
 async function doLogin(){const email=document.getElementById('lEmail').value.trim(),pass=document.getElementById('lPass').value;if(!email||!pass)return toast('Isi email dan password');const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Masuk...';try{const d=await sbAuth('token?grant_type=password',{email,password:pass});token=d.access_token;user=d.user;await loadProfile();saveSession(d.refresh_token);closeSheet('authSheet');toast('Selamat datang!');goPage('home');loadFeed(true);}catch(e){toast(e.message,'error');}finally{btn.disabled=false;btn.textContent='Masuk';}}
 async function doRegister(){let username=document.getElementById('rUser').value.trim(),email=document.getElementById('rEmail').value.trim(),pass=document.getElementById('rPass').value;if(!username||!email||!pass)return toast('Isi semua field');if(pass.length<6)return toast('Password min 6 karakter');username=XSS.sanitizeUsername(username);if(!username)return toast('Username hanya boleh huruf, angka, underscore, titik');try{const d=await sbAuth('signup',{email,password:pass});token=d.access_token;user=d.user;await sb('/rest/v1/profiles',{method:'POST',body:JSON.stringify({id:user.id,username})});await loadProfile();saveSession(d.refresh_token);closeSheet('authSheet');toast('Selamat datang di Xentra!');goPage('home');loadFeed(true);}catch(e){toast(e.message);}}
 async function loadProfile(){try{const d=await sb(`/rest/v1/profiles?id=eq.${user.id}&select=*`);if(d[0])user.profile=d[0];}catch(e){}}
@@ -1474,7 +1508,9 @@ document.getElementById('content').addEventListener('scroll',function(){const ac
 (async function(){
   const savedTheme=localStorage.getItem('xn_theme')||'dark';document.documentElement.setAttribute('data-theme',savedTheme);
   const dt=document.getElementById('darkToggle');if(dt){if(savedTheme==='dark')dt.classList.add('on');else dt.classList.remove('on');}
-  await restoreSession();loadFeed(true);renderTopik();loadStories();
+  const oauthHandled=await handleOAuthRedirect();
+  if(!oauthHandled)await restoreSession();
+  loadFeed(true);renderTopik();loadStories();
   if(user){checkNotifBadge();updateDmBadge();setInterval(()=>{if(user){checkNotifBadge();updateDmBadge();}},60000);}
 })();
 
