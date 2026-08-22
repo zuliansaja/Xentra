@@ -637,6 +637,9 @@ async function handleOAuthRedirect(){
 async function doLogin(){const email=document.getElementById('lEmail').value.trim(),pass=document.getElementById('lPass').value;if(!email||!pass)return toast('Isi email dan password');const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Masuk...';try{const d=await sbAuth('token?grant_type=password',{email,password:pass});token=d.access_token;user=d.user;await loadProfile();saveSession(d.refresh_token);closeSheet('authSheet');toast('Selamat datang!');goPage('home');loadFeed(true);}catch(e){toast(e.message,'error');}finally{btn.disabled=false;btn.textContent='Masuk';}}
 async function doRegister(){let username=document.getElementById('rUser').value.trim(),email=document.getElementById('rEmail').value.trim(),pass=document.getElementById('rPass').value;if(!username||!email||!pass)return toast('Isi semua field');if(pass.length<6)return toast('Password min 6 karakter');username=XSS.sanitizeUsername(username);if(!username)return toast('Username hanya boleh huruf, angka, underscore, titik');try{const d=await sbAuth('signup',{email,password:pass});token=d.access_token;user=d.user;await sb('/rest/v1/profiles',{method:'POST',body:JSON.stringify({id:user.id,username})});await loadProfile();saveSession(d.refresh_token);closeSheet('authSheet');toast('Selamat datang di Xentra!');goPage('home');loadFeed(true);}catch(e){toast(e.message);}}
 async function loadProfile(){try{const d=await sb(`/rest/v1/profiles?id=eq.${user.id}&select=*`);if(d[0])user.profile=d[0];}catch(e){}}
+function switchPAuth(tab){document.getElementById('pTabLoginBtn').classList.toggle('on',tab==='login');document.getElementById('pTabRegBtn').classList.toggle('on',tab==='register');document.getElementById('pAuthLogin').style.display=tab==='login'?'block':'none';document.getElementById('pAuthReg').style.display=tab==='register'?'block':'none';}
+async function doLoginInline(){const email=document.getElementById('pEmail').value.trim(),pass=document.getElementById('pPass').value;if(!email||!pass)return toast('Isi email dan password');const btn=document.getElementById('pLoginBtn');btn.disabled=true;btn.textContent='Masuk...';try{const d=await sbAuth('token?grant_type=password',{email,password:pass});token=d.access_token;user=d.user;await loadProfile();saveSession(d.refresh_token);toast('Selamat datang!');goPage('home');loadFeed(true);}catch(e){toast(e.message,'error');}finally{btn.disabled=false;btn.textContent='Masuk';}}
+async function doRegisterInline(){let username=document.getElementById('pUser').value.trim(),email=document.getElementById('pRegEmail').value.trim(),pass=document.getElementById('pRegPass').value;if(!username||!email||!pass)return toast('Isi semua field');if(pass.length<6)return toast('Password min 6 karakter');username=XSS.sanitizeUsername(username);if(!username)return toast('Username hanya boleh huruf, angka, underscore, titik');const btn=document.getElementById('pRegBtn');btn.disabled=true;btn.textContent='Mendaftar...';try{const d=await sbAuth('signup',{email,password:pass});token=d.access_token;user=d.user;await sb('/rest/v1/profiles',{method:'POST',body:JSON.stringify({id:user.id,username})});await loadProfile();saveSession(d.refresh_token);toast('Selamat datang di Xentra!');goPage('home');loadFeed(true);}catch(e){toast(e.message);}finally{btn.disabled=false;btn.textContent='Daftar';}}
 function doLogout(){StorageGuard._cache={};user=null;token=null;currentPost=null;currentTopic=null;feedPage=0;feedDone=false;feedLoading=false;allNotifItems=[];notifLastSeen=0;if(chatInterval){clearInterval(chatInterval);chatInterval=null;}if(dmChatInterval){clearInterval(dmChatInterval);dmChatInterval=null;}currentDmConvId=null;currentDmOtherUser=null;_revokePreviewUrls();selFiles2=[];clearSession();goPage('home');loadFeed(true);loadStories();toast('Berhasil keluar');}
 
 const needLogin=['notif','profil'];
@@ -651,7 +654,28 @@ function goPage(page){
     if(page==='profil'){
       document.getElementById('pg-profil').classList.add('on');
       document.getElementById('nb-profil').classList.add('on');
-      openAuthFullPage();
+      document.getElementById('pg-profil').innerHTML=`
+        <div style="background:linear-gradient(135deg,var(--accent),#2d5fd2);border-radius:0 0 28px 28px;padding:28px 24px 44px;position:relative;overflow:hidden">
+          <div style="position:absolute;bottom:-14px;right:-14px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-mobile-screen-button" style="font-size:30px;color:#fff;opacity:0.9"></i></div>
+          <div style="font-size:24px;font-weight:800;color:#fff;display:flex;align-items:center;gap:10px">Selamat Datang<i class="fa-solid fa-hand" style="font-size:20px;color:#ffd93d"></i></div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:8px;max-width:230px;line-height:1.5">Masuk buat lanjut ngobrol, share meme, dan gabung komunitas gaming di Xentra.</div>
+        </div>
+        <div style="padding:22px 24px 32px">
+          <div class="atabs" style="margin-bottom:20px"><div class="atab on" id="pTabLoginBtn" onclick="switchPAuth('login')">Masuk</div><div class="atab" id="pTabRegBtn" onclick="switchPAuth('register')">Daftar</div></div>
+          <div id="pAuthLogin">
+            <input type="email" class="finput" id="pEmail" placeholder="Email">
+            <input type="password" class="finput" id="pPass" placeholder="Password">
+            <button class="fbtn" id="pLoginBtn" onclick="doLoginInline()">Masuk</button>
+          </div>
+          <div id="pAuthReg" style="display:none">
+            <input type="text" class="finput" id="pUser" placeholder="Username">
+            <input type="email" class="finput" id="pRegEmail" placeholder="Email">
+            <input type="password" class="finput" id="pRegPass" placeholder="Password (min 6 karakter)">
+            <button class="fbtn" id="pRegBtn" onclick="doRegisterInline()">Daftar</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin:20px 0"><div style="flex:1;height:1px;background:var(--border)"></div><div style="font-size:12px;color:var(--text2)">atau</div><div style="flex:1;height:1px;background:var(--border)"></div></div>
+          <button onclick="doGoogleLogin()" style="width:100%;padding:14px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px"><i class="fa-brands fa-google" style="color:#4a9eff"></i>Lanjutkan dengan Google</button>
+        </div>`;
       return;
     }
     const pg='pg-notif';
