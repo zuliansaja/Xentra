@@ -139,6 +139,20 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .sheet{background:var(--bg2);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px 16px 36px;max-height:92vh;overflow-y:auto;}
 .overlay.full-page{align-items:stretch;}
 .overlay.full-page .sheet{max-width:100%;height:100vh;max-height:100vh;border-radius:0;display:flex;flex-direction:column;justify-content:center;padding-left:28px;padding-right:28px;box-sizing:border-box;}
+.auth-hero{text-align:center;margin-bottom:20px;position:relative;}
+.auth-logo-glow{display:none;}
+.auth-wordmark{font-size:26px;font-weight:800;color:var(--accent);position:relative;z-index:1;}
+.auth-tagline{font-size:13px;color:var(--text2);margin-top:4px;position:relative;z-index:1;}
+.auth-footer-note{text-align:center;font-size:11px;color:var(--text2);margin-top:18px;line-height:1.5;}
+.overlay.full-page .handle{display:none;}
+.overlay.full-page .auth-hero{margin-bottom:40px;}
+.overlay.full-page .auth-logo-glow{display:block;position:absolute;top:-70px;left:50%;transform:translateX(-50%);width:240px;height:240px;background:radial-gradient(circle,rgba(74,158,255,0.35) 0%,rgba(155,89,182,0.16) 45%,transparent 70%);filter:blur(24px);pointer-events:none;}
+.overlay.full-page .auth-wordmark{font-size:44px;letter-spacing:-1.5px;}
+.overlay.full-page .auth-tagline{font-size:13px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-top:10px;}
+.overlay.full-page .finput,.overlay.full-page .fbtn{padding:15px 16px;border-radius:14px;}
+.overlay.full-page .atabs{padding:5px;}
+.overlay.full-page .auth-footer-note{position:absolute;bottom:28px;left:28px;right:28px;margin-top:0;}
+
 .handle{width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
 .sheet-title{font-size:18px;font-weight:700;margin-bottom:18px;}
 .finput{width:100%;padding:13px 14px;border-radius:11px;border:1px solid var(--border);background:var(--input);color:var(--text);font-size:14px;margin-bottom:12px;font-family:inherit;outline:none;resize:none;}
@@ -394,7 +408,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <div class="overlay" id="authSheet" onclick="closeSheet('authSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div>
-    <div style="text-align:center;margin-bottom:20px"><div style="font-size:26px;font-weight:800;color:var(--accent)">Xentra</div><div style="font-size:13px;color:var(--text2);margin-top:4px">Platform meme &amp; gaming Indonesia</div></div>
+    <div class="auth-hero"><div class="auth-logo-glow"></div><div class="auth-wordmark">Xentra</div><div class="auth-tagline">Platform meme &amp; gaming Indonesia</div></div>
     <button onclick="doGoogleLogin()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px"><i class="fa-brands fa-google" style="color:#4a9eff"></i>Lanjutkan dengan Google</button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="flex:1;height:1px;background:var(--border)"></div><div style="font-size:12px;color:var(--text2)">atau</div><div style="flex:1;height:1px;background:var(--border)"></div></div>
     <div class="atabs"><div class="atab on" onclick="switchAuth('login')">Masuk</div><div class="atab" onclick="switchAuth('register')">Daftar</div></div>
@@ -409,6 +423,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <input type="password" class="finput" id="rPass" placeholder="Password (min 6 karakter)">
       <button class="fbtn" onclick="doRegister()">Daftar</button>
     </div>
+    <div class="auth-footer-note">Dengan melanjutkan, kamu menyetujui Syarat &amp; Ketentuan Xentra</div>
   </div>
 </div>
 <div class="overlay" id="uploadOptSheet" onclick="closeSheet('uploadOptSheet')">
