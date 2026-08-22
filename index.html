@@ -655,11 +655,7 @@ function goPage(page){
       document.getElementById('pg-profil').classList.add('on');
       document.getElementById('nb-profil').classList.add('on');
       document.getElementById('pg-profil').innerHTML=`
-        <div style="background:linear-gradient(135deg,var(--accent),#2d5fd2);border-radius:0 0 28px 28px;padding:28px 24px 44px;position:relative;overflow:hidden">
-          <div style="position:absolute;bottom:-14px;right:-14px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-mobile-screen-button" style="font-size:30px;color:#fff;opacity:0.9"></i></div>
-          <div style="font-size:24px;font-weight:800;color:#fff;display:flex;align-items:center;gap:10px">Selamat Datang<i class="fa-solid fa-hand" style="font-size:20px;color:#ffd93d"></i></div>
-          <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:8px;max-width:230px;line-height:1.5">Masuk buat lanjut ngobrol, share meme, dan gabung komunitas gaming di Xentra.</div>
-        </div>
+        <div style="padding:28px 24px 8px"><div style="font-size:24px;font-weight:800;color:var(--text)">Selamat Datang</div></div>
         <div style="padding:22px 24px 32px">
           <div class="atabs" style="margin-bottom:20px"><div class="atab on" id="pTabLoginBtn" onclick="switchPAuth('login')">Masuk</div><div class="atab" id="pTabRegBtn" onclick="switchPAuth('register')">Daftar</div></div>
           <div id="pAuthLogin">
