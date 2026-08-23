@@ -595,7 +595,23 @@ const VideoValidator={
     catch(e){return{ok:false,error:'Gagal membaca video, coba file lain'};}
     return{ok:true};
   },
-  _getDuration(file){return new Promise((resolve,reject)=>{const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{URL.revokeObjectURL(v.src);resolve(v.duration);};v.onerror=()=>{URL.revokeObjectURL(v.src);reject(new Error('invalid'));};v.src=URL.createObjectURL(file);});}
+  _getDuration(file){
+    return new Promise((resolve,reject)=>{
+      const v=document.createElement('video');v.preload='metadata';v.muted=true;
+      const objUrl=URL.createObjectURL(file);
+      const cleanup=()=>URL.revokeObjectURL(objUrl);
+      const timeout=setTimeout(()=>{cleanup();reject(new Error('timeout'));},15000);
+      v.onloadedmetadata=()=>{
+        if(v.duration===Infinity||isNaN(v.duration)){
+          // Bug Chrome: durasi video MP4 tertentu kebaca Infinity sampai di-seek dulu
+          v.currentTime=1e101;
+          v.ontimeupdate=()=>{v.ontimeupdate=null;clearTimeout(timeout);cleanup();resolve(v.duration===Infinity||isNaN(v.duration)?0:v.duration);};
+        }else{clearTimeout(timeout);cleanup();resolve(v.duration);}
+      };
+      v.onerror=()=>{clearTimeout(timeout);cleanup();reject(new Error('invalid'));};
+      v.src=objUrl;
+    });
+  }
 };
 
 const StorageGuard={
