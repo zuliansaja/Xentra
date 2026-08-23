@@ -327,6 +327,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     <div class="logo">Xentra</div>
     <div class="topbar-right">
       <button class="icon-btn" id="topbarSearchBtn" onclick="goPage('search')"><i class="fa fa-search"></i></button>
+      <button class="icon-btn" id="topbarFilterBtn" style="display:none" onclick="openSheet('notifFilterSheet')"><i class="fa fa-sliders"></i></button>
       <button class="icon-btn" onclick="openSheet('settingsSheet')"><i class="fa fa-bars"></i></button>
     </div>
   </div>
@@ -529,6 +530,16 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
   </div>
 </div>
+<div class="overlay" id="notifFilterSheet" onclick="closeSheet('notifFilterSheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+    <div class="uopt" onclick="setNotifFilter('all')"><i class="fa fa-bell"></i><div class="uopt-title">Semua</div></div>
+    <div class="uopt" onclick="setNotifFilter('post')"><i class="fa fa-image"></i><div class="uopt-title">Post</div></div>
+    <div class="uopt" onclick="setNotifFilter('comment')"><i class="fa fa-comment"></i><div class="uopt-title">Komentar</div></div>
+    <div class="uopt" onclick="setNotifFilter('pesan')"><i class="fa fa-paper-plane"></i><div class="uopt-title">Pesan</div></div>
+    <div class="uopt" onclick="setNotifFilter('grup')"><i class="fa fa-users"></i><div class="uopt-title">Grup</div></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 <script>
 const SB='https://qlyybibfopmlqgoznuqp.supabase.co';
@@ -646,12 +657,14 @@ function setImmersiveChat(on){const tb=document.getElementById('topbar'),nb=docu
 function goPage(page){
   setImmersiveChat(false);
   document.getElementById('topbarSearchBtn').style.display='flex';
+  document.getElementById('topbarFilterBtn').style.display='none';
   if(chatInterval){clearInterval(chatInterval);chatInterval=null;}
   if(dmChatInterval){clearInterval(dmChatInterval);dmChatInterval=null;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
   if(needLogin.includes(page)&&!user){
     document.getElementById('topbarSearchBtn').style.display='none';
+    document.getElementById('topbarFilterBtn').style.display='none';
     if(page==='profil'){
       document.getElementById('pg-profil').classList.add('on');
       document.getElementById('nb-profil').classList.add('on');
@@ -680,9 +693,10 @@ function goPage(page){
     document.getElementById(pg).innerHTML='<div class="login-wall"><i class="fa fa-lock"></i><h3 style="white-space:nowrap">Login untuk mengakses halaman ini</h3><button class="btn-primary" onclick="openSheet(\'authSheet\')">Login sekarang</button></div>';
     return;
   }
-  if(page==='notif'){document.getElementById('pg-notif').classList.add('on');document.getElementById('nb-notif').classList.add('on');loadNotif();return;}
+  if(page==='notif'){document.getElementById('pg-notif').classList.add('on');document.getElementById('nb-notif').classList.add('on');document.getElementById('topbarSearchBtn').style.display='none';document.getElementById('topbarFilterBtn').style.display='flex';loadNotif();return;}
   if(page==='search'){document.getElementById('pg-search').classList.add('on');setImmersiveChat(true);setTimeout(()=>document.getElementById('searchInput').focus(),100);return;}
   document.getElementById('pg-'+page).classList.add('on');
+  if(page==='profil')document.getElementById('topbarSearchBtn').style.display='none';
   const nbMap={home:'nb-home',chathub:'nb-chat',profil:'nb-profil'};
   if(nbMap[page])document.getElementById(nbMap[page]).classList.add('on');
   if(page==='chathub'){if(user)switchChatHub('pesan');else switchChatHub('grup');}
@@ -1091,10 +1105,14 @@ async function loadNotif(){
   try{allNotifItems=await fetchAllNotifItems();const actorIds=[...new Set(allNotifItems.map(n=>n.actor_id).filter(Boolean))];let actorMap={};if(actorIds.length){const profiles=await sb(`/rest/v1/profiles?id=in.(${actorIds.join(',')})&select=id,username,avatar_url,is_verified,is_gold`);profiles.forEach(p=>actorMap[p.id]=p);}renderNotifList(actorMap);}catch(e){document.getElementById('notifList').innerHTML=`<div class="center-msg"><i class="fa fa-exclamation-circle"></i><h3>Gagal memuat</h3><p>${e.message}</p></div>`;}
 }
 let _actorMapCache={};
+let notifFilter='all';
+function setNotifFilter(f){notifFilter=f;closeSheet('notifFilterSheet');renderNotifList(_actorMapCache);}
 function renderNotifList(actorMap){
   _actorMapCache=actorMap;const list=document.getElementById('notifList');if(!list)return;
-  if(!allNotifItems.length){list.innerHTML=`<div class="center-msg"><i class="fa fa-bell"></i><h3>Belum ada notifikasi</h3><p>Aktivitas di postmu akan muncul di sini</p></div>`;return;}
-  const groups={};allNotifItems.forEach(n=>{const d=new Date(n.created_at.endsWith('Z')||n.created_at.includes('+')?n.created_at:n.created_at+'Z');const now=new Date();const dayDiff=Math.floor((now-d)/86400000);let label;if(dayDiff===0)label='Hari ini';else if(dayDiff===1)label='Kemarin';else if(dayDiff<7)label=`${dayDiff} hari lalu`;else label='';if(!groups[label])groups[label]=[];groups[label].push(n);});
+  const typeMap={post:['like_post'],comment:['comment_post','reply_comment','like_comment'],grup:['topic_chat'],pesan:[]};
+  const filtered=notifFilter==='all'?allNotifItems:allNotifItems.filter(n=>(typeMap[notifFilter]||[]).includes(n.type));
+  if(!filtered.length){list.innerHTML=`<div class="center-msg"><i class="fa fa-bell"></i><h3>Belum ada notifikasi</h3><p>Aktivitas di postmu akan muncul di sini</p></div>`;return;}
+  const groups={};filtered.forEach(n=>{const d=new Date(n.created_at.endsWith('Z')||n.created_at.includes('+')?n.created_at:n.created_at+'Z');const now=new Date();const dayDiff=Math.floor((now-d)/86400000);let label;if(dayDiff===0)label='Hari ini';else if(dayDiff===1)label='Kemarin';else if(dayDiff<7)label=`${dayDiff} hari lalu`;else label='';if(!groups[label])groups[label]=[];groups[label].push(n);});
   const sorted=[...['Hari ini','Kemarin'].filter(l=>groups[l]),...Object.keys(groups).filter(l=>!['Hari ini','Kemarin'].includes(l))];
   let html='';sorted.forEach(label=>{if(label)html+=`<div class="notif-date-sep">${label}</div>`;groups[label].forEach(n=>{html+=renderNotifItem(n,actorMap);});});list.innerHTML=html;
 }
