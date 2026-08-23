@@ -441,8 +441,16 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div><div class="sheet-title">Buat Post</div>
     <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this)">
-    <div class="uparea" onclick="document.getElementById('fileInput').click()"><i class="fa fa-image"></i><p>Tap untuk pilih foto (max 3)</p></div>
+    <input type="file" id="videoFileInput" accept="video/*" style="display:none" onchange="handleVideoFile(this)">
+    <div class="uparea" id="photoUpArea" onclick="document.getElementById('fileInput').click()"><i class="fa fa-image"></i><p>Tap untuk pilih foto (max 3)</p></div>
     <div class="uppreviews" id="uppreviews" style="display:none"></div>
+    <div style="text-align:center;font-size:12px;color:var(--text2);margin:12px 0">atau</div>
+    <div class="uparea" id="videoUpArea" onclick="document.getElementById('videoFileInput').click()"><i class="fa fa-video"></i><p>Tap untuk pilih video (maks 2 menit)</p></div>
+    <div id="videoPreviewWrap" style="display:none;margin-bottom:14px;position:relative">
+      <video id="videoPreviewEl" style="width:100%;border-radius:12px;max-height:280px;background:#000;display:block" controls muted></video>
+      <div class="upthumb-del" style="position:absolute;top:8px;right:8px" onclick="cancelVideoSelect()"><i class="fa fa-times"></i></div>
+      <div id="videoCompressStatus" style="font-size:12px;color:var(--text2);margin-top:6px;display:none"></div>
+    </div>
     <label class="flabel">Caption</label>
     <textarea class="finput" id="postCaption" rows="3" placeholder="Tulis caption..."></textarea>
     <label class="flabel">Hashtag</label>
@@ -575,6 +583,19 @@ const FileValidator={
   _readMagicBytes(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=e=>resolve(new Uint8Array(e.target.result));r.onerror=()=>reject(new Error('Gagal baca file'));r.readAsArrayBuffer(file.slice(0,12));});},
   async validate(file){if(file.size>this.MAX_SIZE_BYTES)return{ok:false,error:'File terlalu besar. Maksimal 15MB'};if(!Object.keys(this.ALLOWED_TYPES).includes(file.type))return{ok:false,error:'Format tidak didukung. Gunakan JPG, PNG, GIF, atau WebP'};try{const bytes=await this._readMagicBytes(file);const valid=this.ALLOWED_TYPES[file.type].some(magic=>magic.every((b,i)=>bytes[i]===b));if(!valid)return{ok:false,error:'File tidak valid'};}catch(e){return{ok:false,error:'Gagal memvalidasi file'};}return{ok:true};},
   async validateAll(files){for(const f of files){const r=await this.validate(f);if(!r.ok)return r;}return{ok:true};}
+};
+
+const VideoValidator={
+  MAX_SIZE_BYTES:150*1024*1024,
+  MAX_DURATION_SEC:120,
+  async validate(file){
+    if(!file.type.startsWith('video/'))return{ok:false,error:'File harus berupa video'};
+    if(file.size>this.MAX_SIZE_BYTES)return{ok:false,error:'Video terlalu besar (maks 150MB sebelum kompres)'};
+    try{const duration=await this._getDuration(file);if(duration>this.MAX_DURATION_SEC)return{ok:false,error:`Video maksimal 2 menit (durasi kamu: ${Math.round(duration)} detik)`};}
+    catch(e){return{ok:false,error:'Gagal membaca video, coba file lain'};}
+    return{ok:true};
+  },
+  _getDuration(file){return new Promise((resolve,reject)=>{const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{URL.revokeObjectURL(v.src);resolve(v.duration);};v.onerror=()=>{URL.revokeObjectURL(v.src);reject(new Error('invalid'));};v.src=URL.createObjectURL(file);});}
 };
 
 const StorageGuard={
@@ -749,6 +770,7 @@ async function loadFeed(reset=false){
 
 function renderPost(p){
   const imgs=(p.post_images||[]).sort((a,b)=>a.order_index-b.order_index);
+  const isVideo=imgs.length===1&&imgs[0].media_type==='video';
   const upvotes=(p.votes||[]).filter(v=>v.type==='up').length;
   const myVote=user&&(p.votes||[]).find(v=>v.user_id===user.id&&v.type==='up');
   const tags=(p.caption||'').match(/#\w+/g)||[];
@@ -758,7 +780,8 @@ function renderPost(p){
   const firstImg=XSS.sanitizeUrl(imgs[0]?.image_url||'');
   const urlsAttr=imgs.map(i=>XSS.sanitizeUrl(i.image_url)).join('||');
   let imgHtml='';
-  if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${XSS.sanitizeUrl(imgs[0].image_url)}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="0"></div>`;
+  if(isVideo)imgHtml=`<div class="pimgs s1"><video src="${XSS.sanitizeUrl(imgs[0].image_url)}" controls playsinline preload="metadata" style="width:100%;display:block;background:#000;max-height:520px"></video></div>`;
+  else if(imgs.length===1)imgHtml=`<div class="pimgs s1"><img src="${XSS.sanitizeUrl(imgs[0].image_url)}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="0"></div>`;
   else if(imgs.length===2)imgHtml=`<div class="pimgs s2">${imgs.map((i,idx)=>`<img src="${XSS.sanitizeUrl(i.image_url)}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="${idx}">`).join('')}</div>`;
   else if(imgs.length>=3)imgHtml=`<div class="pimgs s3"><img class="pm pimg-click" src="${XSS.sanitizeUrl(imgs[0].image_url)}" loading="lazy" data-urls="${urlsAttr}" data-idx="0"><img src="${XSS.sanitizeUrl(imgs[1].image_url)}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="1"><img src="${XSS.sanitizeUrl(imgs[2].image_url)}" loading="lazy" class="pimg-click" data-urls="${urlsAttr}" data-idx="2"></div>`;
   return `<div class="pcard" id="pc-${p.id}">
@@ -889,19 +912,103 @@ async function submitKomentar(){const inp=document.getElementById('kinput');cons
 let _previewUrls=[];
 function _revokePreviewUrls(){_previewUrls.forEach(u=>URL.revokeObjectURL(u));_previewUrls=[];}
 let selFiles2=[];
-async function handleFiles(inp){const files=Array.from(inp.files).slice(0,3);selFiles2=[];_revokePreviewUrls();for(const f of files){const result=await FileValidator.validate(f);if(!result.ok){toast(`${f.name}: ${result.error}`,'error');continue;}selFiles2.push(f);}const prev=document.getElementById('uppreviews');prev.style.display=selFiles2.length?'grid':'none';prev.innerHTML=selFiles2.map((f,i)=>{const objUrl=URL.createObjectURL(f);_previewUrls.push(objUrl);return `<div class="upthumb"><img src="${objUrl}"><div class="upthumb-del" onclick="removeFile(${i})"><i class="fa fa-times"></i></div></div>`;}).join('');}
+let selVideoFile=null,_videoPreviewUrl=null;
+async function handleFiles(inp){if(selVideoFile)cancelVideoSelect();const files=Array.from(inp.files).slice(0,3);selFiles2=[];_revokePreviewUrls();for(const f of files){const result=await FileValidator.validate(f);if(!result.ok){toast(`${f.name}: ${result.error}`,'error');continue;}selFiles2.push(f);}const prev=document.getElementById('uppreviews');prev.style.display=selFiles2.length?'grid':'none';prev.innerHTML=selFiles2.map((f,i)=>{const objUrl=URL.createObjectURL(f);_previewUrls.push(objUrl);return `<div class="upthumb"><img src="${objUrl}"><div class="upthumb-del" onclick="removeFile(${i})"><i class="fa fa-times"></i></div></div>`;}).join('');}
+async function handleVideoFile(inp){
+  const file=inp.files[0];if(!file)return;
+  const result=await VideoValidator.validate(file);
+  if(!result.ok){toast(result.error,'error');inp.value='';return;}
+  selFiles2=[];_revokePreviewUrls();document.getElementById('uppreviews').innerHTML='';document.getElementById('uppreviews').style.display='none';
+  document.getElementById('photoUpArea').style.display='none';
+  selVideoFile=file;
+  if(_videoPreviewUrl)URL.revokeObjectURL(_videoPreviewUrl);
+  _videoPreviewUrl=URL.createObjectURL(file);
+  document.getElementById('videoPreviewEl').src=_videoPreviewUrl;
+  document.getElementById('videoPreviewWrap').style.display='block';
+  document.getElementById('videoUpArea').style.display='none';
+}
+function cancelVideoSelect(){
+  selVideoFile=null;if(_videoPreviewUrl){URL.revokeObjectURL(_videoPreviewUrl);_videoPreviewUrl=null;}
+  document.getElementById('videoPreviewWrap').style.display='none';
+  document.getElementById('videoUpArea').style.display='block';
+  document.getElementById('photoUpArea').style.display='block';
+  document.getElementById('videoFileInput').value='';
+}
+function compressVideo(file,onProgress){
+  return new Promise((resolve,reject)=>{
+    const srcUrl=URL.createObjectURL(file);
+    const video=document.createElement('video');
+    video.src=srcUrl;video.muted=true;video.playsInline=true;
+    video.onloadedmetadata=async()=>{
+      try{
+        const maxW=720;let w=video.videoWidth,h=video.videoHeight;
+        if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        let mixedStream;
+        try{
+          const srcStream=video.captureStream?video.captureStream():video.mozCaptureStream();
+          const canvasStream=canvas.captureStream(30);
+          mixedStream=new MediaStream([...canvasStream.getVideoTracks(),...srcStream.getAudioTracks()]);
+        }catch(e){URL.revokeObjectURL(srcUrl);reject(new Error('Browser tidak mendukung kompresi video'));return;}
+        const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')?'video/webm;codecs=vp9,opus':'video/webm';
+        const recorder=new MediaRecorder(mixedStream,{mimeType:mime,videoBitsPerSecond:1200000});
+        const chunks=[];
+        recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+        recorder.onstop=()=>{URL.revokeObjectURL(srcUrl);resolve(new Blob(chunks,{type:'video/webm'}));};
+        recorder.onerror=err=>{URL.revokeObjectURL(srcUrl);reject(err.error||new Error('Gagal kompres video'));};
+        let drawing=true;
+        function drawFrame(){if(!drawing)return;ctx.drawImage(video,0,0,w,h);if(onProgress&&video.duration)onProgress(Math.min(99,Math.round(video.currentTime/video.duration*100)));requestAnimationFrame(drawFrame);}
+        video.onended=()=>{drawing=false;recorder.stop();};
+        recorder.start();
+        await video.play();
+        drawFrame();
+      }catch(err){URL.revokeObjectURL(srcUrl);reject(err);}
+    };
+    video.onerror=()=>{URL.revokeObjectURL(srcUrl);reject(new Error('Gagal memuat video'));};
+  });
+}
+async function uploadVideoFile(blob){
+  const path=`posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.webm`;
+  const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'video/webm'},body:blob});
+  if(!r.ok)throw new Error('Gagal upload video');
+  return `${SB}/storage/v1/object/public/meme-images/${path}`;
+}
 function removeFile(i){selFiles2.splice(i,1);_revokePreviewUrls();const dt=new DataTransfer();selFiles2.forEach(f=>dt.items.add(f));document.getElementById('fileInput').files=dt.files;handleFiles(document.getElementById('fileInput'));}
 function compressImage(file,maxSize=1080,quality=0.82){return new Promise(resolve=>{const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{URL.revokeObjectURL(url);let{width,height}=img;if(width>maxSize||height>maxSize){if(width>height){height=Math.round(height*maxSize/width);width=maxSize;}else{width=Math.round(width*maxSize/height);height=maxSize;}}const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(img,0,0,width,height);canvas.toBlob(blob=>resolve(blob||file),'image/jpeg',quality);};img.onerror=()=>{URL.revokeObjectURL(url);resolve(file);};img.src=url;});}
 async function uploadImg(file){const rl=await checkRateLimit('upload',5,300,60);if(!rl.ok)throw new Error(rl.msg);const compressed=await compressImage(file);const path=`posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'image/jpeg'},body:compressed});if(!r.ok)throw new Error('Gagal upload');return`${SB}/storage/v1/object/public/meme-images/${path}`;}
 async function submitPost(){
-  if(!user)return openSheet('authSheet');if(!selFiles2.length)return toast('Pilih foto dulu');
+  if(!user)return openSheet('authSheet');if(!selFiles2.length&&!selVideoFile)return toast('Pilih foto atau video dulu');
   const rl=await checkRateLimit('post',3,300,120);if(!rl.ok)return toast(rl.msg,'error');
   const storageCheck=await StorageGuard.checkPostLimit(user.id);if(!storageCheck.ok)return toast(storageCheck.msg,'error');
   const cap=document.getElementById('postCaption').value.trim(),tags=document.getElementById('postTags').value.trim(),full=cap+(tags?' '+tags:'');
   if(full.length>1000)return toast('Caption + hashtag maksimal 1000 karakter','error');
   const submitBtn=document.querySelector('#uploadPostSheet .fbtn');if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Mengupload...';}
-  try{toast('Mengupload...');const urls=await Promise.all(selFiles2.map(f=>uploadImg(f)));const post=await sb('/rest/v1/posts',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({user_id:user.id,caption:full})});const pid=Array.isArray(post)?post[0].id:post.id;await Promise.all(urls.map((url,i)=>sb('/rest/v1/post_images',{method:'POST',body:JSON.stringify({post_id:pid,image_url:url,order_index:i})})));StorageGuard.bumpPostCount(user.id,1);closeSheet('uploadPostSheet');selFiles2=[];_revokePreviewUrls();document.getElementById('uppreviews').innerHTML='';document.getElementById('uppreviews').style.display='none';document.getElementById('postCaption').value='';document.getElementById('postTags').value='';toast('Post berhasil!');loadFeed(true);}catch(e){toast(e.message);}
-  finally{if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Post Sekarang';}}
+  const statusEl=document.getElementById('videoCompressStatus');
+  try{
+    let mediaRows=[];
+    if(selVideoFile){
+      statusEl.style.display='block';statusEl.textContent='Mengompres video... 0%';
+      const compressed=await compressVideo(selVideoFile,pct=>{statusEl.textContent=`Mengompres video... ${pct}%`;});
+      statusEl.textContent='Mengupload video...';
+      const url=await uploadVideoFile(compressed);
+      mediaRows=[{image_url:url,order_index:0,media_type:'video'}];
+    }else{
+      toast('Mengupload...');
+      const urls=await Promise.all(selFiles2.map(f=>uploadImg(f)));
+      mediaRows=urls.map((url,i)=>({image_url:url,order_index:i,media_type:'image'}));
+    }
+    const post=await sb('/rest/v1/posts',{method:'POST',headers:{...h(),'Prefer':'return=representation'},body:JSON.stringify({user_id:user.id,caption:full})});
+    const pid=Array.isArray(post)?post[0].id:post.id;
+    await Promise.all(mediaRows.map(row=>sb('/rest/v1/post_images',{method:'POST',body:JSON.stringify({post_id:pid,...row})})));
+    StorageGuard.bumpPostCount(user.id,1);
+    closeSheet('uploadPostSheet');
+    selFiles2=[];_revokePreviewUrls();document.getElementById('uppreviews').innerHTML='';document.getElementById('uppreviews').style.display='none';
+    cancelVideoSelect();
+    document.getElementById('postCaption').value='';document.getElementById('postTags').value='';
+    toast('Post berhasil!');loadFeed(true);
+  }catch(e){toast(e.message);}
+  finally{if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Post Sekarang';}if(statusEl)statusEl.style.display='none';}
 }
 function openUploadPost(){closeSheet('uploadOptSheet');if(!user){openSheet('authSheet');return;}openSheet('uploadPostSheet');}
 function openBuatTopik(){closeSheet('uploadOptSheet');if(!user){openSheet('authSheet');return;}openSheet('buatTopikSheet');}
