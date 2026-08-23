@@ -324,11 +324,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="logo">Xentra</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <button class="icon-btn" onclick="openSheet('settingsSheet')"><i class="fa fa-bars"></i></button>
+      <div class="logo">Xentra</div>
+    </div>
     <div class="topbar-right">
       <button class="icon-btn" id="topbarSearchBtn" onclick="goPage('search')"><i class="fa fa-search"></i></button>
       <button class="icon-btn" id="topbarFilterBtn" style="display:none" onclick="openSheet('notifFilterSheet')"><i class="fa fa-sliders"></i></button>
-      <button class="icon-btn" onclick="openSheet('settingsSheet')"><i class="fa fa-bars"></i></button>
     </div>
   </div>
   <div id="ptr-wrap"><div id="ptr-spinner"><i class="fa fa-redo-alt"></i></div></div>
@@ -1095,6 +1097,13 @@ async function fetchAllNotifItems(){
     }
   }
   try{const joinedTopics=await sb(`/rest/v1/topic_members?user_id=eq.${user.id}&select=topic_id`);const joinedTopicIds=joinedTopics.map(t=>t.topic_id);if(joinedTopicIds.length){const topicsData=await sb(`/rest/v1/topics?id=in.(${joinedTopicIds.join(',')})&select=id,name,photo_url`);const topicNameMap={};const topicPhotoMap={};topicsData.forEach(t=>{topicNameMap[t.id]=t.name;topicPhotoMap[t.id]=t.photo_url||'';});const chatMsgs=await sb(`/rest/v1/topic_chats?topic_id=in.(${joinedTopicIds.join(',')})&user_id=neq.${user.id}&select=id,topic_id,user_id,content,created_at&order=created_at.desc&limit=100`);chatMsgs.filter(m=>!m.content.includes('[img]')).forEach(m=>items.push({type:'topic_chat',actor_id:m.user_id,topic_id:m.topic_id,topic_name:topicNameMap[m.topic_id]||'Topik',topic_photo:topicPhotoMap[m.topic_id]||'',created_at:m.created_at,preview:m.content}));}}catch(e){console.warn('fetchNotif topics error:',e);}
+  try{
+    const dmMsgs=await sb(`/rest/v1/dms?receiver_id=eq.${user.id}&select=id,sender_id,content,created_at&order=created_at.desc&limit=100`);
+    const dmSenderIds=[...new Set(dmMsgs.map(m=>m.sender_id))];
+    let dmSenderMap={};
+    if(dmSenderIds.length){const dmProfiles=await sb(`/rest/v1/profiles?id=in.(${dmSenderIds.join(',')})&select=id,username,avatar_url`);dmProfiles.forEach(p=>dmSenderMap[p.id]=p);}
+    dmMsgs.forEach(m=>items.push({type:'dm_message',actor_id:m.sender_id,dm_other_id:m.sender_id,dm_other_uname:dmSenderMap[m.sender_id]?.username||'user',dm_other_avatar:dmSenderMap[m.sender_id]?.avatar_url||'',created_at:m.created_at,preview:m.content.includes('[img]')?'\u{1F4F7} Foto':m.content}));
+  }catch(e){console.warn('fetchNotif dm error:',e);}
   items.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));return items;
 }
 async function loadNotif(){
@@ -1109,7 +1118,7 @@ let notifFilter='all';
 function setNotifFilter(f){notifFilter=f;closeSheet('notifFilterSheet');renderNotifList(_actorMapCache);}
 function renderNotifList(actorMap){
   _actorMapCache=actorMap;const list=document.getElementById('notifList');if(!list)return;
-  const typeMap={post:['like_post'],comment:['comment_post','reply_comment','like_comment'],grup:['topic_chat'],pesan:[]};
+  const typeMap={post:['like_post'],comment:['comment_post','reply_comment','like_comment'],grup:['topic_chat'],pesan:['dm_message']};
   const filtered=notifFilter==='all'?allNotifItems:allNotifItems.filter(n=>(typeMap[notifFilter]||[]).includes(n.type));
   if(!filtered.length){list.innerHTML=`<div class="center-msg"><i class="fa fa-bell"></i><h3>Belum ada notifikasi</h3><p>Aktivitas di postmu akan muncul di sini</p></div>`;return;}
   const groups={};filtered.forEach(n=>{const d=new Date(n.created_at.endsWith('Z')||n.created_at.includes('+')?n.created_at:n.created_at+'Z');const now=new Date();const dayDiff=Math.floor((now-d)/86400000);let label;if(dayDiff===0)label='Hari ini';else if(dayDiff===1)label='Kemarin';else if(dayDiff<7)label=`${dayDiff} hari lalu`;else label='';if(!groups[label])groups[label]=[];groups[label].push(n);});
@@ -1123,8 +1132,9 @@ function renderNotifItem(n,actorMap){
   const isUnread=nTs>notifLastSeen;
   let iconEl='',textHtml='',thumbHtml='';const timeStr=ago(n.created_at);const safeThumb=XSS.sanitizeUrl(n.thumb||'');const safePreview=XSS.sanitize((n.preview||'').replace(/\[img\](.*?)\[\/img\]/,'[Foto]'));const safeTopicName=XSS.escape(n.topic_name||'');const safeTopicPhoto=XSS.sanitizeUrl(n.topic_photo||'');
   if(safeThumb)thumbHtml=`<div class="notif-thumb"><img src="${safeThumb}" loading="lazy"></div>`;const actorName=`<strong>${uname}</strong>${verifiedBadge(actor)+goldBadge(actor)}`;
-  switch(n.type){case'like_post':iconEl=`<div class="notif-icon like"><i class="fa fa-heart"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>menyukai postmu</span></div>`;if(safePreview)textHtml+=`<div class="notif-preview">${safePreview}</div>`;break;case'comment_post':iconEl=`<div class="notif-icon comment"><i class="fa fa-comment"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>mengomentari postmu</span></div><div class="notif-preview">${safePreview}</div>`;break;case'reply_comment':iconEl=`<div class="notif-icon reply"><i class="fa fa-reply"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>membalas komentarmu</span></div><div class="notif-preview">${safePreview}</div>`;break;case'like_comment':iconEl=`<div class="notif-icon like"><i class="fa fa-heart"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>menyukai komentarmu</span></div>`;break;case'topic_chat':iconEl=`<div class="notif-icon topic"><i class="fa fa-users"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>mengirim pesan di </span><strong>${safeTopicName}</strong></div><div class="notif-preview">${safePreview}</div>`;thumbHtml=safeTopicPhoto?`<div class="notif-thumb"><img src="${safeTopicPhoto}" loading="lazy"></div>`:`<div class="notif-thumb" style="font-size:20px;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text2)"><i class="fa fa-users"></i></div>`;break;}
-  const clickAction=n.type==='topic_chat'?`onclick="openChat('${n.topic_id}','${safeTopicName.replace(/'/g,"\\'")}',0,'${safeTopicPhoto}','',true)"`:n.post_id?`onclick="closeSheet('komentarSheet');openKomentar('${n.post_id}')"`:'' ;
+  switch(n.type){case'like_post':iconEl=`<div class="notif-icon like"><i class="fa fa-heart"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>menyukai postmu</span></div>`;if(safePreview)textHtml+=`<div class="notif-preview">${safePreview}</div>`;break;case'comment_post':iconEl=`<div class="notif-icon comment"><i class="fa fa-comment"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>mengomentari postmu</span></div><div class="notif-preview">${safePreview}</div>`;break;case'reply_comment':iconEl=`<div class="notif-icon reply"><i class="fa fa-reply"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>membalas komentarmu</span></div><div class="notif-preview">${safePreview}</div>`;break;case'like_comment':iconEl=`<div class="notif-icon like"><i class="fa fa-heart"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>menyukai komentarmu</span></div>`;break;case'topic_chat':iconEl=`<div class="notif-icon topic"><i class="fa fa-users"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>mengirim pesan di </span><strong>${safeTopicName}</strong></div><div class="notif-preview">${safePreview}</div>`;thumbHtml=safeTopicPhoto?`<div class="notif-thumb"><img src="${safeTopicPhoto}" loading="lazy"></div>`:`<div class="notif-thumb" style="font-size:20px;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text2)"><i class="fa fa-users"></i></div>`;break;case'dm_message':iconEl=`<div class="notif-icon reply"><i class="fa fa-paper-plane"></i></div>`;textHtml=`<div class="notif-text">${actorName} <span>mengirim pesan pribadi</span></div><div class="notif-preview">${safePreview}</div>`;break;}
+  const safeDmUname=XSS.escape(n.dm_other_uname||'user');const safeDmAvatar=XSS.sanitizeUrl(n.dm_other_avatar||'');
+  const clickAction=n.type==='topic_chat'?`onclick="openChat('${n.topic_id}','${safeTopicName.replace(/'/g,"\\'")}',0,'${safeTopicPhoto}','',true)"`:n.type==='dm_message'?`onclick="openDmChat('${n.dm_other_id}','${safeDmUname.replace(/'/g,"\\'")}','${safeDmAvatar}')"`:n.post_id?`onclick="closeSheet('komentarSheet');openKomentar('${n.post_id}')"`:'' ;
   let finalThumb=thumbHtml;if(thumbHtml&&iconEl)finalThumb=thumbHtml.replace(/(<div class="notif-thumb[^>]*>)/,'$1'+iconEl);
   return `<div class="notif-item ${isUnread?'unread':''}" ${clickAction}><div class="notif-avatar">${avatarHtml}</div><div class="notif-body">${textHtml}<div class="notif-sub"><span>${timeStr}</span></div></div>${finalThumb}</div>`;
 }
