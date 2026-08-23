@@ -326,7 +326,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   <div id="topbar">
     <div class="logo">Xentra</div>
     <div class="topbar-right">
-      <button class="icon-btn" onclick="goPage('search')"><i class="fa fa-search"></i></button>
+      <button class="icon-btn" id="topbarSearchBtn" onclick="goPage('search')"><i class="fa fa-search"></i></button>
       <button class="icon-btn" onclick="openSheet('settingsSheet')"><i class="fa fa-bars"></i></button>
     </div>
   </div>
@@ -645,11 +645,13 @@ const needLogin=['notif','profil'];
 function setImmersiveChat(on){const tb=document.getElementById('topbar'),nb=document.getElementById('navbar');if(tb)tb.style.display=on?'none':'flex';if(nb)nb.style.display=on?'none':'flex';}
 function goPage(page){
   setImmersiveChat(false);
+  document.getElementById('topbarSearchBtn').style.display='flex';
   if(chatInterval){clearInterval(chatInterval);chatInterval=null;}
   if(dmChatInterval){clearInterval(dmChatInterval);dmChatInterval=null;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
   if(needLogin.includes(page)&&!user){
+    document.getElementById('topbarSearchBtn').style.display='none';
     if(page==='profil'){
       document.getElementById('pg-profil').classList.add('on');
       document.getElementById('nb-profil').classList.add('on');
