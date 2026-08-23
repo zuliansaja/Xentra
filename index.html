@@ -651,7 +651,7 @@ function closeSheet(id){document.getElementById(id).classList.remove('open');doc
 function openAuthFullPage(){const overlay=document.getElementById('authSheet');overlay.classList.add('full-page');openSheet('authSheet');}
 function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');setTimeout(()=>el.className='toast',2500);}
 function ago(d){const ds=d.endsWith('Z')||d.includes('+')?d:d+'Z';const s=(Date.now()-new Date(ds))/1000;if(s<60)return'Baru saja';if(s<3600)return Math.floor(s/60)+' menit';if(s<86400)return Math.floor(s/3600)+' jam';return Math.floor(s/86400)+' hari';}
-function switchAuth(tab){document.querySelectorAll('.atab').forEach((el,i)=>el.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));document.getElementById('authLogin').style.display=tab==='login'?'block':'none';document.getElementById('authReg').style.display=tab==='register'?'block':'none';}
+function switchAuth(tab){document.querySelectorAll('#authSheet .atab').forEach((el,i)=>el.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));document.getElementById('authLogin').style.display=tab==='login'?'block':'none';document.getElementById('authReg').style.display=tab==='register'?'block':'none';}
 function doGoogleLogin(){
   const redirectTo=location.origin+location.pathname;
   location.href=`${SB}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
