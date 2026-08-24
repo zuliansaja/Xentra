@@ -440,12 +440,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <div class="overlay" id="uploadPostSheet" onclick="closeSheet('uploadPostSheet')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="handle"></div><div class="sheet-title">Buat Post</div>
-    <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this)">
-    <input type="file" id="videoFileInput" accept="video/*" style="display:none" onchange="handleVideoFile(this)">
-    <div class="uparea" id="photoUpArea" onclick="document.getElementById('fileInput').click()"><i class="fa fa-image"></i><p>Tap untuk pilih foto (max 3)</p></div>
+    <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none" onchange="handleMediaSelect(this)">
+    <div class="uparea" id="photoUpArea" onclick="document.getElementById('fileInput').click()"><i class="fa fa-images"></i><p>Tap untuk pilih foto (max 3) atau 1 video (maks 2 menit)</p></div>
     <div class="uppreviews" id="uppreviews" style="display:none"></div>
-    <div style="text-align:center;font-size:12px;color:var(--text2);margin:12px 0">atau</div>
-    <div class="uparea" id="videoUpArea" onclick="document.getElementById('videoFileInput').click()"><i class="fa fa-video"></i><p>Tap untuk pilih video (maks 2 menit)</p></div>
     <div id="videoPreviewWrap" style="display:none;margin-bottom:14px;position:relative">
       <video id="videoPreviewEl" style="width:100%;border-radius:12px;max-height:280px;background:#000;display:block" controls muted></video>
       <div class="upthumb-del" style="position:absolute;top:8px;right:8px" onclick="cancelVideoSelect()"><i class="fa fa-times"></i></div>
@@ -929,68 +926,81 @@ let _previewUrls=[];
 function _revokePreviewUrls(){_previewUrls.forEach(u=>URL.revokeObjectURL(u));_previewUrls=[];}
 let selFiles2=[];
 let selVideoFile=null,_videoPreviewUrl=null;
-async function handleFiles(inp){if(selVideoFile)cancelVideoSelect();const files=Array.from(inp.files).slice(0,3);selFiles2=[];_revokePreviewUrls();for(const f of files){const result=await FileValidator.validate(f);if(!result.ok){toast(`${f.name}: ${result.error}`,'error');continue;}selFiles2.push(f);}const prev=document.getElementById('uppreviews');prev.style.display=selFiles2.length?'grid':'none';prev.innerHTML=selFiles2.map((f,i)=>{const objUrl=URL.createObjectURL(f);_previewUrls.push(objUrl);return `<div class="upthumb"><img src="${objUrl}"><div class="upthumb-del" onclick="removeFile(${i})"><i class="fa fa-times"></i></div></div>`;}).join('');}
-async function handleVideoFile(inp){
-  const file=inp.files[0];if(!file)return;
-  const result=await VideoValidator.validate(file);
-  if(!result.ok){toast(result.error,'error');inp.value='';return;}
-  selFiles2=[];_revokePreviewUrls();document.getElementById('uppreviews').innerHTML='';document.getElementById('uppreviews').style.display='none';
-  document.getElementById('photoUpArea').style.display='none';
-  selVideoFile=file;
-  if(_videoPreviewUrl)URL.revokeObjectURL(_videoPreviewUrl);
-  _videoPreviewUrl=URL.createObjectURL(file);
-  document.getElementById('videoPreviewEl').src=_videoPreviewUrl;
-  document.getElementById('videoPreviewWrap').style.display='block';
-  document.getElementById('videoUpArea').style.display='none';
+async function handleMediaSelect(inp){
+  const files=Array.from(inp.files);if(!files.length)return;
+  const firstIsVideo=files[0].type.startsWith('video/');
+  if(firstIsVideo){
+    const file=files[0];
+    const result=await VideoValidator.validate(file);
+    if(!result.ok){toast(result.error,'error');inp.value='';return;}
+    selFiles2=[];_revokePreviewUrls();document.getElementById('uppreviews').innerHTML='';document.getElementById('uppreviews').style.display='none';
+    selVideoFile=file;
+    if(_videoPreviewUrl)URL.revokeObjectURL(_videoPreviewUrl);
+    _videoPreviewUrl=URL.createObjectURL(file);
+    document.getElementById('videoPreviewEl').src=_videoPreviewUrl;
+    document.getElementById('videoPreviewWrap').style.display='block';
+    document.getElementById('photoUpArea').style.display='none';
+  }else{
+    if(selVideoFile)cancelVideoSelect();
+    const imgFiles=files.filter(f=>!f.type.startsWith('video/')).slice(0,3);
+    selFiles2=[];_revokePreviewUrls();
+    for(const f of imgFiles){const result=await FileValidator.validate(f);if(!result.ok){toast(`${f.name}: ${result.error}`,'error');continue;}selFiles2.push(f);}
+    const prev=document.getElementById('uppreviews');prev.style.display=selFiles2.length?'grid':'none';
+    prev.innerHTML=selFiles2.map((f,i)=>{const objUrl=URL.createObjectURL(f);_previewUrls.push(objUrl);return `<div class="upthumb"><img src="${objUrl}"><div class="upthumb-del" onclick="removeFile(${i})"><i class="fa fa-times"></i></div></div>`;}).join('');
+  }
 }
 function cancelVideoSelect(){
   selVideoFile=null;if(_videoPreviewUrl){URL.revokeObjectURL(_videoPreviewUrl);_videoPreviewUrl=null;}
   document.getElementById('videoPreviewWrap').style.display='none';
-  document.getElementById('videoUpArea').style.display='block';
   document.getElementById('photoUpArea').style.display='block';
-  document.getElementById('videoFileInput').value='';
+  document.getElementById('fileInput').value='';
 }
 function compressVideo(file,onProgress){
   return new Promise((resolve,reject)=>{
+    if(typeof file.stream!=='function'&&!window.MediaRecorder){reject(Object.assign(new Error('unsupported'),{code:'UNSUPPORTED'}));return;}
     const srcUrl=URL.createObjectURL(file);
     const video=document.createElement('video');
     video.src=srcUrl;video.muted=true;video.playsInline=true;
+    const timeout=setTimeout(()=>{URL.revokeObjectURL(srcUrl);reject(new Error('Timeout memuat video (metadata)'));},15000);
     video.onloadedmetadata=async()=>{
+      clearTimeout(timeout);
       try{
-        const maxW=720;let w=video.videoWidth,h=video.videoHeight;
+        if(typeof video.captureStream!=='function'){URL.revokeObjectURL(srcUrl);reject(Object.assign(new Error('unsupported'),{code:'UNSUPPORTED'}));return;}
+        const maxW=720;let w=video.videoWidth||640,h=video.videoHeight||360;
         if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
         const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
         const ctx=canvas.getContext('2d');
         let mixedStream;
         try{
-          const srcStream=video.captureStream?video.captureStream():video.mozCaptureStream();
+          const srcStream=video.captureStream();
           const canvasStream=canvas.captureStream(30);
           mixedStream=new MediaStream([...canvasStream.getVideoTracks(),...srcStream.getAudioTracks()]);
-        }catch(e){URL.revokeObjectURL(srcUrl);reject(new Error('Browser tidak mendukung kompresi video'));return;}
+        }catch(e){URL.revokeObjectURL(srcUrl);reject(Object.assign(new Error('unsupported'),{code:'UNSUPPORTED'}));return;}
+        if(!window.MediaRecorder||!MediaRecorder.isTypeSupported('video/webm')){URL.revokeObjectURL(srcUrl);reject(Object.assign(new Error('unsupported'),{code:'UNSUPPORTED'}));return;}
         const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')?'video/webm;codecs=vp9,opus':'video/webm';
         const recorder=new MediaRecorder(mixedStream,{mimeType:mime,videoBitsPerSecond:1200000});
         const chunks=[];
         recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
-        recorder.onstop=()=>{URL.revokeObjectURL(srcUrl);resolve(new Blob(chunks,{type:'video/webm'}));};
+        recorder.onstop=()=>{URL.revokeObjectURL(srcUrl);const blob=new Blob(chunks,{type:'video/webm'});if(!blob.size){reject(new Error('Hasil kompres kosong, coba video lain'));return;}resolve(blob);};
         recorder.onerror=err=>{URL.revokeObjectURL(srcUrl);reject(err.error||new Error('Gagal kompres video'));};
         let drawing=true;
-        function drawFrame(){if(!drawing)return;ctx.drawImage(video,0,0,w,h);if(onProgress&&video.duration)onProgress(Math.min(99,Math.round(video.currentTime/video.duration*100)));requestAnimationFrame(drawFrame);}
+        function drawFrame(){if(!drawing)return;try{ctx.drawImage(video,0,0,w,h);}catch(e){}if(onProgress&&video.duration&&isFinite(video.duration))onProgress(Math.min(99,Math.round(video.currentTime/video.duration*100)));requestAnimationFrame(drawFrame);}
         video.onended=()=>{drawing=false;recorder.stop();};
         recorder.start();
         await video.play();
         drawFrame();
       }catch(err){URL.revokeObjectURL(srcUrl);reject(err);}
     };
-    video.onerror=()=>{URL.revokeObjectURL(srcUrl);reject(new Error('Gagal memuat video'));};
+    video.onerror=()=>{clearTimeout(timeout);URL.revokeObjectURL(srcUrl);reject(new Error('Gagal memuat video (format tidak didukung)'));};
   });
 }
-async function uploadVideoFile(blob){
-  const path=`posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.webm`;
-  const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'video/webm'},body:blob});
-  if(!r.ok)throw new Error('Gagal upload video');
+async function uploadVideoFile(blob,contentType,ext){
+  const path=`posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':contentType},body:blob});
+  if(!r.ok){const t=await r.text().catch(()=>'');throw new Error('Gagal upload video ke server: '+(t||r.status));}
   return `${SB}/storage/v1/object/public/meme-images/${path}`;
 }
-function removeFile(i){selFiles2.splice(i,1);_revokePreviewUrls();const dt=new DataTransfer();selFiles2.forEach(f=>dt.items.add(f));document.getElementById('fileInput').files=dt.files;handleFiles(document.getElementById('fileInput'));}
+function removeFile(i){selFiles2.splice(i,1);_revokePreviewUrls();const dt=new DataTransfer();selFiles2.forEach(f=>dt.items.add(f));document.getElementById('fileInput').files=dt.files;handleMediaSelect(document.getElementById('fileInput'));}
 function compressImage(file,maxSize=1080,quality=0.82){return new Promise(resolve=>{const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{URL.revokeObjectURL(url);let{width,height}=img;if(width>maxSize||height>maxSize){if(width>height){height=Math.round(height*maxSize/width);width=maxSize;}else{width=Math.round(width*maxSize/height);height=maxSize;}}const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(img,0,0,width,height);canvas.toBlob(blob=>resolve(blob||file),'image/jpeg',quality);};img.onerror=()=>{URL.revokeObjectURL(url);resolve(file);};img.src=url;});}
 async function uploadImg(file){const rl=await checkRateLimit('upload',5,300,60);if(!rl.ok)throw new Error(rl.msg);const compressed=await compressImage(file);const path=`posts/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;const r=await fetch(`${SB}/storage/v1/object/meme-images/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':`Bearer ${token}`,'Content-Type':'image/jpeg'},body:compressed});if(!r.ok)throw new Error('Gagal upload');return`${SB}/storage/v1/object/public/meme-images/${path}`;}
 async function submitPost(){
@@ -1005,10 +1015,20 @@ async function submitPost(){
     let mediaRows=[];
     if(selVideoFile){
       statusEl.style.display='block';statusEl.textContent='Mengompres video... 0%';
-      const compressed=await compressVideo(selVideoFile,pct=>{statusEl.textContent=`Mengompres video... ${pct}%`;});
-      statusEl.textContent='Mengupload video...';
-      const url=await uploadVideoFile(compressed);
-      mediaRows=[{image_url:url,order_index:0,media_type:'video'}];
+      let uploadUrl;
+      try{
+        const compressed=await compressVideo(selVideoFile,pct=>{statusEl.textContent=`Mengompres video... ${pct}%`;});
+        statusEl.textContent='Mengupload video...';
+        uploadUrl=await uploadVideoFile(compressed,'video/webm','webm');
+      }catch(compErr){
+        if(compErr&&compErr.code==='UNSUPPORTED'){
+          if(selVideoFile.size>55*1024*1024){throw new Error('Browser kamu tidak mendukung kompresi otomatis, dan video ini terlalu besar (maks 55MB tanpa kompres)');}
+          statusEl.textContent='Mengupload video (tanpa kompres, browser tidak mendukung)...';
+          const ext=(selVideoFile.name.split('.').pop()||'mp4').toLowerCase();
+          uploadUrl=await uploadVideoFile(selVideoFile,selVideoFile.type||'video/mp4',ext);
+        }else{throw compErr;}
+      }
+      mediaRows=[{image_url:uploadUrl,order_index:0,media_type:'video'}];
     }else{
       toast('Mengupload...');
       const urls=await Promise.all(selFiles2.map(f=>uploadImg(f)));
