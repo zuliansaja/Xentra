@@ -1800,5 +1800,31 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeLightb
   });
 })();
 </script>
+  <script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import FingerprintJS from 'https://openfpcdn.io/fingerprintjs/v4'
+
+const sbCek = createClient('PROJECT_URL', 'ANON_KEY')
+let visitorId = null
+
+async function cekPerangkat() {
+  const { data: { session } } = await sbCek.auth.getSession()
+  if (!session) return
+
+  if (!visitorId) {
+    const fp = await FingerprintJS.load()
+    visitorId = (await fp.get()).visitorId
+  }
+
+  const { data: ok } = await sbCek.rpc('check_device', { fp: visitorId })
+  if (ok === false) {
+    await sbCek.auth.signOut()
+    document.body.innerHTML = '<h1 style="padding:40px;text-align:center">Akses ditolak</h1>'
+  }
+}
+
+cekPerangkat()
+setInterval(cekPerangkat, 20000)
+  </script>
 </body>
 </html>
