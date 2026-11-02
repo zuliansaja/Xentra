@@ -1808,18 +1808,24 @@ const sbCek = createClient('https://qlyybibfopmlqgoznuqp.supabase.co', 'sb_publi
 let visitorId = null
 
 async function cekPerangkat() {
-  const { data: { session } } = await sbCek.auth.getSession()
-  if (!session) return
+  try {
+    const { data: { session } } = await sbCek.auth.getSession()
+    if (!session) { alert('DEBUG: sesi kosong'); return }
 
-  if (!visitorId) {
-    const fp = await FingerprintJS.load()
-    visitorId = (await fp.get()).visitorId
-  }
+    if (!visitorId) {
+      const fp = await FingerprintJS.load()
+      visitorId = (await fp.get()).visitorId
+    }
 
-  const { data: ok } = await sbCek.rpc('check_device', { fp: visitorId })
-  if (ok === false) {
-    await sbCek.auth.signOut()
-    document.body.innerHTML = '<h1 style="padding:40px;text-align:center">Akses ditolak</h1>'
+    const { data: ok, error } = await sbCek.rpc('check_device', { fp: visitorId })
+    if (error) { alert('DEBUG ERR: ' + error.message); return }
+    alert('DEBUG OK: ' + ok)
+    if (ok === false) {
+      await sbCek.auth.signOut()
+      document.body.innerHTML = '<h1 style="padding:40px;text-align:center">Akses ditolak</h1>'
+    }
+  } catch (e) {
+    alert('DEBUG CATCH: ' + e.message)
   }
 }
 
